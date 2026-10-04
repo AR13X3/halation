@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 AR13X3 — Halation (https://github.com/AR13X3/halation)
 // GPU "stable fluids" solver (Jos Stam), in the style popularised by
 // Pavel Dobryakov's WebGL Fluid Simulation. The dye is a single density
 // channel; the palette turns density into color in the field pass.

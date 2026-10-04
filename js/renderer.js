@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 AR13X3 — Halation (https://github.com/AR13X3/halation)
 // Orchestrates the render passes. The same code path renders the live preview,
 // preset thumbnails and full-resolution exports — only the target size changes.
 

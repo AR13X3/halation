@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 AR13X3 — Halation (https://github.com/AR13X3/halation)
 // Encoders and file helpers. No dependencies: PNG is written by hand (so we can
 // do 16-bit, which browsers' canvas.toBlob can't), deflate comes from the
 // browser's native CompressionStream.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 AR13X3 — Halation (https://github.com/AR13X3/halation)
 // Small WebGL2 helper layer: programs with auto-bound uniforms, render targets.
 
 export function createContext(canvas) {

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 AR13X3 — Halation (https://github.com/AR13X3/halation)
 // Gradient editor: draggable stops, click-to-add, drag-off-to-delete,
 // a palette library and a generator.
 

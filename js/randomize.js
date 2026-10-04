@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 AR13X3 — Halation (https://github.com/AR13X3/halation)
 // "Surprise me" — randomizes within ranges that tend to look good.
 
 import { PARAMS, setPath, getPath } from './schema.js';

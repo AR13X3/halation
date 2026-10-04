@@ -9,11 +9,18 @@
 
 <p align="center"><b>Fluid gradients behind textured glass — a free, open-source background generator for designers.</b></p>
 
-<p align="center"><a href="https://ar13x3.github.io/halation/"><b>Open Halation in your browser →</b></a></p>
+<p align="center">
+  <a href="https://ar13x3.github.io/halation/"><b>Open the app</b></a> ·
+  <a href="docs/GUIDE.md">User guide</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a> ·
+  <a href="#license">License</a>
+</p>
 
 ![Halation looks](assets/banner.jpg)
 
-Halation simulates flowing color fields and puts them behind reeded glass, halftone screens, LED matrices, topographic lines and more. Tweak everything live, then export high-resolution stills (up to 16-bit PNG), bursts of frames, or seamless-loop videos. It runs entirely in your browser on the GPU. There's nothing to install and nothing is uploaded.
+Halation renders flowing color fields behind physically based glass and screen effects: reeded and frosted glass, crystal, rain on a window, halftone, LED, contour lines and more. Tweak everything live, then export high-resolution stills (up to 16-bit PNG), bursts of frames or seamless-loop videos.
+
+It runs entirely in your browser on the GPU. Nothing to install, no account, and nothing you make is uploaded.
 
 ## Screenshots
 
@@ -23,150 +30,93 @@ Halation simulates flowing color fields and puts them behind reeded glass, halft
 | --- | --- | --- |
 | ![Glass controls](assets/screenshots/glass.jpg) | ![Screen controls](assets/screenshots/screen.jpg) | ![Export controls](assets/screenshots/export.jpg) |
 
-## Features
+## Quick start
 
-**Flow (the "fluid")**
-- **Silk**: domain-warped noise, with optional sharp folds
-- **Bands**: soft beams of light
-- **Mesh**: drifting mesh-gradient color points
-- **Ribbons**: glowing line bundles that wave and fan out
-- **Shapes**: crisp, softly lit spheres, chain links and pills on a gradient backdrop, so the glass has something solid to break up
-- **Fluid**: a real-time Navier–Stokes ink simulation; drag on the canvas to paint
-- **Image**: drop in any picture and run it through the glass (with optional gradient-map recolor)
-- Scale, turbulence, detail, swirl, rotation, soften, seed. Drag the canvas to pan and scroll to zoom.
+**Use it online:** open **[ar13x3.github.io/halation](https://ar13x3.github.io/halation/)** in a current Chrome, Edge, Firefox or Safari.
 
-**Color**
-- Gradient editor with unlimited stops (smooth OKLab blending), a palette library and a palette generator
-- Contrast, balance, repeat/mirror, offset, posterize, animated color cycling
-- **Relief + gloss** light the flow like a 3D surface (liquid metal, satin…)
+1. Choose an output size in **Canvas** (phone, desktop, 4K, square, print…).
+2. Click a look in the sidebar, or press **Surprise me**.
+3. Adjust the flow, colors, glass and finish until it's yours.
+4. Pause on a frame you like and press **Export**, or record a seamless loop as video.
 
-**Glass**: physically based light transport
-- Types: Reeded (fluted), Wavy reeded, Concentric rings, Glass-block tiles, Hammered, Water surface, Crystal (bevelled facets), Rain on a fogged window (drops with trails), Pyramids (diamond prism sheet)
-- Flute profiles: round, linear, prism, wave, bevel, glass block
-- **Light path**: Snell refraction, index of refraction (IOR), frost with long-tailed scattering, streaks (defocused light smearing along the flutes), spectral dispersion, caustics
-- **Surface**: Fresnel reflections of a light environment, total internal reflection at steep seams, highlights, edge shadow, Beer–Lambert tint
-- **Coverage**: the pane can cover the full canvas, one side, a centered window or a vertical band, with a lit edge
-- **Second pane**: stack another sheet behind the first (e.g. crossed reeds = quilted glass)
+The **[user guide](docs/GUIDE.md)** covers every control, export option, recipes for common tasks and troubleshooting.
 
-**Light**: direction, elevation, intensity and color, plus what the glass reflects (studio softbox, the palette's own colors, a window, or a dark room)
-
-**Screen**: the "display" the image is seen through
-- Halftone (circle / square / diamond), Line screens (straight / concentric rings / waves)
-- LED matrix (round / square / RGB subpixels), CRT shadow mask, Mosaic (square / hex)
-- Topographic contours with index lines, ordered dither
-
-**Finish**: brightness, contrast, saturation, hue, film grain, vignette, bloom, chromatic aberration, and a technical grid overlay
-
-**Motion & export**
-- **Seamless loops**: time moves around a circle through 4D noise, so the last frame flows into the first
-- **Download** PNG, **16-bit PNG** (no gradient banding), JPEG or WebP at 0.5×–4× of any canvas size
-- **Copy** straight to the clipboard to paste into Figma, Photoshop, etc.
-- **Burst**: capture N frames spread across the loop as a .zip, then pick your favorite
-- **Video**: record exactly one loop as MP4/WebM, ready for animated wallpapers
-- Canvas presets for phones, desktops, 4K, ultrawide, banners and print (A4 @ 300 dpi), or custom sizes
-
-**Runs on modest hardware**
-- Performance modes in the transport bar: **Auto** (benchmarks your GPU on load), **Eco** (low-power laptops: 30 fps cap, lower internal resolution), **Balanced** and **Max**
-- Dynamic resolution keeps the moving preview smooth
-- The modes only affect the *moving* preview. Once the image stops changing it refines itself to full quality: full resolution, with 16 jittered passes averaged to remove noise and antialias glass seams. Exports always render at full quality (96 samples per pixel), so stills and exports look identical on any machine.
-
-**Workflow**
-- 20 built-in looks, **Surprise me** (with per-section dice), undo/redo
-- Save your own looks (with thumbnails), import/export them as JSON
-- **Share links** that encode the whole look in the URL
-- Your last session is restored automatically
-
-### Keyboard shortcuts
-
-| Key | Action |
-| --- | --- |
-| `Space` | Play / pause |
-| `S` | Download image |
-| `C` | Copy image to clipboard |
-| `R` | Surprise me |
-| `←` `→` | Step a frame (`Shift` = 1 s) |
-| `1`–`9` | Jump to a built-in look |
-| `H` | Hide the interface |
-| `F` | Fullscreen |
-| `Ctrl/⌘ Z` | Undo (`Shift` to redo) |
-
-Double-click any control label to reset it. Drag a number field to scrub its value.
-
-## Running locally
-
-There's no build step, just static files. ES modules need to be served over HTTP (opening `index.html` directly from disk won't work):
+**Run it locally:** there is no build step and no dependencies.
 
 ```bash
+git clone https://github.com/AR13X3/halation.git
+cd halation
 npm start
 ```
 
-That runs a tiny zero-dependency server at http://localhost:5173. Any static server works too (`npx serve .`, `python -m http.server`, …).
+Then open http://localhost:5173. Any static file server works; the page must be served over HTTP rather than opened from disk.
 
-Requires a browser with **WebGL 2** (current Chrome, Edge, Firefox, Safari). 16-bit export needs float render targets (`EXT_color_buffer_float`), which almost all desktop GPUs support.
+## Features
 
-## Deploying to GitHub Pages
+**Flow**: the moving color field behind the glass.
+Silk, light bands, mesh gradients, ribbons, crisp lit shapes, a real-time fluid simulation you paint with the mouse, or any image you drop in.
 
-1. Push this folder to a GitHub repository.
-2. In the repo, go to **Settings → Pages → Build and deployment**, choose **Deploy from a branch**, pick `main` and `/ (root)`.
-3. Your app will be live at `https://<you>.github.io/<repo>/`.
+**Color**: gradient editor with smooth OKLab blending, palette library and generator, repeats, posterize, animated color cycling, and relief and gloss lighting for liquid-metal looks.
 
-Then set `REPO_URL` at the top of [`js/main.js`](js/main.js) so the GitHub button in the app points to your repository.
+**Glass**: physically based light transport.
+- Nine glass types: reeded, wavy, rings, glass-block tiles, hammered, water, crystal, rain on a fogged window, and prism pyramids
+- Refraction with adjustable index of refraction, frost, streaks, spectral dispersion and caustics
+- Fresnel reflections, total internal reflection, highlights and tinted glass
+- Partial panes (one side, a window or a band) and a second stacked pane
+
+**Screen**: halftone, line screens, LED matrix, CRT, mosaic, topographic contours and dither.
+
+**Finish**: grading, film grain, vignette, bloom, chromatic aberration and a grid overlay.
+
+**Export**
+- PNG, 16-bit PNG (no banding), JPEG or WebP at 0.5×–4× any canvas size
+- Copy to clipboard, burst capture as a .zip, and seamless-loop video (MP4/WebM)
+- Size presets for phones, desktops up to 5K, banners and A4 print
+
+**Workflow**: 20 built-in looks, Surprise me, undo/redo, saved looks with import/export, and share links that recreate a look exactly.
+
+**Runs on modest hardware**: performance modes (Auto, Eco, Balanced, Max) and dynamic resolution keep the preview smooth. Paused frames refine to full quality and exports render identically on any machine.
 
 ## How it works
 
-Every frame goes through five GPU passes:
+Each frame runs five GPU passes:
 
 ```
 field ─▶ glass ─▶ screen ─▶ bloom ─▶ finish
 ```
 
-1. **Field** (`FIELD_FRAG`) computes a scalar "flow" value per pixel (noise, bands, mesh, ribbons, shapes, fluid dye or image luminance), shapes it, and maps it through the palette. The value is kept in the alpha channel for relief lighting and contours.
-2. **Glass** (`GLASS_FRAG`) builds a surface for each pane (slope, ray displacement, local magnification), traces the light through it (refraction, Monte Carlo frost, streak and spectral dispersion), then applies Beer–Lambert tint, caustics, Fresnel reflection of the light environment, total internal reflection and specular highlights. Several passes with different seeds and sub-pixel jitter are averaged for clean stills and exports.
-3. **Screen** (`SCREEN_FRAG`) resamples the glass output on a cell grid to draw halftone dots, LEDs, lines, contours, etc.
-4. **Bloom** runs a bright-pass with blur at quarter resolution.
-5. **Finish** (`FINAL_FRAG`) does grading, vignette, grid, grain and dithering.
+1. **Field** computes the flow value for each pixel (noise, bands, mesh, ribbons, shapes, fluid dye or image) and maps it through the palette.
+2. **Glass** builds a surface for each pane and traces light through it: refraction, Monte Carlo frost, streaks and spectral dispersion, then tint, caustics, Fresnel reflection, total internal reflection and highlights. Jittered passes are averaged for clean, antialiased stills.
+3. **Screen** resamples the result on a cell grid for halftone, LED, contour and other patterns.
+4. **Bloom** blurs the brightest areas at quarter resolution.
+5. **Finish** applies grading, vignette, grid, grain and dithering.
 
-All sizes are defined relative to the canvas height, so a 4× export looks exactly like the preview, only sharper. Exports are rendered offscreen at full resolution and streamed into a hand-written PNG encoder (so 16-bit works) using the browser's native `CompressionStream`.
+All sizes are relative to the canvas height, so a 4× export looks exactly like the preview, only sharper. Exports render offscreen and stream into a built-in PNG encoder (which makes 16-bit output possible) using the browser's native compression.
 
-### Project layout
+Built with plain JavaScript and WebGL 2. No frameworks, no build step, no dependencies. See [CONTRIBUTING.md](CONTRIBUTING.md) for the project structure and how to add effects.
 
-```
-index.html           app shell
-css/app.css          UI styles
-js/schema.js         every parameter: UI, defaults, ranges, randomizer, uniforms
-js/gl/shaders.js     all GLSL for the main pipeline
-js/gl/gl.js          tiny WebGL2 helpers (programs auto-bind uniforms by name)
-js/renderer.js       runs the passes for preview, thumbnails and exports
-js/fluid.js          GPU stable-fluids solver
-js/palette.js        OKLab gradients, palette library and generator
-js/presets.js        built-in looks
-js/randomize.js      "Surprise me"
-js/export.js         PNG (8/16-bit) encoder, ZIP writer, download helpers
-js/store.js          state, undo/redo, share-link encoding
-js/ui/*              panel, controls, gradient editor, looks sidebar, icons
-tools/serve.mjs      dev server
-```
+## Contributing
 
-### Adding a new effect
-
-Parameters are schema-driven, so adding one takes about two steps:
-
-1. Add an entry to `PARAMS` in `js/schema.js`, e.g.
-   `{ key: 'glass.ripple', label: 'Ripple', type: 'range', min: 0, max: 1, step: 0.01, def: 0, show: isGlass('reeded') }`.
-   The panel control, presets, share links and randomizer pick it up automatically.
-2. Declare `uniform float u_glass_ripple;` in the relevant shader and use it. Uniforms are bound by name (`section.key` → `u_section_key`); selects become an `int` index into their `options`.
-
-New glass or screen types are a new entry in `GLASS_TYPES` / `SCREEN_TYPES` plus a branch in the shader (the index in the list is the value of `u_glass_type` / `u_screen_type`). Add an icon in `js/ui/icons.js` to make it look nice.
-
-Pull requests with new looks, effects and palettes are very welcome.
-
-## Credits
-
-- 4D simplex noise: Ashima Arts & Stefan Gustavson ([webgl-noise](https://github.com/ashima/webgl-noise), MIT)
-- Hash functions: Dave Hoskins ("Hash without Sine", MIT)
-- Fluid solver after Jos Stam's *Stable Fluids*, in the style of Pavel Dobryakov's [WebGL Fluid Simulation](https://github.com/PavelDoGreat/WebGL-Fluid-Simulation) (MIT)
-- OKLab color space: Björn Ottosson
+Bug reports, new looks, effects and documentation improvements are welcome. Please read the [contributing guide](CONTRIBUTING.md) first; it explains the development setup, guidelines and how contributions are licensed.
 
 ## License
 
-[MIT](LICENSE). Use it, fork it, ship it. Backgrounds you create are yours.
+Halation is free and open-source software, licensed under the **[GNU Affero General Public License v3.0](LICENSE)** (AGPL-3.0-only).
+
+- You may use, study, share and modify it.
+- If you distribute a modified version, or run one as a service that others use over a network, you must make its complete source code available under the same license.
+- **What you create is yours.** Images and videos you make with Halation belong to you and are not covered by this license. Use them anywhere, including commercial work.
+- **Commercial licensing.** To use Halation in a closed-source product or under other terms, contact the author through [GitHub](https://github.com/AR13X3).
+- **Trademarks.** The Halation name and logo are not licensed for use in other products or services.
+
+Copyright © 2026 AR13X3.
+
+## Credits
+
+- 4D simplex noise: Ashima Arts and Stefan Gustavson ([webgl-noise](https://github.com/ashima/webgl-noise), MIT)
+- Hash functions: Dave Hoskins ("Hash without Sine", MIT)
+- Fluid solver after Jos Stam's *Stable Fluids*, adapted from Pavel Dobryakov's [WebGL Fluid Simulation](https://github.com/PavelDoGreat/WebGL-Fluid-Simulation) (MIT)
+- Voronoi techniques: Inigo Quilez
+- OKLab color space: Björn Ottosson
+
+Full notices for included third-party code are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

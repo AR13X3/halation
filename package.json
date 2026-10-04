@@ -8,5 +8,11 @@
     "start": "node tools/serve.mjs",
     "dev": "node tools/serve.mjs"
   },
-  "license": "MIT"
+  "license": "AGPL-3.0-only",
+  "author": "AR13X3",
+  "homepage": "https://ar13x3.github.io/halation/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AR13X3/halation.git"
+  }
 }

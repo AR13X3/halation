@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 AR13X3 — Halation (https://github.com/AR13X3/halation)
 // GLSL for the main pipeline:  field → (blur) → glass → screen → (bloom) → final
 //
 // Coordinates: `p` is in "height units" — the canvas spans p.y ∈ [-0.5, 0.5] and

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 AR13X3 — Halation (https://github.com/AR13X3/halation)
 // Every tweakable parameter lives here. The UI, presets, randomizer, URL sharing
 // and shader uniforms are all generated from this list.
 //

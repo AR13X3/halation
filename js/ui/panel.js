@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 AR13X3 — Halation (https://github.com/AR13X3/halation)
 // Builds the right-hand control panel from the schema.
 
 import { PARAMS, SECTIONS, PARAM_MAP, DOC_SIZES } from '../schema.js';
