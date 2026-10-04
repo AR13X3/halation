@@ -113,6 +113,8 @@ Copyright © 2026 AR13X3.
 
 ## Credits
 
+Created by [AR13X3](https://github.com/AR13X3), developed with the help of [Claude Code](https://claude.com/claude-code).
+
 - 4D simplex noise: Ashima Arts and Stefan Gustavson ([webgl-noise](https://github.com/ashima/webgl-noise), MIT)
 - Hash functions: Dave Hoskins ("Hash without Sine", MIT)
 - Fluid solver after Jos Stam's *Stable Fluids*, adapted from Pavel Dobryakov's [WebGL Fluid Simulation](https://github.com/PavelDoGreat/WebGL-Fluid-Simulation) (MIT)
