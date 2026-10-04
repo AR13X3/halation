@@ -9,6 +9,8 @@
 
 <p align="center"><b>Fluid gradients behind textured glass — a free, open-source background generator for designers.</b></p>
 
+<p align="center"><a href="https://ar13x3.github.io/halation/"><b>Open Halation in your browser →</b></a></p>
+
 ![Halation looks](assets/banner.jpg)
 
 Halation simulates flowing color fields and puts them behind reeded glass, halftone screens, LED matrices, topographic lines and more. Tweak everything live, then export high-resolution stills (up to 16-bit PNG), bursts of frames, or seamless-loop videos. It runs entirely in your browser on the GPU. There's nothing to install and nothing is uploaded.

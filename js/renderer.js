@@ -140,6 +140,7 @@ export class Renderer {
     U.u_time = time;
     U.u_grainSeed = state.finish.grainAnim ? Math.floor(time * 24) % 97 : 0;
     U.u_paletteSize = PALETTE_SIZE;
+    U.u_zero = 0;
     return U;
   }
 

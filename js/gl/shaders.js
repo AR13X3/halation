@@ -25,6 +25,10 @@ uniform float u_time;     // seconds
 uniform float u_phase;    // loop angle (radians); integer multiples loop seamlessly
 uniform vec2 u_W;         // position on the noise "time circle"
 uniform float u_source_seed;
+// Always 0. Added to loop bounds so they are not compile-time constants:
+// Direct3D's shader compiler (used by browsers on Windows) otherwise unrolls
+// and inlines every loop, which can make a shader take many seconds to compile.
+uniform int u_zero;
 
 #define PI 3.14159265359
 #define TAU 6.28318530718
@@ -108,8 +112,7 @@ float snoise(vec4 v) {
 // octave keeps it on a circle, so loops stay seamless.
 float fbm(vec2 p, vec2 w, int oct) {
   float sum = 0.0, amp = 0.5, norm = 0.0;
-  for (int i = 0; i < 8; i++) {
-    if (i >= oct) break;
+  for (int i = 0; i < oct + u_zero; i++) {
     sum += amp * snoise(vec4(p, w));
     norm += amp;
     p = rot2(0.62) * p * 2.03 + vec2(1.7, 9.2);
@@ -117,6 +120,17 @@ float fbm(vec2 p, vec2 w, int oct) {
     amp *= 0.5;
   }
   return sum / norm;
+}
+
+// Two independent fbm values from a single loop, so the compiler inlines one
+// copy of fbm instead of two (much faster shader compiles on Windows).
+vec2 fbm2(vec2 pa, vec2 wa, int oa, vec2 pb, vec2 wb, int ob) {
+  vec2 r = vec2(0.0);
+  for (int j = 0; j < 2 + u_zero; j++) {
+    float v = fbm(j == 0 ? pa : pb, j == 0 ? wa : wb, j == 0 ? oa : ob);
+    if (j == 0) r.x = v; else r.y = v;
+  }
+  return r;
 }
 `;
 
@@ -151,7 +165,7 @@ vec2 seedOffset() { return (hash22(vec2(u_source_seed * 0.1371 + 0.5, 3.7)) - 0.
 
 float silk(vec2 p, vec2 so) {
   vec2 W = u_W;
-  vec2 q = vec2(fbm(p + so, W, 3), fbm(p + so + vec2(5.2, 1.3), W + vec2(4.1, 2.7), 3));
+  vec2 q = fbm2(p + so, W, 3, p + so + vec2(5.2, 1.3), W + vec2(4.1, 2.7), 3);
   vec2 r = p + u_source_warp * 1.6 * q;
   float f = fbm(r + so + vec2(1.7, 9.2), W * 1.1 + vec2(8.3, 2.8), u_source_detail);
   float smoothV = f * 0.95 + 0.5;
@@ -164,12 +178,12 @@ float bands(vec2 p, vec2 so) {
   vec2 n = vec2(cos(a), sin(a));
   float d = dot(p, n);
   float along = dot(p, vec2(-n.y, n.x));
-  d += u_source_warp * 0.16 * fbm(p * 1.3 + so, u_W, u_source_detail);
-  along += u_source_warp * 0.2 * fbm(p * 0.9 + so + 4.3, u_W + 2.0, 2);
+  vec2 bw = fbm2(p * 1.3 + so, u_W, u_source_detail, p * 0.9 + so + 4.3, u_W + 2.0, 2);
+  d += u_source_warp * 0.16 * bw.x;
+  along += u_source_warp * 0.2 * bw.y;
   float cnt = float(u_source_bandCount);
   float sum = 0.0;
-  for (int i = 0; i < 6; i++) {
-    if (i >= u_source_bandCount) break;
+  for (int i = 0; i < u_source_bandCount + u_zero; i++) {
     float fi = float(i);
     float h = hash11(fi * 7.31 + u_source_seed * 0.71);
     float c = (fi - (cnt - 1.0) * 0.5) * u_source_bandSpacing
@@ -184,13 +198,10 @@ float bands(vec2 p, vec2 so) {
 }
 
 float mesh(vec2 p, vec2 so) {
-  vec2 wp = p + u_source_warp * 0.2 * vec2(
-    fbm(p * 1.1 + so, u_W, u_source_detail),
-    fbm(p * 1.1 + so + vec2(7.7, 3.3), u_W + vec2(2.0, 5.0), u_source_detail));
+  vec2 wp = p + u_source_warp * 0.2 * fbm2(p * 1.1 + so, u_W, u_source_detail, p * 1.1 + so + vec2(7.7, 3.3), u_W + vec2(2.0, 5.0), u_source_detail);
   float cnt = float(u_source_meshCount);
   float ws = 0.0, ts = 0.0;
-  for (int i = 0; i < 8; i++) {
-    if (i >= u_source_meshCount) break;
+  for (int i = 0; i < u_source_meshCount + u_zero; i++) {
     float fi = float(i);
     vec2 h = hash22(vec2(fi * 1.37 + 0.5, u_source_seed * 0.173 + 2.0));
     vec2 base = (h - 0.5) * vec2(u_aspect, 1.0) * 1.15;
@@ -239,8 +250,7 @@ float shapes(vec2 p) {
   float t = clamp(0.5 + dot(p, vec2(cos(ba), sin(ba))) * 0.85, 0.0, 1.0) * 0.4;
   vec3 L = normalize(vec3(-0.45, 0.65, 0.62));
   float n = float(u_source_shapeCount);
-  for (int i = 0; i < 6; i++) {
-    if (i >= u_source_shapeCount) break;
+  for (int i = 0; i < u_source_shapeCount + u_zero; i++) {
     float fi = float(i);
     vec2 h = hash22(vec2(fi * 3.17 + 1.3, u_source_seed * 0.211 + 5.0));
     float R = u_source_shapeSize * 0.5 * (n > 1.0 ? mix(0.8, 1.0, fract(h.x * 7.3)) : 1.0);
@@ -286,7 +296,7 @@ float shapes(vec2 p) {
 }
 
 vec4 imageSample(vec2 p, vec2 so) {
-  vec2 wp = p + u_source_warp * 0.06 * vec2(fbm(p * 1.5 + so, u_W, 3), fbm(p * 1.5 + so + 9.1, u_W + 3.3, 3));
+  vec2 wp = p + u_source_warp * 0.06 * fbm2(p * 1.5 + so, u_W, 3, p * 1.5 + so + 9.1, u_W + 3.3, 3);
   float ia = u_imageSize.x / max(u_imageSize.y, 1.0);
   vec2 uv = ia > u_aspect ? vec2(wp.x / ia, wp.y) + 0.5 : vec2(wp.x / u_aspect, wp.y * ia / u_aspect) + 0.5;
   return texture(u_image, uv);
@@ -443,9 +453,8 @@ Surf flutes(float x, vec2 dir, vec2 alongv, float w, float str, float salt) {
 float hammerH(vec2 g, float salt) {
   vec2 ig = floor(g), fg = fract(g);
   float res = 0.0;
-  for (int yy = -1; yy <= 1; yy++)
-  for (int xx = -1; xx <= 1; xx++) {
-    vec2 b = vec2(float(xx), float(yy));
+  for (int k = 0; k < 9 + u_zero; k++) {
+    vec2 b = vec2(float(k % 3 - 1), float(k / 3 - 1));
     vec2 o = hash22(ig + b + u_source_seed * 0.013 + salt);
     o = 0.5 + (o - 0.5) * (0.4 + 0.6 * u_glass_jitter);
     res += exp(-9.0 * length(b + o - fg));
@@ -460,9 +469,8 @@ float voronoiBorder(vec2 x, float salt, out vec2 cell, out vec2 toBorder) {
   vec2 n = floor(x), f = fract(x);
   vec2 mg = vec2(0.0), mr = vec2(0.0);
   float md = 8.0;
-  for (int j = -1; j <= 1; j++)
-  for (int i = -1; i <= 1; i++) {
-    vec2 g = vec2(float(i), float(j));
+  for (int k = 0; k < 9 + u_zero; k++) {
+    vec2 g = vec2(float(k % 3 - 1), float(k / 3 - 1));
     vec2 o = 0.5 + (hash22(n + g + salt) - 0.5) * (0.6 + 0.4 * u_glass_jitter);
     vec2 r = g + o - f;
     float d = dot(r, r);
@@ -470,9 +478,8 @@ float voronoiBorder(vec2 x, float salt, out vec2 cell, out vec2 toBorder) {
   }
   md = 8.0;
   toBorder = vec2(0.0);
-  for (int j = -2; j <= 2; j++)
-  for (int i = -2; i <= 2; i++) {
-    vec2 g = mg + vec2(float(i), float(j));
+  for (int k = 0; k < 25 + u_zero; k++) {
+    vec2 g = mg + vec2(float(k % 5 - 2), float(k / 5 - 2));
     vec2 o = 0.5 + (hash22(n + g + salt) - 0.5) * (0.6 + 0.4 * u_glass_jitter);
     vec2 r = g + o - f;
     if (dot(mr - r, mr - r) > 1e-5) {
@@ -485,6 +492,11 @@ float voronoiBorder(vec2 x, float salt, out vec2 cell, out vec2 toBorder) {
   return md;
 }
 
+// Finite-difference stencil: center, +x, +y, -x, -y.
+vec2 stencil(int k, float e) {
+  return k == 1 ? vec2(e, 0.0) : k == 2 ? vec2(0.0, e) : k == 3 ? vec2(-e, 0.0) : k == 4 ? vec2(0.0, -e) : vec2(0.0);
+}
+
 float waterH(vec2 q, vec2 W) {
   return snoise(vec4(q, W)) + 0.45 * snoise(vec4(q * 2.1 + 3.1, W * 1.6 + 1.7));
 }
@@ -494,16 +506,15 @@ float waterH(vec2 q, vec2 W) {
 // through the fog as they slide down.
 Surf rain(vec2 p, float w, float str, float salt) {
   Surf S = noSurf();
-  for (int L = 0; L < 2; L++) {
+  for (int L = 0; L < 2 + u_zero; L++) {
     float fl = float(L);
     float cs = w * (L == 0 ? 2.4 : 0.9);
     vec2 q = p / cs;
     vec2 id = floor(q);
     // trails left by big drops (look a few cells below for the drop that made them)
     if (L == 0) {
-      for (int yy = -3; yy <= 0; yy++)
-      for (int xx = -1; xx <= 1; xx++) {
-        vec2 cid = id + vec2(float(xx), float(yy));
+      for (int k = 0; k < 12 + u_zero; k++) {
+        vec2 cid = id + vec2(float(k % 3 - 1), float(k / 3 - 3));
         float hr = hash12(cid * 1.31 + u_source_seed * 0.07 + salt);
         if (hr > u_glass_coverage || fract(hr * 29.3) > 0.55) continue;
         vec2 hp = hash22(cid + u_source_seed * 0.11 + salt);
@@ -516,9 +527,8 @@ Surf rain(vec2 p, float w, float str, float salt) {
         if (u > 0.0 && u < 1.0 && abs(q.x - c.x - wob) < halfW) S.clear = max(S.clear, smoothstep(1.0, 0.6, u));
       }
     }
-    for (int yy = -1; yy <= 1; yy++)
-    for (int xx = -1; xx <= 1; xx++) {
-      vec2 cid = id + vec2(float(xx), float(yy));
+    for (int k = 0; k < 9 + u_zero; k++) {
+      vec2 cid = id + vec2(float(k % 3 - 1), float(k / 3 - 1));
       float hr = hash12(cid * 1.31 + u_source_seed * 0.07 + salt + fl * 17.3);
       if (hr > u_glass_coverage) continue;
       vec2 hp = hash22(cid + u_source_seed * 0.11 + salt + fl * 7.7);
@@ -579,14 +589,12 @@ Surf surface(int gt, vec2 p, float count, float angleDeg, float str, float salt)
   } else if (gt == 5) {                           // hammered: smooth dimples
     vec2 g = rot2(a) * p / w;
     float e = 0.02;
-    float h0 = hammerH(g, salt);
-    float hx1 = hammerH(g + vec2(e, 0.0), salt), hy1 = hammerH(g + vec2(0.0, e), salt);
-    vec2 grad = rot2(-a) * vec2(hx1 - h0, hy1 - h0) / e;
-    float lap = 0.0;
-    if (u_glass_caustics > 0.001) {   // the curvature is only needed for caustics
-      float hx0 = hammerH(g - vec2(e, 0.0), salt), hy0 = hammerH(g - vec2(0.0, e), salt);
-      lap = (hx1 + hx0 + hy1 + hy0 - 4.0 * h0) / (e * e);
-    }
+    float hs[5];
+    int nh = u_glass_caustics > 0.001 ? 5 : 3;   // the curvature is only needed for caustics
+    for (int k = 0; k < nh + u_zero; k++) hs[k] = hammerH(g + stencil(k, e), salt);
+    float h0 = hs[0];
+    vec2 grad = rot2(-a) * vec2(hs[1] - h0, hs[2] - h0) / e;
+    float lap = nh == 5 ? (hs[1] + hs[3] + hs[2] + hs[4] - 4.0 * h0) / (e * e) : 0.0;
     S.off = grad * str * w * 0.9;
     S.M = 1.0 + str * 0.9 * lap;
     S.g = grad * 0.9 * bump(str);
@@ -596,14 +604,12 @@ Surf surface(int gt, vec2 p, float count, float angleDeg, float str, float salt)
     vec2 q = p / w * 0.22;
     vec2 W = u_W * 1.5;
     float e = 0.02;
-    float h0 = waterH(q, W);
-    float hx1 = waterH(q + vec2(e, 0.0), W), hy1 = waterH(q + vec2(0.0, e), W);
-    vec2 grad = vec2(hx1 - h0, hy1 - h0) / e;
-    float lap = 0.0;
-    if (u_glass_caustics > 0.001) {   // the curvature is only needed for caustics
-      float hx0 = waterH(q - vec2(e, 0.0), W), hy0 = waterH(q - vec2(0.0, e), W);
-      lap = (hx1 + hx0 + hy1 + hy0 - 4.0 * h0) / (e * e);
-    }
+    float hs[5];
+    int nh = u_glass_caustics > 0.001 ? 5 : 3;
+    for (int k = 0; k < nh + u_zero; k++) hs[k] = waterH(q + stencil(k, e), W);
+    float h0 = hs[0];
+    vec2 grad = vec2(hs[1] - h0, hs[2] - h0) / e;
+    float lap = nh == 5 ? (hs[1] + hs[3] + hs[2] + hs[4] - 4.0 * h0) / (e * e) : 0.0;
     S.off = grad * str * w * 0.16;
     S.M = 1.0 + str * 0.035 * lap;
     S.g = grad * 0.35 * bump(str);
@@ -701,7 +707,15 @@ void main() {
   bool anyGlass = gt > 0 || bt > 0;
 
   // ── surfaces: front pane, then (optionally) a back pane hit by the bent ray
-  Surf A = surface(gt, p, u_glass_count, u_glass_angle, u_glass_strength, 0.0);
+  Surf A = noSurf(), B = noSurf();
+  int panes = bt > 0 ? 2 : gt > 0 ? 1 : 0;
+  for (int k = 0; k < panes + u_zero; k++) {
+    bool back = k == 1;
+    Surf S = surface(back ? bt : gt, back ? p + A.off : p,
+                     back ? u_glass_backCount : u_glass_count, back ? u_glass_backAngle : u_glass_angle,
+                     back ? u_glass_backStrength : u_glass_strength, back ? 3.3 : 0.0);
+    if (back) B = S; else A = S;
+  }
   vec2 off = A.off;
   float M = A.M;
   float shade = max(1.0 - u_glass_shadow * A.edge, 0.0);
@@ -710,7 +724,6 @@ void main() {
   float clear = A.clear;
   float aniso = A.aniso;
   if (bt > 0) {
-    Surf B = surface(bt, p + A.off, u_glass_backCount, u_glass_backAngle, u_glass_backStrength, 3.3);
     off += B.off;
     M *= B.M;
     shade *= max(1.0 - u_glass_shadow * 0.7 * B.edge, 0.0);
@@ -729,8 +742,7 @@ void main() {
   vec2 sp0 = p + off;
   vec3 acc = vec3(0.0), wsum = vec3(0.0);
   float aacc = 0.0;
-  for (int i = 0; i < 64; i++) {
-    if (i >= N) break;
+  for (int i = 0; i < N + u_zero; i++) {
     float fi = float(i);
     vec2 sp = sp0;
     if (frostR > 0.0) {

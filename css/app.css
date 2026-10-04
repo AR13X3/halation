@@ -653,6 +653,24 @@ kbd {
   color: var(--text);
 }
 
+.boot {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 16px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: .02em;
+  z-index: 90;
+  transition: opacity .35s ease;
+}
+.boot img { animation: boot-pulse 1.6s ease-in-out infinite; }
+.boot.done { opacity: 0; pointer-events: none; }
+@keyframes boot-pulse { 50% { opacity: .45; } }
+
 .fatal {
   position: fixed;
   inset: 0;

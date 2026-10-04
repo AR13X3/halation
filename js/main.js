@@ -24,12 +24,28 @@ const canvas = $('#canvas');
 const stage = $('#stage');
 const frameEl = $('#frame');
 
+function hideBoot() {
+  const boot = $("#boot");
+  if (!boot) return;
+  boot.classList.add("done");
+  setTimeout(() => boot.remove(), 400);
+}
+
 function fatal(msg) {
   const el = document.createElement('div');
   el.className = 'fatal';
   el.textContent = msg;
   document.body.append(el);
 }
+
+// Let the loading screen paint before shaders compile (that can take a few
+// seconds on a first visit, and blocks the page while it runs).
+await new Promise((resolve) => {
+  let done = false;
+  const go = () => { if (!done) { done = true; resolve(); } };
+  requestAnimationFrame(() => setTimeout(go, 0));
+  setTimeout(go, 150);
+});
 
 const ctx = createContext(canvas);
 if (!ctx) {
@@ -241,6 +257,7 @@ function tick(now) {
       if (fluidOn && simDt > 0) { fluid.step((simDt * a.speed) / 0.6, s.source); simDt = 0; }
       if (lastRender && a.playing && !rec) adaptResolution(now - lastRender, t);
       renderLive();
+      if (!lastRender) hideBoot();
       lastRender = now;
       dirty = false;
       refineK = 0;
