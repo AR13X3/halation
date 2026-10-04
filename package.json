@@ -1,0 +1,12 @@
+{
+  "name": "halation",
+  "version": "1.0.0",
+  "description": "Fluid gradient backgrounds behind textured glass — a free, open-source background generator.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node tools/serve.mjs",
+    "dev": "node tools/serve.mjs"
+  },
+  "license": "MIT"
+}

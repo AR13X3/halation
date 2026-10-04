@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Halation — fluid backgrounds behind glass</title>
+  <meta name="description" content="Free, open-source generator for fluid gradient backgrounds behind reeded glass, halftone, LED and other textures. Export high-resolution PNGs and seamless loop videos." />
+  <meta name="theme-color" content="#0b0b0d" />
+  <meta property="og:title" content="Halation" />
+  <meta property="og:description" content="Fluid gradients behind textured glass. Free & open source." />
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <img src="assets/logo-mark-light.svg" alt="" width="20" height="24" />
+        <span class="brand-name">Halation</span>
+      </div>
+      <div class="top-group">
+        <button class="icon-btn" id="btn-undo" title="Undo (Ctrl+Z)"></button>
+        <button class="icon-btn" id="btn-redo" title="Redo (Ctrl+Shift+Z)"></button>
+      </div>
+      <div class="top-spacer"></div>
+      <div class="top-group">
+        <button class="btn ghost" id="btn-surprise" title="Randomize everything (R)"></button>
+        <button class="btn ghost" id="btn-share" title="Copy a link to this exact look"></button>
+        <button class="icon-btn" id="btn-help" title="Keyboard shortcuts (?)"></button>
+        <a class="icon-btn" id="btn-github" href="https://github.com/" target="_blank" rel="noopener" title="Source on GitHub"></a>
+        <button class="btn primary" id="btn-export" title="Download image (S)"></button>
+      </div>
+    </header>
+
+    <aside class="side side-left" id="presets" aria-label="Looks"></aside>
+
+    <main class="stage" id="stage">
+      <div class="frame" id="frame">
+        <canvas id="canvas"></canvas>
+      </div>
+      <div class="dropzone" id="dropzone"><div>Drop an image to use it as the flow source</div></div>
+      <div class="rec-badge" id="rec-badge" hidden><span class="dot"></span><span id="rec-text">REC</span></div>
+      <div class="transport" id="transport">
+        <button class="icon-btn" id="btn-play" title="Play / pause (Space)"></button>
+        <div class="scrub" id="scrub-wrap">
+          <input type="range" class="slider" id="scrub" min="0" max="1000" step="1" value="0" />
+        </div>
+        <span class="time" id="time">0.0s</span>
+        <button class="icon-btn" id="btn-loop" title="Seamless loop"></button>
+        <span class="divider"></span>
+        <select class="select mini" id="quality">
+          <option value="auto">Auto</option>
+          <option value="eco">Eco · low-power</option>
+          <option value="balanced">Balanced</option>
+          <option value="max">Max</option>
+        </select>
+        <span class="fps" id="fps">—</span>
+        <button class="icon-btn" id="btn-hide" title="Hide interface (H)"></button>
+      </div>
+    </main>
+
+    <aside class="side side-right" id="panel" aria-label="Controls"></aside>
+  </div>
+
+  <div class="busy" id="busy" hidden>
+    <div class="busy-card">
+      <div class="spinner"></div>
+      <div id="busy-text">Rendering…</div>
+      <div class="progress"><div id="busy-bar"></div></div>
+    </div>
+  </div>
+
+  <dialog id="help" class="dialog">
+    <div class="dialog-head"><b>Keyboard shortcuts</b><button class="icon-btn" data-close></button></div>
+    <dl class="keys">
+      <dt><kbd>Space</kbd></dt><dd>Play / pause</dd>
+      <dt><kbd>S</kbd></dt><dd>Download image</dd>
+      <dt><kbd>C</kbd></dt><dd>Copy image to clipboard</dd>
+      <dt><kbd>R</kbd></dt><dd>Surprise me (randomize all)</dd>
+      <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Step one frame (hold Shift for 1 s)</dd>
+      <dt><kbd>1</kbd>–<kbd>9</kbd></dt><dd>Jump to a built-in look</dd>
+      <dt><kbd>H</kbd></dt><dd>Hide / show the interface</dd>
+      <dt><kbd>F</kbd></dt><dd>Fullscreen</dd>
+      <dt><kbd>Ctrl</kbd> <kbd>Z</kbd></dt><dd>Undo (Shift for redo)</dd>
+      <dt>Drag canvas</dt><dd>Pan the flow (or paint, in Fluid mode)</dd>
+      <dt>Scroll canvas</dt><dd>Zoom the flow</dd>
+      <dt>Double-click label</dt><dd>Reset that control</dd>
+      <dt>Drag a number</dt><dd>Scrub its value (Shift = fine)</dd>
+    </dl>
+  </dialog>
+
+  <input type="file" id="file-image" accept="image/*" hidden />
+
+  <noscript><p class="fatal">Halation needs JavaScript and WebGL 2.</p></noscript>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

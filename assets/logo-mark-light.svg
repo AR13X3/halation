@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="16 10 68 80">
+  <!-- Halation mark for dark backgrounds. -->
+  <defs>
+    <clipPath id="disc"><circle cx="50" cy="50" r="30"/></clipPath>
+  </defs>
+  <path d="M50 20 A30 30 0 0 0 50 80 Z" fill="#f4f2ee"/>
+  <g clip-path="url(#disc)" fill="#f4f2ee">
+    <rect x="54" y="0" width="4" height="100"/>
+    <rect x="62" y="0" width="4" height="100"/>
+    <rect x="70" y="0" width="4" height="100"/>
+    <rect x="78" y="0" width="4" height="100"/>
+  </g>
+  <rect x="48.75" y="12" width="2.5" height="76" rx="1.25" fill="#ff3438"/>
+</svg>
