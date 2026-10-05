@@ -22,7 +22,7 @@ export function h(tag, attrs = {}, ...children) {
   return el;
 }
 
-const labelText = (p, s) => (typeof p.label === 'function' ? p.label(s) : p.label);
+export const labelText = (p, s) => (typeof p.label === 'function' ? p.label(s) : p.label);
 
 function decimals(step) {
   const s = String(step);

@@ -30,7 +30,7 @@ Everything you need to go from a blank canvas to a finished background. If you j
 | **Looks** (left) | Built-in starting points, plus looks you save yourself. Click one to load it. |
 | **Canvas** (center) | Live preview at the exact proportions of your output size. Drag to pan, scroll to zoom. |
 | **Transport bar** (bottom) | Play/pause, timeline, seamless-loop toggle, performance mode and frame-rate readout. The eye icon hides the interface. |
-| **Controls** (right) | Every setting, grouped into sections: Canvas, Flow, Color, Glass, Light, Screen, Finish, Motion, Export. Click a section title to collapse it. Hover a title for its dice (randomize this section) and reset buttons. |
+| **Controls** (right) | Every setting, grouped into sections: Canvas, Flow, Color, Glass, Light, Screen, Finish, Motion, Export. Canvas and Color start open; click a section title to expand or collapse it. Hover a title for its dice (randomize this section) and reset buttons. |
 | **Top bar** | Undo/redo, **Surprise me**, **Share**, keyboard shortcuts, source code link and **Export**. |
 
 A few habits that make editing fast:
@@ -38,6 +38,7 @@ A few habits that make editing fast:
 - **Double-click a label** to reset that control to its default.
 - **Drag a number** left or right to scrub it (hold `Shift` for fine steps), or click it to type a value. Arrow keys nudge it.
 - Hover a label for a short explanation of what it does.
+- **Search settings** at the top of the controls (or press `/`) to find any setting by name or by what it does: "blur" finds Soften and Frost, "rainbow" finds Dispersion. Settings that the current look hides, such as Band width while the pattern is Silk, are listed below the results with the change that reveals them. Press `Esc` to clear the search.
 
 ## Your first background in five steps
 
@@ -207,6 +208,7 @@ Whatever the mode, a still preview refines itself to full quality (the readout s
 | `S` | Download image |
 | `C` | Copy image to clipboard |
 | `R` | Surprise me |
+| `/` | Search settings (`Esc` clears) |
 | `←` `→` | Step one frame (`Shift`: one second) |
 | `1`–`9` | Load built-in looks 1–9 |
 | `H` | Hide / show the interface |

@@ -866,6 +866,12 @@ window.addEventListener('keydown', (e) => {
       else stage.requestFullscreen?.();
       break;
     case '?': $('#help').showModal(); break;
+    case '/':
+      e.preventDefault();
+      if (app.classList.contains('ui-hidden')) toggleUI();
+      panel.focusSearch();
+      break;
+    case 'Escape': if (!$('#help').open) panel.clearSearch(); break;
     case 'ArrowLeft':
     case 'ArrowRight': {
       e.preventDefault();

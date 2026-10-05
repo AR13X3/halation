@@ -7,6 +7,7 @@
 // type     range | int | select | chips | toggle | color | seed
 // show     (state) => boolean  — visibility in the panel
 // rnd      [lo, hi] range used by the randomizer, or false to never randomize
+// tags     extra words the settings search should match (synonyms)
 
 export const SOURCE_TYPES = [
   { value: 'silk', label: 'Silk', icon: 'silk' },
@@ -96,16 +97,16 @@ export const SECTIONS = [
 
 export const PARAMS = [
   // ── Canvas ────────────────────────────────────────────────────────────────
-  { key: 'doc.size', label: 'Size', type: 'select', options: DOC_SIZES, def: 'phone', uniform: false },
+  { key: 'doc.size', label: 'Size', type: 'select', options: DOC_SIZES, def: 'phone', uniform: false, tags: 'resolution dimensions preset wallpaper aspect ratio' },
   { key: 'doc.width', label: 'Width', type: 'int', min: 64, max: 8192, step: 1, def: 1080, uniform: false, unit: 'px', noSlider: true },
   { key: 'doc.height', label: 'Height', type: 'int', min: 64, max: 8192, step: 1, def: 1920, uniform: false, unit: 'px', noSlider: true },
 
   // ── Flow (source) ─────────────────────────────────────────────────────────
-  { key: 'source.type', label: 'Pattern', type: 'chips', options: SOURCE_TYPES, def: 'silk', rnd: false },
-  { key: 'source.scale', label: 'Scale', type: 'range', min: 0.15, max: 4, step: 0.01, def: 1, rnd: [0.6, 1.8], show: notSrc('fluid') },
-  { key: 'source.warp', label: 'Turbulence', type: 'range', min: 0, max: 3, step: 0.01, def: 1.1, rnd: [0.3, 2], show: notSrc('fluid', 'shapes') },
-  { key: 'source.detail', label: 'Detail', type: 'int', min: 1, max: 8, step: 1, def: 4, rnd: [2, 6], show: isSrc('silk', 'bands', 'mesh', 'ribbons') },
-  { key: 'source.ridge', label: 'Folds', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.7], show: isSrc('silk'), hint: 'Turns soft swirls into sharp silk-like creases' },
+  { key: 'source.type', label: 'Pattern', type: 'chips', options: SOURCE_TYPES, def: 'silk', rnd: false, tags: 'style source' },
+  { key: 'source.scale', label: 'Scale', type: 'range', min: 0.15, max: 4, step: 0.01, def: 1, rnd: [0.6, 1.8], show: notSrc('fluid'), tags: 'zoom size' },
+  { key: 'source.warp', label: 'Turbulence', type: 'range', min: 0, max: 3, step: 0.01, def: 1.1, rnd: [0.3, 2], show: notSrc('fluid', 'shapes'), tags: 'warp distortion noise' },
+  { key: 'source.detail', label: 'Detail', type: 'int', min: 1, max: 8, step: 1, def: 4, rnd: [2, 6], show: isSrc('silk', 'bands', 'mesh', 'ribbons'), tags: 'octaves complexity' },
+  { key: 'source.ridge', label: 'Folds', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.7], show: isSrc('silk'), hint: 'Turns soft swirls into sharp silk-like creases', tags: 'creases ridges' },
 
   { key: 'source.bandCount', label: 'Bands', type: 'int', min: 1, max: 6, step: 1, def: 2, rnd: [1, 4], show: isSrc('bands') },
   { key: 'source.bandWidth', label: 'Band width', type: 'range', min: 0.02, max: 0.6, step: 0.005, def: 0.16, rnd: [0.06, 0.35], show: isSrc('bands') },
@@ -136,39 +137,39 @@ export const PARAMS = [
 
   { key: 'source.fluidForce', label: 'Force', type: 'range', min: 0, max: 3, step: 0.01, def: 1, rnd: false, show: isSrc('fluid'), uniform: false },
   { key: 'source.fluidRadius', label: 'Brush size', type: 'range', min: 0.05, max: 1, step: 0.01, def: 0.3, rnd: false, show: isSrc('fluid'), uniform: false },
-  { key: 'source.fluidCurl', label: 'Vorticity', type: 'range', min: 0, max: 60, step: 0.5, def: 22, rnd: false, show: isSrc('fluid'), uniform: false },
+  { key: 'source.fluidCurl', label: 'Vorticity', type: 'range', min: 0, max: 60, step: 0.5, def: 22, rnd: false, show: isSrc('fluid'), uniform: false, tags: 'curl swirl' },
   { key: 'source.fluidVelFade', label: 'Momentum fade', type: 'range', min: 0, max: 4, step: 0.01, def: 0.4, rnd: false, show: isSrc('fluid'), uniform: false },
   { key: 'source.fluidInkFade', label: 'Ink fade', type: 'range', min: 0, max: 3, step: 0.01, def: 0.5, rnd: false, show: isSrc('fluid'), uniform: false },
   { key: 'source.fluidStreams', label: 'Streams', type: 'int', min: 0, max: 6, step: 1, def: 3, rnd: false, show: isSrc('fluid'), uniform: false, hint: 'Automatic ink emitters' },
   { key: 'source.fluidInk', label: 'Ink amount', type: 'range', min: 0, max: 3, step: 0.01, def: 1, rnd: false, show: isSrc('fluid'), uniform: false },
   { key: 'source.fluidGain', label: 'Density', type: 'range', min: 0.2, max: 4, step: 0.01, def: 1.2, rnd: false, show: isSrc('fluid') },
-  { key: 'source.fluidQuality', label: 'Sim quality', type: 'select', options: [{ value: 'low', label: 'Low' }, { value: 'med', label: 'Medium' }, { value: 'high', label: 'High' }], def: 'med', rnd: false, show: isSrc('fluid'), uniform: false },
+  { key: 'source.fluidQuality', label: 'Sim quality', type: 'select', options: [{ value: 'low', label: 'Low' }, { value: 'med', label: 'Medium' }, { value: 'high', label: 'High' }], def: 'med', rnd: false, show: isSrc('fluid'), uniform: false, tags: 'resolution performance' },
 
-  { key: 'source.blur', label: 'Soften', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.2] },
-  { key: 'source.twist', label: 'Swirl', type: 'range', min: -6, max: 6, step: 0.01, def: 0, rnd: [-2, 2], show: notSrc('fluid') },
-  { key: 'source.rotation', label: 'Rotate', type: 'range', min: -180, max: 180, step: 1, def: 0, unit: '°', rnd: [-180, 180], show: notSrc('fluid') },
-  { key: 'source.offsetX', label: 'Pan X', type: 'range', min: -3, max: 3, step: 0.001, def: 0, rnd: false, show: notSrc('fluid'), hint: 'Tip: drag the canvas to pan, scroll to zoom' },
-  { key: 'source.offsetY', label: 'Pan Y', type: 'range', min: -3, max: 3, step: 0.001, def: 0, rnd: false, show: notSrc('fluid') },
-  { key: 'source.seed', label: 'Seed', type: 'seed', min: 0, max: 9999, def: 7, rnd: [0, 9999], show: notSrc('fluid', 'image') },
+  { key: 'source.blur', label: 'Soften', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.2], tags: 'blur smooth' },
+  { key: 'source.twist', label: 'Swirl', type: 'range', min: -6, max: 6, step: 0.01, def: 0, rnd: [-2, 2], show: notSrc('fluid'), tags: 'twist spiral vortex' },
+  { key: 'source.rotation', label: 'Rotate', type: 'range', min: -180, max: 180, step: 1, def: 0, unit: '°', rnd: [-180, 180], show: notSrc('fluid'), tags: 'rotation angle' },
+  { key: 'source.offsetX', label: 'Pan X', type: 'range', min: -3, max: 3, step: 0.001, def: 0, rnd: false, show: notSrc('fluid'), hint: 'Tip: drag the canvas to pan, scroll to zoom', tags: 'position move' },
+  { key: 'source.offsetY', label: 'Pan Y', type: 'range', min: -3, max: 3, step: 0.001, def: 0, rnd: false, show: notSrc('fluid'), tags: 'position move' },
+  { key: 'source.seed', label: 'Seed', type: 'seed', min: 0, max: 9999, def: 7, rnd: [0, 9999], show: notSrc('fluid', 'image'), tags: 'random variation' },
 
   // ── Color ─────────────────────────────────────────────────────────────────
   // color.stops is edited by the gradient editor (not a schema control)
-  { key: 'color.spread', label: 'Contrast', type: 'range', min: 0.2, max: 4, step: 0.01, def: 1.2, rnd: [0.9, 2] },
-  { key: 'color.shift', label: 'Balance', type: 'range', min: -0.6, max: 0.6, step: 0.01, def: 0, rnd: [-0.15, 0.15] },
-  { key: 'color.repeat', label: 'Repeat', type: 'range', min: 1, max: 8, step: 0.01, def: 1, rnd: false },
+  { key: 'color.spread', label: 'Contrast', type: 'range', min: 0.2, max: 4, step: 0.01, def: 1.2, rnd: [0.9, 2], tags: 'spread range' },
+  { key: 'color.shift', label: 'Balance', type: 'range', min: -0.6, max: 0.6, step: 0.01, def: 0, rnd: [-0.15, 0.15], tags: 'shift bias' },
+  { key: 'color.repeat', label: 'Repeat', type: 'range', min: 1, max: 8, step: 0.01, def: 1, rnd: false, tags: 'cycles' },
   { key: 'color.offset', label: 'Offset', type: 'range', min: 0, max: 1, step: 0.001, def: 0, rnd: false },
   { key: 'color.mirror', label: 'Mirror repeats', type: 'toggle', def: true, rnd: false },
-  { key: 'color.cycle', label: 'Color cycle', type: 'int', min: -4, max: 4, step: 1, def: 0, rnd: false, uniform: false, hint: 'Palette cycles per loop' },
-  { key: 'color.posterize', label: 'Posterize', type: 'int', min: 0, max: 16, step: 1, def: 0, rnd: false, hint: '0 = smooth' },
-  { key: 'color.relief', label: 'Relief', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.6], hint: 'Shade the flow like a 3D surface' },
-  { key: 'color.gloss', label: 'Gloss', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.6] },
+  { key: 'color.cycle', label: 'Color cycle', type: 'int', min: -4, max: 4, step: 1, def: 0, rnd: false, uniform: false, hint: 'Palette cycles per loop', tags: 'animate rotate palette' },
+  { key: 'color.posterize', label: 'Posterize', type: 'int', min: 0, max: 16, step: 1, def: 0, rnd: false, hint: '0 = smooth', tags: 'steps quantize flat' },
+  { key: 'color.relief', label: 'Relief', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.6], hint: 'Shade the flow like a 3D surface', tags: 'emboss depth 3d bump shading' },
+  { key: 'color.gloss', label: 'Gloss', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.6], tags: 'shine specular metal' },
   { key: 'color.glossSize', label: 'Gloss tightness', type: 'range', min: 0, max: 1, step: 0.01, def: 0.5, rnd: [0.2, 0.9], show: (s) => s.color.gloss > 0 },
 
   // ── Glass ─────────────────────────────────────────────────────────────────
-  { key: 'glass.type', label: 'Glass', type: 'chips', options: GLASS_TYPES, def: 'none', rnd: false },
-  { key: 'glass.count', group: 'Shape', label: (s) => ({ water: 'Ripple density', hammered: 'Density', crystal: 'Facets', rain: 'Drop density', rings: 'Rings', tiles: 'Tiles', pyramid: 'Pyramids' })[s.glass.type] || 'Flutes', type: 'range', min: 2, max: 160, step: 0.5, def: 14, rnd: [6, 48], show: (s) => s.glass.type !== 'none', curve: 2 },
+  { key: 'glass.type', label: 'Glass', type: 'chips', options: GLASS_TYPES, def: 'none', rnd: false, tags: 'pane texture' },
+  { key: 'glass.count', group: 'Shape', label: (s) => ({ water: 'Ripple density', hammered: 'Density', crystal: 'Facets', rain: 'Drop density', rings: 'Rings', tiles: 'Tiles', pyramid: 'Pyramids' })[s.glass.type] || 'Flutes', type: 'range', min: 2, max: 160, step: 0.5, def: 14, rnd: [6, 48], show: (s) => s.glass.type !== 'none', curve: 2, tags: 'density flutes ripples facets rings tiles pyramids drops' },
   { key: 'glass.angle', group: 'Shape', label: 'Angle', type: 'range', min: -90, max: 90, step: 1, def: 0, unit: '°', rnd: [-20, 20], show: (s) => ['reeded', 'wavy', 'tiles', 'hammered', 'crystal', 'pyramid'].includes(s.glass.type) },
-  { key: 'glass.profile', group: 'Shape', label: 'Profile', type: 'select', options: GLASS_PROFILES, def: 'round', show: isGlass('reeded', 'wavy', 'rings', 'tiles'), hint: 'Cross-section of each flute' },
+  { key: 'glass.profile', group: 'Shape', label: 'Profile', type: 'select', options: GLASS_PROFILES, def: 'round', show: isGlass('reeded', 'wavy', 'rings', 'tiles'), hint: 'Cross-section of each flute', tags: 'shape cross section' },
   { key: 'glass.wave', group: 'Shape', label: 'Wave amount', type: 'range', min: 0, max: 3, step: 0.01, def: 0.6, rnd: [0.2, 1.5], show: isGlass('wavy') },
   { key: 'glass.waveFreq', group: 'Shape', label: 'Wave frequency', type: 'range', min: 0.2, max: 8, step: 0.01, def: 1.5, rnd: [0.5, 3], show: isGlass('wavy') },
   { key: 'glass.coverage', group: 'Shape', label: 'Coverage', type: 'range', min: 0.05, max: 1, step: 0.01, def: 0.55, rnd: [0.3, 0.8], show: isGlass('rain'), hint: 'How much of the pane is covered in drops' },
@@ -176,39 +177,39 @@ export const PARAMS = [
   { key: 'glass.centerY', group: 'Shape', label: 'Center Y', type: 'range', min: -1.5, max: 1.5, step: 0.01, def: 0, rnd: [-1, 1], show: isGlass('rings') },
   { key: 'glass.jitter', group: 'Shape', label: 'Irregularity', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.4], show: isGlass('reeded', 'wavy', 'rings', 'tiles', 'hammered', 'crystal', 'rain', 'pyramid') },
 
-  { key: 'glass.panel', group: 'Coverage', label: 'Pane', type: 'select', options: [{ value: 'full', label: 'Full canvas' }, { value: 'right', label: 'Right side' }, { value: 'left', label: 'Left side' }, { value: 'top', label: 'Top' }, { value: 'bottom', label: 'Bottom' }, { value: 'window', label: 'Centered window' }, { value: 'band', label: 'Vertical band' }], def: 'full', rnd: false, show: glassOn, hint: 'Let the glass cover only part of the image' },
+  { key: 'glass.panel', group: 'Coverage', label: 'Pane', type: 'select', options: [{ value: 'full', label: 'Full canvas' }, { value: 'right', label: 'Right side' }, { value: 'left', label: 'Left side' }, { value: 'top', label: 'Top' }, { value: 'bottom', label: 'Bottom' }, { value: 'window', label: 'Centered window' }, { value: 'band', label: 'Vertical band' }], def: 'full', rnd: false, show: glassOn, hint: 'Let the glass cover only part of the image', tags: 'mask area region split' },
   { key: 'glass.panelSize', group: 'Coverage', label: 'Pane size', type: 'range', min: 0.05, max: 1, step: 0.01, def: 0.55, rnd: [0.35, 0.7], show: (s) => glassOn(s) && s.glass.panel !== 'full' },
   { key: 'glass.panelOffset', group: 'Coverage', label: 'Pane offset', type: 'range', min: -1, max: 1, step: 0.01, def: 0, rnd: [-0.3, 0.3], show: (s) => glassOn(s) && s.glass.panel !== 'full' },
 
-  { key: 'glass.strength', group: 'Light path', label: 'Refraction', type: 'range', min: -2, max: 2, step: 0.01, def: 0.6, rnd: [-1, 1.2], show: glassOn, hint: 'How far light bends — negative = concave flutes' },
-  { key: 'glass.ior', group: 'Light path', label: 'Index (IOR)', type: 'range', min: 1.05, max: 2.4, step: 0.01, def: 1.5, rnd: [1.35, 1.8], show: glassOn, hint: 'Index of refraction: 1.33 water · 1.5 glass · 2.4 diamond. Drives reflections and total internal reflection.' },
-  { key: 'glass.frost', group: 'Light path', label: (s) => (s.glass.type === 'rain' || s.glass.backType === 'rain' ? 'Fog' : 'Frost'), type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.4], show: glassOn, hint: 'Scatters light passing through (rough / fogged glass)' },
-  { key: 'glass.streak', group: 'Light path', label: 'Streak', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.4], show: glassOn, hint: 'Out-of-focus light smears along the flutes, like lights seen through reeded glass' },
-  { key: 'glass.dispersion', group: 'Light path', label: 'Dispersion', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.5], show: glassOn, hint: 'Splits light into a rainbow where it bends' },
+  { key: 'glass.strength', group: 'Light path', label: 'Refraction', type: 'range', min: -2, max: 2, step: 0.01, def: 0.6, rnd: [-1, 1.2], show: glassOn, hint: 'How far light bends — negative = concave flutes', tags: 'bend distortion lens' },
+  { key: 'glass.ior', group: 'Light path', label: 'Index (IOR)', type: 'range', min: 1.05, max: 2.4, step: 0.01, def: 1.5, rnd: [1.35, 1.8], show: glassOn, hint: 'Index of refraction: 1.33 water · 1.5 glass · 2.4 diamond. Drives reflections and total internal reflection.', tags: 'refractive index' },
+  { key: 'glass.frost', group: 'Light path', label: (s) => (s.glass.type === 'rain' || s.glass.backType === 'rain' ? 'Fog' : 'Frost'), type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.4], show: glassOn, hint: 'Scatters light passing through (rough / fogged glass)', tags: 'frost fog blur rough matte' },
+  { key: 'glass.streak', group: 'Light path', label: 'Streak', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.4], show: glassOn, hint: 'Out-of-focus light smears along the flutes, like lights seen through reeded glass', tags: 'smear' },
+  { key: 'glass.dispersion', group: 'Light path', label: 'Dispersion', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.5], show: glassOn, hint: 'Splits light into a rainbow where it bends', tags: 'rainbow chromatic prism spectrum' },
   { key: 'glass.caustics', group: 'Light path', label: 'Caustics', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.6], show: glassOn, hint: 'Light concentrated by each lens — bright cores and focus lines' },
 
-  { key: 'glass.reflect', group: 'Surface', label: 'Reflections', type: 'range', min: 0, max: 1, step: 0.01, def: 0.15, rnd: [0, 0.5], show: glassOn, hint: 'Fresnel reflections of the light environment (see Light)' },
-  { key: 'glass.highlight', group: 'Surface', label: 'Highlight', type: 'range', min: 0, max: 1, step: 0.01, def: 0.08, rnd: [0, 0.4], show: glassOn, hint: 'Reflection of the light source on the glass surface — the bright line on each flute' },
+  { key: 'glass.reflect', group: 'Surface', label: 'Reflections', type: 'range', min: 0, max: 1, step: 0.01, def: 0.15, rnd: [0, 0.5], show: glassOn, hint: 'Fresnel reflections of the light environment (see Light)', tags: 'fresnel mirror' },
+  { key: 'glass.highlight', group: 'Surface', label: 'Highlight', type: 'range', min: 0, max: 1, step: 0.01, def: 0.08, rnd: [0, 0.4], show: glassOn, hint: 'Reflection of the light source on the glass surface — the bright line on each flute', tags: 'specular shine' },
   { key: 'glass.sharpness', group: 'Surface', label: 'Sharpness', type: 'range', min: 0, max: 1, step: 0.01, def: 0.5, rnd: [0.3, 0.85], show: (s) => glassOn(s) && s.glass.highlight > 0 },
-  { key: 'glass.shadow', group: 'Surface', label: 'Edge shadow', type: 'range', min: 0, max: 1, step: 0.01, def: 0.25, rnd: [0, 0.7], show: glassOn },
-  { key: 'glass.tintAmount', group: 'Surface', label: 'Tint', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.5], show: glassOn, hint: 'Colored glass — thicker parts absorb more' },
+  { key: 'glass.shadow', group: 'Surface', label: 'Edge shadow', type: 'range', min: 0, max: 1, step: 0.01, def: 0.25, rnd: [0, 0.7], show: glassOn, tags: 'edges darken' },
+  { key: 'glass.tintAmount', group: 'Surface', label: 'Tint', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.5], show: glassOn, hint: 'Colored glass — thicker parts absorb more', tags: 'color stained' },
   { key: 'glass.tint', group: 'Surface', label: 'Tint color', type: 'color', def: '#7fd1b0', rnd: false, show: (s) => glassOn(s) && s.glass.tintAmount > 0 },
 
-  { key: 'glass.backType', group: 'Second pane', label: 'Back pane', type: 'select', options: GLASS_TYPES, def: 'none', rnd: false, hint: 'Stack a second sheet of glass behind the first' },
+  { key: 'glass.backType', group: 'Second pane', label: 'Back pane', type: 'select', options: GLASS_TYPES, def: 'none', rnd: false, hint: 'Stack a second sheet of glass behind the first', tags: 'second double layer stack' },
   { key: 'glass.backCount', group: 'Second pane', label: 'Density', type: 'range', min: 2, max: 160, step: 0.5, def: 14, rnd: [6, 40], show: (s) => s.glass.backType !== 'none', curve: 2 },
   { key: 'glass.backAngle', group: 'Second pane', label: 'Angle', type: 'range', min: -90, max: 90, step: 1, def: 90, unit: '°', rnd: [-90, 90], show: (s) => s.glass.backType !== 'none' },
   { key: 'glass.backStrength', group: 'Second pane', label: 'Refraction', type: 'range', min: -2, max: 2, step: 0.01, def: 0.5, rnd: [-0.8, 0.8], show: (s) => s.glass.backType !== 'none' },
 
   // ── Light ─────────────────────────────────────────────────────────────────
-  { key: 'light.angle', label: 'Direction', type: 'range', min: 0, max: 360, step: 1, def: 120, unit: '°', rnd: [0, 360] },
-  { key: 'light.elevation', label: 'Elevation', type: 'range', min: 5, max: 90, step: 1, def: 50, unit: '°', rnd: [25, 70], hint: 'Low light = long grazing highlights' },
-  { key: 'light.intensity', label: 'Intensity', type: 'range', min: 0, max: 3, step: 0.01, def: 1, rnd: [0.8, 1.4] },
+  { key: 'light.angle', label: 'Direction', type: 'range', min: 0, max: 360, step: 1, def: 120, unit: '°', rnd: [0, 360], tags: 'angle sun' },
+  { key: 'light.elevation', label: 'Elevation', type: 'range', min: 5, max: 90, step: 1, def: 50, unit: '°', rnd: [25, 70], hint: 'Low light = long grazing highlights', tags: 'height altitude' },
+  { key: 'light.intensity', label: 'Intensity', type: 'range', min: 0, max: 3, step: 0.01, def: 1, rnd: [0.8, 1.4], tags: 'brightness strength' },
   { key: 'light.color', label: 'Color', type: 'color', def: '#ffffff', rnd: false },
-  { key: 'light.env', label: 'Environment', type: 'select', options: LIGHT_ENVS, def: 'studio', hint: 'What the glass reflects' },
+  { key: 'light.env', label: 'Environment', type: 'select', options: LIGHT_ENVS, def: 'studio', hint: 'What the glass reflects', tags: 'reflection surroundings' },
 
   // ── Screen ────────────────────────────────────────────────────────────────
-  { key: 'screen.type', label: 'Screen', type: 'chips', options: SCREEN_TYPES, def: 'none', rnd: false },
-  { key: 'screen.size', label: (s) => (s.screen.type === 'contour' ? 'Detail' : 'Cells'), type: 'range', min: 10, max: 400, step: 1, def: 110, rnd: [60, 220], show: (s) => screenOn(s) && s.screen.type !== 'contour', curve: 2, hint: 'Cells across the canvas height' },
+  { key: 'screen.type', label: 'Screen', type: 'chips', options: SCREEN_TYPES, def: 'none', rnd: false, tags: 'texture effect overlay' },
+  { key: 'screen.size', label: (s) => (s.screen.type === 'contour' ? 'Detail' : 'Cells'), type: 'range', min: 10, max: 400, step: 1, def: 110, rnd: [60, 220], show: (s) => screenOn(s) && s.screen.type !== 'contour', curve: 2, hint: 'Cells across the canvas height', tags: 'resolution density scale' },
   { key: 'screen.angle', label: 'Angle', type: 'range', min: 0, max: 90, step: 1, def: 45, unit: '°', rnd: [0, 90], show: (s) => isScreen('halftone')(s) || (isScreen('lines')(s) && s.screen.lineShape !== 'rings') },
   { key: 'screen.dotShape', label: 'Dot shape', type: 'select', options: [{ value: 'circle', label: 'Circle' }, { value: 'square', label: 'Square' }, { value: 'diamond', label: 'Diamond' }], def: 'circle', show: isScreen('halftone') },
   { key: 'screen.lineShape', label: 'Line shape', type: 'select', options: [{ value: 'straight', label: 'Straight' }, { value: 'rings', label: 'Rings' }, { value: 'waves', label: 'Waves' }], def: 'straight', show: isScreen('lines') },
@@ -223,44 +224,44 @@ export const PARAMS = [
   { key: 'screen.dotScale', label: (s) => (s.screen.type === 'crt' ? 'Mask strength' : s.screen.type === 'mosaic' ? 'Tile size' : s.screen.type === 'lines' ? 'Line weight' : 'Dot size'), type: 'range', min: 0.1, max: 1.5, step: 0.01, def: 0.9, rnd: [0.6, 1.1], show: isScreen('halftone', 'lines', 'led', 'crt', 'mosaic') },
   { key: 'screen.contrast', label: 'Contrast', type: 'range', min: 0.2, max: 3, step: 0.01, def: 1, rnd: [0.8, 1.6], show: (s) => screenOn(s) && s.screen.type !== 'contour' },
   { key: 'screen.invert', label: 'Invert', type: 'toggle', def: false, rnd: false, show: isScreen('halftone', 'lines', 'dither') },
-  { key: 'screen.colorMode', label: 'Color', type: 'select', options: [{ value: 'source', label: 'From image' }, { value: 'mono', label: 'Ink & paper' }], def: 'source', show: (s) => screenOn(s) && s.screen.type !== 'crt' },
+  { key: 'screen.colorMode', label: 'Color', type: 'select', options: [{ value: 'source', label: 'From image' }, { value: 'mono', label: 'Ink & paper' }], def: 'source', show: (s) => screenOn(s) && s.screen.type !== 'crt', tags: 'monochrome mono' },
   { key: 'screen.ink', label: 'Ink', type: 'color', def: '#ffffff', rnd: false, show: (s) => screenOn(s) && s.screen.colorMode === 'mono' && s.screen.type !== 'crt' },
   { key: 'screen.paper', label: 'Paper', type: 'color', def: '#05060a', rnd: false, show: (s) => screenOn(s) && s.screen.colorMode === 'mono' && s.screen.type !== 'crt' },
   { key: 'screen.background', label: 'Background', type: 'range', min: 0, max: 1, step: 0.01, def: 0.12, rnd: [0, 0.4], show: (s) => isScreen('halftone', 'lines', 'led', 'mosaic', 'contour')(s) && s.screen.colorMode === 'source', hint: 'How much of the image shows between marks' },
   { key: 'screen.fill', label: 'Lines over image', type: 'toggle', def: false, rnd: false, show: isScreen('contour') },
   { key: 'screen.glow', label: (s) => (s.screen.type === 'mosaic' ? 'Bevel' : s.screen.type === 'led' || s.screen.type === 'crt' ? 'Glow' : 'Boost'), type: 'range', min: 0, max: 1, step: 0.01, def: 0.3, rnd: [0, 0.6], show: isScreen('halftone', 'lines', 'led', 'crt', 'mosaic', 'contour') },
-  { key: 'screen.mix', label: 'Mix', type: 'range', min: 0, max: 1, step: 0.01, def: 1, rnd: false, show: screenOn },
+  { key: 'screen.mix', label: 'Mix', type: 'range', min: 0, max: 1, step: 0.01, def: 1, rnd: false, show: screenOn, tags: 'opacity amount blend' },
 
   // ── Finish ────────────────────────────────────────────────────────────────
-  { key: 'finish.exposure', label: 'Brightness', type: 'range', min: -2, max: 2, step: 0.01, def: 0, rnd: [-0.2, 0.2] },
+  { key: 'finish.exposure', label: 'Brightness', type: 'range', min: -2, max: 2, step: 0.01, def: 0, rnd: [-0.2, 0.2], tags: 'exposure' },
   { key: 'finish.contrast', label: 'Contrast', type: 'range', min: 0, max: 2, step: 0.01, def: 1, rnd: [0.9, 1.2] },
-  { key: 'finish.saturation', label: 'Saturation', type: 'range', min: 0, max: 2, step: 0.01, def: 1, rnd: [0.85, 1.25] },
-  { key: 'finish.hue', label: 'Hue shift', type: 'range', min: -180, max: 180, step: 1, def: 0, unit: '°', rnd: false },
-  { key: 'finish.grain', label: 'Grain', type: 'range', min: 0, max: 1, step: 0.01, def: 0.08, rnd: [0, 0.35] },
+  { key: 'finish.saturation', label: 'Saturation', type: 'range', min: 0, max: 2, step: 0.01, def: 1, rnd: [0.85, 1.25], tags: 'vibrance gray grey' },
+  { key: 'finish.hue', label: 'Hue shift', type: 'range', min: -180, max: 180, step: 1, def: 0, unit: '°', rnd: false, tags: 'color rotate' },
+  { key: 'finish.grain', label: 'Grain', type: 'range', min: 0, max: 1, step: 0.01, def: 0.08, rnd: [0, 0.35], tags: 'noise film texture' },
   { key: 'finish.grainSize', label: 'Grain size', type: 'range', min: 0.5, max: 4, step: 0.01, def: 1, rnd: [0.8, 1.6], show: (s) => s.finish.grain > 0 },
   { key: 'finish.grainAnim', label: 'Animated grain', type: 'toggle', def: true, rnd: false, show: (s) => s.finish.grain > 0 },
-  { key: 'finish.vignette', label: 'Vignette', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.5] },
-  { key: 'finish.bloom', label: 'Bloom', type: 'range', min: 0, max: 2, step: 0.01, def: 0, rnd: [0, 0.8] },
+  { key: 'finish.vignette', label: 'Vignette', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.5], tags: 'darken edges corners' },
+  { key: 'finish.bloom', label: 'Bloom', type: 'range', min: 0, max: 2, step: 0.01, def: 0, rnd: [0, 0.8], tags: 'glow halation' },
   { key: 'finish.bloomRadius', label: 'Bloom radius', type: 'range', min: 0, max: 1, step: 0.01, def: 0.5, rnd: [0.2, 0.8], show: (s) => s.finish.bloom > 0 },
   { key: 'finish.bloomThreshold', label: 'Bloom threshold', type: 'range', min: 0, max: 1, step: 0.01, def: 0.55, rnd: [0.3, 0.8], show: (s) => s.finish.bloom > 0 },
-  { key: 'finish.aberration', label: 'Aberration', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.3] },
-  { key: 'finish.grid', label: 'Grid overlay', type: 'toggle', def: false, rnd: false },
+  { key: 'finish.aberration', label: 'Aberration', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.3], tags: 'chromatic rgb fringe' },
+  { key: 'finish.grid', label: 'Grid overlay', type: 'toggle', def: false, rnd: false, tags: 'guides lines' },
   { key: 'finish.gridSize', label: 'Grid cells', type: 'range', min: 1, max: 40, step: 0.5, def: 6, rnd: false, show: (s) => s.finish.grid },
   { key: 'finish.gridOpacity', label: 'Grid opacity', type: 'range', min: 0, max: 1, step: 0.01, def: 0.35, rnd: false, show: (s) => s.finish.grid },
   { key: 'finish.gridDots', label: 'Markers', type: 'range', min: 0, max: 1, step: 0.01, def: 0.1, rnd: false, show: (s) => s.finish.grid },
   { key: 'finish.gridColor', label: 'Grid color', type: 'color', def: '#ffffff', rnd: false, show: (s) => s.finish.grid },
 
   // ── Motion ────────────────────────────────────────────────────────────────
-  { key: 'anim.speed', label: 'Speed', type: 'range', min: 0, max: 3, step: 0.01, def: 0.6, uniform: false },
+  { key: 'anim.speed', label: 'Speed', type: 'range', min: 0, max: 3, step: 0.01, def: 0.6, uniform: false, tags: 'animation tempo fast slow' },
   { key: 'anim.loop', label: 'Seamless loop', type: 'toggle', def: true, uniform: false, hint: 'Animation repeats perfectly — great for video wallpapers' },
-  { key: 'anim.duration', label: 'Loop length', type: 'range', min: 2, max: 60, step: 0.5, def: 10, unit: 's', uniform: false, show: (s) => s.anim.loop },
-  { key: 'anim.fps', label: 'Video FPS', type: 'select', options: [{ value: '24', label: '24 fps' }, { value: '30', label: '30 fps' }, { value: '60', label: '60 fps' }], def: '30', uniform: false },
+  { key: 'anim.duration', label: 'Loop length', type: 'range', min: 2, max: 60, step: 0.5, def: 10, unit: 's', uniform: false, show: (s) => s.anim.loop, tags: 'length time seconds' },
+  { key: 'anim.fps', label: 'Video FPS', type: 'select', options: [{ value: '24', label: '24 fps' }, { value: '30', label: '30 fps' }, { value: '60', label: '60 fps' }], def: '30', uniform: false, tags: 'frame rate framerate' },
 
   // ── Export ────────────────────────────────────────────────────────────────
-  { key: 'export.scale', label: 'Scale', type: 'select', options: [{ value: '0.5', label: '0.5×' }, { value: '1', label: '1×' }, { value: '2', label: '2×' }, { value: '3', label: '3×' }, { value: '4', label: '4×' }], def: '1', uniform: false },
-  { key: 'export.format', label: 'Format', type: 'select', options: [{ value: 'png', label: 'PNG 8-bit' }, { value: 'png16', label: 'PNG 16-bit (no banding)' }, { value: 'jpeg', label: 'JPEG' }, { value: 'webp', label: 'WebP' }], def: 'png', uniform: false },
-  { key: 'export.quality', label: 'Quality', type: 'range', min: 0.5, max: 1, step: 0.01, def: 0.95, uniform: false, show: (s) => s.export.format === 'jpeg' || s.export.format === 'webp' },
-  { key: 'export.burst', label: 'Burst frames', type: 'int', min: 2, max: 60, step: 1, def: 12, uniform: false, hint: 'Frames spread evenly over the loop' },
+  { key: 'export.scale', label: 'Scale', type: 'select', options: [{ value: '0.5', label: '0.5×' }, { value: '1', label: '1×' }, { value: '2', label: '2×' }, { value: '3', label: '3×' }, { value: '4', label: '4×' }], def: '1', uniform: false, tags: 'resolution size multiplier' },
+  { key: 'export.format', label: 'Format', type: 'select', options: [{ value: 'png', label: 'PNG 8-bit' }, { value: 'png16', label: 'PNG 16-bit (no banding)' }, { value: 'jpeg', label: 'JPEG' }, { value: 'webp', label: 'WebP' }], def: 'png', uniform: false, tags: 'file type jpg' },
+  { key: 'export.quality', label: 'Quality', type: 'range', min: 0.5, max: 1, step: 0.01, def: 0.95, uniform: false, show: (s) => s.export.format === 'jpeg' || s.export.format === 'webp', tags: 'compression' },
+  { key: 'export.burst', label: 'Burst frames', type: 'int', min: 2, max: 60, step: 1, def: 12, uniform: false, hint: 'Frames spread evenly over the loop', tags: 'sequence zip' },
 ];
 
 export const PARAM_MAP = Object.fromEntries(PARAMS.map((p) => [p.key, p]));
