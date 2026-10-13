@@ -75,7 +75,8 @@ export const PRESETS = [
     name: 'Lagoon Ribbons',
     look: {
       source: { type: 'ribbons', ribLines: 34, ribWidth: 0.6, ribThick: 0.07, ribGlow: 0.5, ribAmp: 1.3, ribFreq: 0.8, ribFan: -0.6, ribAngle: 15, warp: 0.5, seed: 33 },
-      color: { stops: P('#011a1f', '#05515c', '#2ec4b6', '#e8fffb'), spread: 1.15, relief: 0.3, gloss: 0.35 },
+      color: { stops: P('#011a1f', '#05515c', '#2ec4b6', '#e8fffb'), spread: 1.15 },
+      surface: { relief: 0.3, gloss: 0.35 },
       finish: { bloom: 0.4, bloomRadius: 0.45, bloomThreshold: 0.5, grain: 0.04 },
     },
   },
@@ -84,7 +85,8 @@ export const PRESETS = [
     name: 'Rose Metal',
     look: {
       source: { type: 'silk', scale: 1.3, warp: 1.1, ridge: 0.6, detail: 4, seed: 412 },
-      color: { stops: P('#1a0c0c', '#6e3a35', '#d99a8a', '#fff0ea'), spread: 1.3, relief: 0.75, gloss: 0.85, glossSize: 0.55 },
+      color: { stops: P('#1a0c0c', '#6e3a35', '#d99a8a', '#fff0ea'), spread: 1.3 },
+      surface: { relief: 0.75, gloss: 0.85, glossSize: 0.55 },
       light: { angle: 65 },
       finish: { grain: 0.04, vignette: 0.3 },
     },
@@ -210,6 +212,59 @@ export const PRESETS = [
       color: { stops: P('#0a0a24', '#2b1f6e', '#e0821b', '#ffe7a8'), spread: 1.1 },
       glass: { type: 'wavy', count: 18, strength: 0.5, wave: 0.4, waveFreq: 1, shadow: 0.3, highlight: 0.05 },
       finish: { grain: 0.12 },
+    },
+  },
+  {
+    id: 'moire-ribbon', // silhouette + moiré screen + iridescence
+    name: 'Moiré Ribbon',
+    look: {
+      source: { type: 'mesh', meshCount: 6, meshBlend: 1.2, warp: 0.9, seed: 31, form: 'ribbon', formSize: 0.38, formWave: 1.6, formDepth: 0.85, formSoft: 0, formBg: '#0a0c0b' },
+      color: { stops: [{ pos: 0, color: '#050b26' }, { pos: 0.3, color: '#123596' }, { pos: 0.55, color: '#2f6be0' }, { pos: 0.72, color: '#7fb3ff' }, { pos: 0.84, color: '#ff9a7a' }, { pos: 0.93, color: '#ffd37a' }, { pos: 1, color: '#d8ecff' }], spread: 1 },
+      surface: { iridescence: 0.35, film: 0.3 },
+      screen: { type: 'moire', size: 280, angle: 20, bend: 2, interference: 2.5, background: 0.5, dotScale: 0.9, glow: 0.2 },
+      finish: { grain: 0.04 },
+    },
+  },
+  {
+    id: 'liquid-glass', // liquid surface + gloss + sparkle
+    name: 'Liquid Glass',
+    look: {
+      source: { type: 'silk', scale: 0.65, warp: 1.3, ridge: 0.85, detail: 1, twist: 0.8, seed: 77 },
+      color: { stops: P('#071a3a', '#1b4a86', '#5b8fcc', '#d8ebff'), spread: 0.95 },
+      surface: { liquid: 0.8, gloss: 0.6, glossSize: 0.85, sparkle: 0.6, sparkleDensity: 0.3 },
+      finish: { bloom: 0.5, bloomThreshold: 0.6, grain: 0.03 },
+      anim: { speed: 0.4 },
+    },
+  },
+  {
+    id: 'holo-chrome', // chrome + thin-film iridescence
+    name: 'Holo Chrome',
+    look: {
+      source: { type: 'silk', scale: 1, warp: 1.6, ridge: 0.25, detail: 3, rotation: 35, seed: 140 },
+      color: { stops: P('#18191f', '#4a4e5c', '#a3a8b6', '#d4d8e2') },
+      surface: { chrome: 1, iridescence: 0.38, film: 0.55, gloss: 0.5, glossSize: 0.7, sparkle: 0.2 },
+      finish: { grain: 0.03 },
+      anim: { speed: 0.4 },
+    },
+  },
+  {
+    id: 'light-speed', // threads in an hourglass + zoom streaks + orbit aberration
+    name: 'Light Speed',
+    look: {
+      source: { type: 'threads', rotation: 90, thrConverge: 0.6, thrSpread: 0.4, thrCount: 70, thrWeight: 1.8, thrBreak: 0.45, thrGlow: 0.6, thrDepth: 0.5, warp: 0.5, seed: 9 },
+      color: { stops: P('#000000', '#4a1a06', '#ff9a4a', '#fff6ea') },
+      surface: { sparkle: 0.5, sparkleDensity: 0.8 },
+      finish: { bloom: 0.6, aberration: 0.5, aberrationMode: 'orbit', streak: 0.2, grain: 0.04 },
+    },
+  },
+  {
+    id: 'prism-filaments', // converging threads with spectral fringes
+    name: 'Prism Filaments',
+    look: {
+      source: { type: 'threads', thrConverge: 1, thrSpread: 1.1, thrCount: 9, thrDepth: 0.7, thrGlow: 0.45, thrBreak: 0.15, thrWeight: 2, warp: 2, rotation: 25, seed: 3 },
+      color: { stops: P('#04050e', '#151a52', '#6e7dff', '#ffffff') },
+      finish: { bloom: 0.55, aberration: 0.8, aberrationMode: 'orbit', grain: 0.03 },
+      anim: { speed: 0.4 },
     },
   },
 ];

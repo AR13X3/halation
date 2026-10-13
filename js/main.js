@@ -10,7 +10,7 @@ import { buildPanel } from './ui/panel.js';
 import { buildPresetsPanel } from './ui/presets-panel.js';
 import { ICONS } from './ui/icons.js';
 import { toast } from './ui/controls.js';
-import { randomizeSection, randomizeAll } from './randomize.js';
+import { randomizeSection, surpriseCandidates, scoreImage } from './randomize.js';
 import { encodePNG, makeZip, download, copyImage, pickVideoMime, timestamp, slug } from './export.js';
 
 // Source repository (forks: point this at your own).
@@ -448,8 +448,39 @@ function afterBulkChange(name) {
   store.commit();
 }
 
+// Surprise me: render a few candidates from one recipe at a tiny size and keep
+// the one that scores best (see randomize.js).
+const surpriseSet = new TargetSet(ctx);
+let surpriseTarget = null;
 function surprise() {
-  randomizeAll(store.state);
+  const doc = store.state.doc;
+  const cands = surpriseCandidates(store.state, 6);
+  let best = cands[0];
+  try {
+    const H = 112, W = Math.max(24, Math.min(256, Math.round((H * doc.width) / doc.height)));
+    if (!surpriseTarget || surpriseTarget.w !== W) {
+      surpriseTarget?.dispose();
+      surpriseTarget = createTarget(gl, W, H, RGBA8, { filter: gl.NEAREST });
+    }
+    const px = new Uint8Array(W * H * 4);
+    let bestScore = -Infinity;
+    for (const c of cands) {
+      const s = defaultState();
+      for (const k of LOOK_SECTIONS) s[k] = { ...s[k], ...structuredClone(c.look[k] || {}) };
+      sanitize(s);
+      s.doc.width = doc.width;
+      s.doc.height = doc.height;
+      renderer.render(s, surpriseSet, { w: W, h: H, target: surpriseTarget }, { time: store.state.anim.time, fieldScale: 1, samples: 3 });
+      surpriseTarget.bind();
+      gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      const score = scoreImage(px, W, H, { dark: c.dark, screen: s.screen.type !== 'none' });
+      if (score > bestScore) { bestScore = score; best = c; }
+    }
+  } catch (err) {
+    console.warn('Surprise me: could not compare candidates', err);
+  }
+  dirty = true;
+  store.applyLook(best.look);
   afterBulkChange('Surprise');
 }
 

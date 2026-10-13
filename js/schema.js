@@ -14,6 +14,7 @@ export const SOURCE_TYPES = [
   { value: 'bands', label: 'Bands', icon: 'bands' },
   { value: 'mesh', label: 'Mesh', icon: 'mesh' },
   { value: 'ribbons', label: 'Ribbons', icon: 'ribbons' },
+  { value: 'threads', label: 'Threads', icon: 'threads' },
   { value: 'shapes', label: 'Shapes', icon: 'shapes' },
   { value: 'fluid', label: 'Fluid', icon: 'fluid' },
   { value: 'image', label: 'Image', icon: 'image' },
@@ -52,11 +53,25 @@ export const SCREEN_TYPES = [
   { value: 'none', label: 'None', icon: 'none' },
   { value: 'halftone', label: 'Halftone', icon: 'halftone' },
   { value: 'lines', label: 'Lines', icon: 'lines' },
+  { value: 'moire', label: 'Moiré', icon: 'moire' },
   { value: 'led', label: 'LED', icon: 'led' },
   { value: 'crt', label: 'CRT', icon: 'crt' },
   { value: 'mosaic', label: 'Mosaic', icon: 'mosaic' },
   { value: 'contour', label: 'Contour', icon: 'contour' },
   { value: 'dither', label: 'Dither', icon: 'dither' },
+];
+
+export const FORMS = [
+  { value: 'none', label: 'None' },
+  { value: 'ribbon', label: 'Ribbon (vertical)' },
+  { value: 'wave', label: 'Wave (horizontal)' },
+  { value: 'blob', label: 'Blob' },
+];
+
+export const STREAK_TYPES = [
+  { value: 'zoom', label: 'Zoom' },
+  { value: 'spin', label: 'Spin' },
+  { value: 'linear', label: 'Directional' },
 ];
 
 export const DOC_SIZES = [
@@ -82,11 +97,14 @@ const isGlass = (...types) => (s) => types.includes(s.glass.type) || types.inclu
 const glassOn = (s) => s.glass.type !== 'none' || s.glass.backType !== 'none';
 const isScreen = (...types) => (s) => types.includes(s.screen.type);
 const screenOn = (s) => s.screen.type !== 'none';
+const formOn = (s) => s.source.form !== 'none';
+const streakOn = (s) => s.finish.streak > 0;
 
 export const SECTIONS = [
   { id: 'doc', title: 'Canvas', randomizable: false },
   { id: 'source', title: 'Flow' },
   { id: 'color', title: 'Color' },
+  { id: 'surface', title: 'Surface' },
   { id: 'glass', title: 'Glass' },
   { id: 'light', title: 'Light' },
   { id: 'screen', title: 'Screen' },
@@ -127,6 +145,14 @@ export const PARAMS = [
   { key: 'source.ribFan', label: 'Fan', type: 'range', min: -2, max: 2, step: 0.01, def: 0.6, rnd: [-1, 1], show: isSrc('ribbons') },
   { key: 'source.ribAngle', label: 'Angle', type: 'range', min: -90, max: 90, step: 1, def: -20, unit: '°', rnd: [-45, 45], show: isSrc('ribbons') },
 
+  { key: 'source.thrCount', label: 'Threads', type: 'range', min: 2, max: 80, step: 0.5, def: 16, rnd: [8, 30], show: isSrc('threads'), curve: 2, hint: 'Threads across the canvas height', tags: 'filaments lines density' },
+  { key: 'source.thrWeight', label: 'Thread weight', type: 'range', min: 0.3, max: 8, step: 0.05, def: 1.4, unit: 'px', rnd: [0.8, 2.5], show: isSrc('threads'), tags: 'thickness width' },
+  { key: 'source.thrGlow', label: 'Glow', type: 'range', min: 0, max: 1, step: 0.01, def: 0.45, rnd: [0.2, 0.8], show: isSrc('threads') },
+  { key: 'source.thrSpread', label: 'Bundle width', type: 'range', min: 0.05, max: 3, step: 0.01, def: 3, rnd: [0.3, 3], show: isSrc('threads'), hint: 'Max = threads fill the canvas' },
+  { key: 'source.thrConverge', label: 'Converge', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 1], show: isSrc('threads'), hint: 'Pinch the threads toward the center: an hourglass, then a starburst', tags: 'focus pinch burst hourglass warp' },
+  { key: 'source.thrDepth', label: 'Depth of field', type: 'range', min: 0, max: 1, step: 0.01, def: 0.4, rnd: [0, 0.8], show: isSrc('threads'), hint: 'Soft, out-of-focus threads behind the sharp ones', tags: 'bokeh blur layers defocus' },
+  { key: 'source.thrBreak', label: 'Breakup', type: 'range', min: 0, max: 1, step: 0.01, def: 0.3, rnd: [0, 0.8], show: isSrc('threads'), hint: 'Breaks threads into streaks of light that race along them', tags: 'dashes streaks speed trails' },
+
   { key: 'source.shape', label: 'Shape', type: 'select', options: [{ value: 'sphere', label: 'Sphere' }, { value: 'link', label: 'Chain link' }, { value: 'pill', label: 'Pill' }, { value: 'mixed', label: 'Mixed' }], def: 'sphere', show: isSrc('shapes') },
   { key: 'source.shapeCount', label: 'Count', type: 'int', min: 1, max: 6, step: 1, def: 1, rnd: [1, 3], show: isSrc('shapes') },
   { key: 'source.shapeSize', label: 'Size', type: 'range', min: 0.1, max: 1.4, step: 0.01, def: 0.7, rnd: [0.4, 0.9], show: isSrc('shapes') },
@@ -152,6 +178,13 @@ export const PARAMS = [
   { key: 'source.offsetY', label: 'Pan Y', type: 'range', min: -3, max: 3, step: 0.001, def: 0, rnd: false, show: notSrc('fluid'), tags: 'position move' },
   { key: 'source.seed', label: 'Seed', type: 'seed', min: 0, max: 9999, def: 7, rnd: [0, 9999], show: notSrc('fluid', 'image'), tags: 'random variation' },
 
+  { key: 'source.form', group: 'Silhouette', label: 'Form', type: 'select', options: FORMS, def: 'none', rnd: false, hint: 'Shape the flow into a sculpted form over a plain backdrop', tags: 'mask shape cutout silhouette sculpture' },
+  { key: 'source.formSize', group: 'Silhouette', label: 'Size', type: 'range', min: 0.1, max: 1.5, step: 0.01, def: 0.55, rnd: [0.35, 0.8], show: formOn, tags: 'width' },
+  { key: 'source.formWave', group: 'Silhouette', label: 'Meander', type: 'range', min: 0, max: 2, step: 0.01, def: 0.8, rnd: [0.3, 1.4], show: formOn, hint: 'How much the form bends and swells', tags: 'wobble wave bend' },
+  { key: 'source.formSoft', group: 'Silhouette', label: 'Edge softness', type: 'range', min: 0, max: 1, step: 0.01, def: 0.02, rnd: [0, 0.1], show: formOn, tags: 'feather blur' },
+  { key: 'source.formDepth', group: 'Silhouette', label: 'Depth', type: 'range', min: 0, max: 1, step: 0.01, def: 0.5, rnd: [0.2, 0.8], show: formOn, hint: 'Shades the form toward its edges so it reads as a rounded body', tags: 'volume 3d shading roundness' },
+  { key: 'source.formBg', group: 'Silhouette', label: 'Backdrop', type: 'color', def: '#060709', rnd: false, show: formOn, tags: 'background color' },
+
   // ── Color ─────────────────────────────────────────────────────────────────
   // color.stops is edited by the gradient editor (not a schema control)
   { key: 'color.spread', label: 'Contrast', type: 'range', min: 0.2, max: 4, step: 0.01, def: 1.2, rnd: [0.9, 2], tags: 'spread range' },
@@ -161,9 +194,19 @@ export const PARAMS = [
   { key: 'color.mirror', label: 'Mirror repeats', type: 'toggle', def: true, rnd: false },
   { key: 'color.cycle', label: 'Color cycle', type: 'int', min: -4, max: 4, step: 1, def: 0, rnd: false, uniform: false, hint: 'Palette cycles per loop', tags: 'animate rotate palette' },
   { key: 'color.posterize', label: 'Posterize', type: 'int', min: 0, max: 16, step: 1, def: 0, rnd: false, hint: '0 = smooth', tags: 'steps quantize flat' },
-  { key: 'color.relief', label: 'Relief', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.6], hint: 'Shade the flow like a 3D surface', tags: 'emboss depth 3d bump shading' },
-  { key: 'color.gloss', label: 'Gloss', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.6], tags: 'shine specular metal' },
-  { key: 'color.glossSize', label: 'Gloss tightness', type: 'range', min: 0, max: 1, step: 0.01, def: 0.5, rnd: [0.2, 0.9], show: (s) => s.color.gloss > 0 },
+
+  // ── Surface ───────────────────────────────────────────────────────────────
+  // The flow's value doubles as a height field; these settings light it.
+  { key: 'surface.relief', label: 'Relief', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.6], hint: 'Shade the flow like a 3D surface', tags: 'emboss depth 3d bump shading' },
+  { key: 'surface.gloss', label: 'Gloss', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.6], tags: 'shine specular' },
+  { key: 'surface.glossSize', label: 'Gloss tightness', type: 'range', min: 0, max: 1, step: 0.01, def: 0.5, rnd: [0.2, 0.9], show: (s) => s.surface.gloss > 0 },
+  { key: 'surface.chrome', label: 'Chrome', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.9], hint: 'Polished metal: the surface mirrors a horizon lit in your palette colors', tags: 'metal mirror liquid mercury reflective silver' },
+  { key: 'surface.liquid', label: 'Liquid', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.8], hint: 'Clear liquid: each fold bends the colors beneath it and catches light along its edges', tags: 'glass transparent refraction clear water translucent' },
+  { key: 'surface.iridescence', label: 'Iridescence', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.7], hint: 'Thin-film interference: the rainbow sheen of soap bubbles, oil and holographic foil', tags: 'holographic rainbow pearl oil soap opal foil' },
+  { key: 'surface.film', label: 'Film thickness', type: 'range', min: 0, max: 1, step: 0.01, def: 0.35, rnd: [0.1, 0.8], show: (s) => s.surface.iridescence > 0, hint: 'Thin films give a few vivid bands; thick films give many pale ones' },
+  { key: 'surface.sparkle', label: 'Sparkle', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.6], hint: 'Tiny glints that twinkle on the bright parts of the flow', tags: 'glitter glints stars dust shimmer' },
+  { key: 'surface.sparkleDensity', label: 'Sparkle density', type: 'range', min: 0, max: 1, step: 0.01, def: 0.45, rnd: [0.2, 0.8], show: (s) => s.surface.sparkle > 0 },
+  { key: 'surface.sparkleSize', label: 'Sparkle size', type: 'range', min: 0, max: 1, step: 0.01, def: 0.35, rnd: [0.15, 0.7], show: (s) => s.surface.sparkle > 0 },
 
   // ── Glass ─────────────────────────────────────────────────────────────────
   { key: 'glass.type', label: 'Glass', type: 'chips', options: GLASS_TYPES, def: 'none', rnd: false, tags: 'pane texture' },
@@ -208,9 +251,11 @@ export const PARAMS = [
   { key: 'light.env', label: 'Environment', type: 'select', options: LIGHT_ENVS, def: 'studio', hint: 'What the glass reflects', tags: 'reflection surroundings' },
 
   // ── Screen ────────────────────────────────────────────────────────────────
-  { key: 'screen.type', label: 'Screen', type: 'chips', options: SCREEN_TYPES, def: 'none', rnd: false, tags: 'texture effect overlay' },
-  { key: 'screen.size', label: (s) => (s.screen.type === 'contour' ? 'Detail' : 'Cells'), type: 'range', min: 10, max: 400, step: 1, def: 110, rnd: [60, 220], show: (s) => screenOn(s) && s.screen.type !== 'contour', curve: 2, hint: 'Cells across the canvas height', tags: 'resolution density scale' },
-  { key: 'screen.angle', label: 'Angle', type: 'range', min: 0, max: 90, step: 1, def: 45, unit: '°', rnd: [0, 90], show: (s) => isScreen('halftone')(s) || (isScreen('lines')(s) && s.screen.lineShape !== 'rings') },
+  { key: 'screen.type', label: 'Screen', type: 'chips', options: SCREEN_TYPES, def: 'none', rnd: false, tags: 'texture effect overlay moire engraving' },
+  { key: 'screen.size', label: (s) => (s.screen.type === 'lines' || s.screen.type === 'moire' ? 'Lines' : 'Cells'), type: 'range', min: 10, max: 400, step: 1, def: 110, rnd: [60, 220], show: (s) => screenOn(s) && s.screen.type !== 'contour', curve: 2, hint: 'Cells across the canvas height', tags: 'resolution density scale' },
+  { key: 'screen.angle', label: 'Angle', type: 'range', min: 0, max: 90, step: 1, def: 45, unit: '°', rnd: [0, 90], show: (s) => isScreen('halftone', 'moire')(s) || (isScreen('lines')(s) && s.screen.lineShape !== 'rings') },
+  { key: 'screen.bend', label: 'Bend', type: 'range', min: 0, max: 2, step: 0.01, def: 0.8, rnd: [0.3, 1.5], show: isScreen('moire'), hint: 'How far the lines follow the shapes in the image', tags: 'warp follow engrave' },
+  { key: 'screen.interference', label: 'Interference', type: 'range', min: 0, max: 30, step: 0.1, def: 4, unit: '°', rnd: [0, 10], show: isScreen('moire'), hint: 'Angle of a second layer of lines. Small angles make broad moiré fringes; 0 = one layer', tags: 'moire second layer cross' },
   { key: 'screen.dotShape', label: 'Dot shape', type: 'select', options: [{ value: 'circle', label: 'Circle' }, { value: 'square', label: 'Square' }, { value: 'diamond', label: 'Diamond' }], def: 'circle', show: isScreen('halftone') },
   { key: 'screen.lineShape', label: 'Line shape', type: 'select', options: [{ value: 'straight', label: 'Straight' }, { value: 'rings', label: 'Rings' }, { value: 'waves', label: 'Waves' }], def: 'straight', show: isScreen('lines') },
   { key: 'screen.ledShape', label: 'Pixel shape', type: 'select', options: [{ value: 'round', label: 'Round' }, { value: 'square', label: 'Square' }, { value: 'rgb', label: 'RGB subpixels' }], def: 'round', show: isScreen('led') },
@@ -221,15 +266,15 @@ export const PARAMS = [
   { key: 'screen.lineWidth', label: 'Line weight', type: 'range', min: 0.5, max: 8, step: 0.1, def: 1.4, rnd: [0.8, 3], unit: 'px', show: isScreen('contour') },
   { key: 'screen.indexEvery', label: 'Bold every', type: 'int', min: 0, max: 10, step: 1, def: 0, rnd: [0, 5], show: isScreen('contour'), hint: '0 = off' },
   { key: 'screen.levels', label: 'Levels', type: 'int', min: 2, max: 8, step: 1, def: 2, rnd: [2, 4], show: isScreen('dither') },
-  { key: 'screen.dotScale', label: (s) => (s.screen.type === 'crt' ? 'Mask strength' : s.screen.type === 'mosaic' ? 'Tile size' : s.screen.type === 'lines' ? 'Line weight' : 'Dot size'), type: 'range', min: 0.1, max: 1.5, step: 0.01, def: 0.9, rnd: [0.6, 1.1], show: isScreen('halftone', 'lines', 'led', 'crt', 'mosaic') },
+  { key: 'screen.dotScale', label: (s) => (s.screen.type === 'crt' ? 'Mask strength' : s.screen.type === 'mosaic' ? 'Tile size' : s.screen.type === 'lines' || s.screen.type === 'moire' ? 'Line weight' : 'Dot size'), type: 'range', min: 0.1, max: 1.5, step: 0.01, def: 0.9, rnd: [0.6, 1.1], show: isScreen('halftone', 'lines', 'moire', 'led', 'crt', 'mosaic') },
   { key: 'screen.contrast', label: 'Contrast', type: 'range', min: 0.2, max: 3, step: 0.01, def: 1, rnd: [0.8, 1.6], show: (s) => screenOn(s) && s.screen.type !== 'contour' },
-  { key: 'screen.invert', label: 'Invert', type: 'toggle', def: false, rnd: false, show: isScreen('halftone', 'lines', 'dither') },
+  { key: 'screen.invert', label: 'Invert', type: 'toggle', def: false, rnd: false, show: isScreen('halftone', 'lines', 'moire', 'dither') },
   { key: 'screen.colorMode', label: 'Color', type: 'select', options: [{ value: 'source', label: 'From image' }, { value: 'mono', label: 'Ink & paper' }], def: 'source', show: (s) => screenOn(s) && s.screen.type !== 'crt', tags: 'monochrome mono' },
   { key: 'screen.ink', label: 'Ink', type: 'color', def: '#ffffff', rnd: false, show: (s) => screenOn(s) && s.screen.colorMode === 'mono' && s.screen.type !== 'crt' },
   { key: 'screen.paper', label: 'Paper', type: 'color', def: '#05060a', rnd: false, show: (s) => screenOn(s) && s.screen.colorMode === 'mono' && s.screen.type !== 'crt' },
-  { key: 'screen.background', label: 'Background', type: 'range', min: 0, max: 1, step: 0.01, def: 0.12, rnd: [0, 0.4], show: (s) => isScreen('halftone', 'lines', 'led', 'mosaic', 'contour')(s) && s.screen.colorMode === 'source', hint: 'How much of the image shows between marks' },
+  { key: 'screen.background', label: 'Background', type: 'range', min: 0, max: 1, step: 0.01, def: 0.12, rnd: [0, 0.4], show: (s) => isScreen('halftone', 'lines', 'moire', 'led', 'mosaic', 'contour')(s) && s.screen.colorMode === 'source', hint: 'How much of the image shows between marks' },
   { key: 'screen.fill', label: 'Lines over image', type: 'toggle', def: false, rnd: false, show: isScreen('contour') },
-  { key: 'screen.glow', label: (s) => (s.screen.type === 'mosaic' ? 'Bevel' : s.screen.type === 'led' || s.screen.type === 'crt' ? 'Glow' : 'Boost'), type: 'range', min: 0, max: 1, step: 0.01, def: 0.3, rnd: [0, 0.6], show: isScreen('halftone', 'lines', 'led', 'crt', 'mosaic', 'contour') },
+  { key: 'screen.glow', label: (s) => (s.screen.type === 'mosaic' ? 'Bevel' : s.screen.type === 'led' || s.screen.type === 'crt' ? 'Glow' : 'Boost'), type: 'range', min: 0, max: 1, step: 0.01, def: 0.3, rnd: [0, 0.6], show: isScreen('halftone', 'lines', 'moire', 'led', 'crt', 'mosaic', 'contour') },
   { key: 'screen.mix', label: 'Mix', type: 'range', min: 0, max: 1, step: 0.01, def: 1, rnd: false, show: screenOn, tags: 'opacity amount blend' },
 
   // ── Finish ────────────────────────────────────────────────────────────────
@@ -244,7 +289,13 @@ export const PARAMS = [
   { key: 'finish.bloom', label: 'Bloom', type: 'range', min: 0, max: 2, step: 0.01, def: 0, rnd: [0, 0.8], tags: 'glow halation' },
   { key: 'finish.bloomRadius', label: 'Bloom radius', type: 'range', min: 0, max: 1, step: 0.01, def: 0.5, rnd: [0.2, 0.8], show: (s) => s.finish.bloom > 0 },
   { key: 'finish.bloomThreshold', label: 'Bloom threshold', type: 'range', min: 0, max: 1, step: 0.01, def: 0.55, rnd: [0.3, 0.8], show: (s) => s.finish.bloom > 0 },
-  { key: 'finish.aberration', label: 'Aberration', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.3], tags: 'chromatic rgb fringe' },
+  { key: 'finish.aberration', label: 'Aberration', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.3], hint: 'Rainbow fringes from an imperfect lens', tags: 'chromatic rgb fringe prism' },
+  { key: 'finish.aberrationMode', label: 'Aberration style', type: 'select', options: [{ value: 'lens', label: 'Lens (radial)' }, { value: 'orbit', label: 'Orbit (around the center)' }], def: 'lens', show: (s) => s.finish.aberration > 0, hint: 'Orbit fringes the sides of lines that point at the center' },
+  { key: 'finish.streak', label: 'Streaks', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.5], hint: 'Motion streaks: light smears away from a center (zoom), around it (spin) or in one direction', tags: 'zoom blur radial motion speed warp hyperspace spin' },
+  { key: 'finish.streakType', label: 'Streak type', type: 'select', options: STREAK_TYPES, def: 'zoom', show: streakOn },
+  { key: 'finish.streakAngle', label: 'Streak angle', type: 'range', min: -180, max: 180, step: 1, def: 0, unit: '°', rnd: [-180, 180], show: (s) => streakOn(s) && s.finish.streakType === 'linear' },
+  { key: 'finish.streakX', label: 'Streak center X', type: 'range', min: -1.5, max: 1.5, step: 0.01, def: 0, rnd: [-0.5, 0.5], show: (s) => streakOn(s) && s.finish.streakType !== 'linear' },
+  { key: 'finish.streakY', label: 'Streak center Y', type: 'range', min: -1.5, max: 1.5, step: 0.01, def: 0, rnd: [-0.5, 0.5], show: (s) => streakOn(s) && s.finish.streakType !== 'linear' },
   { key: 'finish.grid', label: 'Grid overlay', type: 'toggle', def: false, rnd: false, tags: 'guides lines' },
   { key: 'finish.gridSize', label: 'Grid cells', type: 'range', min: 1, max: 40, step: 0.5, def: 6, rnd: false, show: (s) => s.finish.grid },
   { key: 'finish.gridOpacity', label: 'Grid opacity', type: 'range', min: 0, max: 1, step: 0.01, def: 0.35, rnd: false, show: (s) => s.finish.grid },
@@ -267,7 +318,7 @@ export const PARAMS = [
 export const PARAM_MAP = Object.fromEntries(PARAMS.map((p) => [p.key, p]));
 
 // Sections that make up a "look" — saved in presets, history, share links.
-export const LOOK_SECTIONS = ['source', 'color', 'glass', 'light', 'screen', 'finish', 'anim'];
+export const LOOK_SECTIONS = ['source', 'color', 'surface', 'glass', 'light', 'screen', 'finish', 'anim'];
 
 export const DEFAULT_STOPS = [
   { pos: 0, color: '#1b0f2e' },

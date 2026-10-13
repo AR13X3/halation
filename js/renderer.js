@@ -4,7 +4,7 @@
 // preset thumbnails and full-resolution exports — only the target size changes.
 
 import { createProgram, createTarget, draw } from './gl/gl.js';
-import { VERT, FIELD_FRAG, BLUR_FRAG, GLASS_FRAG, SCREEN_FRAG, BRIGHT_FRAG, FINAL_FRAG } from './gl/shaders.js';
+import { VERT, FIELD_FRAG, BLUR_FRAG, GLASS_FRAG, SCREEN_FRAG, STREAK_FRAG, BRIGHT_FRAG, FINAL_FRAG } from './gl/shaders.js';
 import { PARAMS, getPath, uniformName, optionIndex } from './schema.js';
 import { buildPaletteData, hexToRgb, PALETTE_SIZE } from './palette.js';
 
@@ -45,6 +45,7 @@ export class Renderer {
       blur: createProgram(gl, VERT, BLUR_FRAG, 'blur'),
       glass: createProgram(gl, VERT, GLASS_FRAG, 'glass'),
       screen: createProgram(gl, VERT, SCREEN_FRAG, 'screen'),
+      streak: createProgram(gl, VERT, STREAK_FRAG, 'streak'),
       bright: createProgram(gl, VERT, BRIGHT_FRAG, 'bright'),
       final: createProgram(gl, VERT, FINAL_FRAG, 'final'),
     };
@@ -183,7 +184,8 @@ export class Renderer {
 
     // 1. field -------------------------------------------------------------
     let fs = opts.fieldScale ?? 0.5;
-    if (state.screen.type === 'contour' || state.source.type === 'ribbons' || state.source.type === 'shapes') fs = Math.max(fs, 1);
+    // thin lines and crisp edges need the field at full resolution
+    if (state.screen.type === 'contour' || ['ribbons', 'threads', 'shapes'].includes(state.source.type) || state.source.form !== 'none') fs = Math.max(fs, 1);
     const maxField = Math.min(ctx.caps.maxTexture, 4096);
     let fw = iw * fs, fh = ih * fs;
     if (Math.max(fw, fh) > maxField) { const k = maxField / Math.max(fw, fh); fw *= k; fh *= k; }
@@ -247,6 +249,22 @@ export class Renderer {
     screen.bind();
     prog.screen.use().apply(U).texture('u_src', 0, glass.tex);
     draw(gl);
+    let scene = screen;
+
+    // 3b. streaks: three passes, each 8× longer than the last ----------------
+    if (state.finish.streak > 0.001) {
+      const A = set.get('streakA', iw, ih, hdr);
+      const B = set.get('streakB', iw, ih, hdr);
+      const len = state.finish.streak ** 1.5;
+      const ps = prog.streak.use().apply(U);
+      const outs = [A, B, A];
+      for (let k = 0; k < 3; k++) {
+        outs[k].bind();
+        ps.texture('u_src', 0, scene.tex).set('u_len', len / 8 ** (2 - k));
+        draw(gl);
+        scene = outs[k];
+      }
+    }
 
     // 4. bloom ------------------------------------------------------------
     const bloomOn = state.finish.bloom > 0.001;
@@ -256,7 +274,7 @@ export class Renderer {
       const A = set.get('bloomA', bw, bh, hdr);
       const B = set.get('bloomB', bw, bh, hdr);
       A.bind();
-      prog.bright.use().apply(U).set('u_srcTexel', [1 / iw, 1 / ih]).texture('u_src', 0, screen.tex);
+      prog.bright.use().apply(U).set('u_srcTexel', [1 / iw, 1 / ih]).texture('u_src', 0, scene.tex);
       draw(gl);
       const sigma = (0.004 + state.finish.bloomRadius * 0.045) * bh;
       const step = Math.max(sigma / 2.2, 0.5);
@@ -283,7 +301,7 @@ export class Renderer {
     U.u_pxScale = h / 1080;
     const pfin = prog.final.use().apply(U);
     pfin.set({ u_bloomOn: bloomOn ? 1 : 0, u_flipY: opts.flipY ? 1 : 0, u_dither: opts.dither === false ? 0 : 1 });
-    pfin.texture('u_src', 0, screen.tex).texture('u_bloom', 1, bloomTex);
+    pfin.texture('u_src', 0, scene.tex).texture('u_bloom', 1, bloomTex);
     draw(gl);
   }
 }

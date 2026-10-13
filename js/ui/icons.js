@@ -13,6 +13,7 @@ export const ICONS = {
   bands: svg('<path d="M3 17L17 3" stroke-width="3" opacity=".35"/><path d="M3 11L11 3M9 17l8-8"/>'),
   mesh: svg('<circle cx="7" cy="8" r="4.2"/><circle cx="13" cy="12.5" r="4.8" opacity=".6"/>'),
   ribbons: svg('<path d="M2 6c4-3 8 3 16 0M2 10c4-3 8 3 16 0M2 14c4-3 8 3 16 0"/>'),
+  threads: svg('<path d="M2 3.5C7 8.5 13 8.5 18 3.5M2 10h16M2 16.5c5-5 11-5 16 0"/><path d="M2 6.8c5 3 11 3 16 0M2 13.2c5-3 11-3 16 0" stroke-width="1" opacity=".55"/>'),
   fluid: svg('<path d="M10 2.5c3 4 5.5 6.6 5.5 9.8a5.5 5.5 0 0 1-11 0C4.5 9.1 7 6.5 10 2.5z"/><path d="M7.5 12.5a2.6 2.6 0 0 0 2.5 2.6" opacity=".6"/>'),
   image: svg('<rect x="2.5" y="4" width="15" height="12" rx="2"/><path d="M3 14l4-4 3 3 3-3 4 4"/><circle cx="13" cy="8" r="1.3"/>'),
   // glass
@@ -30,6 +31,7 @@ export const ICONS = {
   // screens
   halftone: svg(dots([[4, 4, 0.8], [10, 4, 1.3], [16, 4, 1.9], [4, 10, 1.3], [10, 10, 1.9], [16, 10, 2.4], [4, 16, 1.9], [10, 16, 2.4], [16, 16, 2.8]])),
   lines: svg('<path d="M3 4h14" stroke-width=".8"/><path d="M3 8h14" stroke-width="1.4"/><path d="M3 12h14" stroke-width="2.2"/><path d="M3 16h14" stroke-width="3"/>'),
+  moire: svg('<path d="M3 5c4-1.6 10-1.6 14 0M3 9c4-1.6 10-1.6 14 0M3 13c4-1.6 10-1.6 14 0M3 17c4-1.6 10-1.6 14 0" stroke-width="1.1"/><path d="M3 3.2l14 2.6M3 7.2l14 2.6M3 11.2l14 2.6M3 15.2l14 2.6" stroke-width="1" opacity=".5"/>'),
   led: svg(dots([4, 8, 12, 16].flatMap((y) => [4, 8, 12, 16].map((x) => [x, y, 1.3])))),
   crt: svg('<path d="M4 3v14" stroke-width="2.4"/><path d="M10 3v14" stroke-width="2.4" opacity=".6"/><path d="M16 3v14" stroke-width="2.4" opacity=".3"/>'),
   mosaic: svg('<g fill="currentColor" stroke="none"><rect x="3" y="3" width="6.5" height="6.5" rx="1"/><rect x="10.5" y="3" width="6.5" height="6.5" rx="1" opacity=".5"/><rect x="3" y="10.5" width="6.5" height="6.5" rx="1" opacity=".3"/><rect x="10.5" y="10.5" width="6.5" height="6.5" rx="1" opacity=".75"/></g>'),

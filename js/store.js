@@ -86,6 +86,13 @@ export function migrateLook(look) {
     look.light = { angle: look.color.light, ...(look.light || {}) };
     delete look.color.light;
   }
+  // 1.0 kept relief and gloss in the color section.
+  for (const k of ['relief', 'gloss', 'glossSize']) {
+    if (look.color && k in look.color) {
+      look.surface = { [k]: look.color[k], ...(look.surface || {}) };
+      delete look.color[k];
+    }
+  }
   return look;
 }
 

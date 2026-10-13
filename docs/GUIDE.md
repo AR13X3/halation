@@ -9,17 +9,18 @@ Everything you need to go from a blank canvas to a finished background. If you j
 3. [Canvas](#canvas)
 4. [Flow](#flow)
 5. [Color](#color)
-6. [Glass](#glass)
-7. [Light](#light)
-8. [Screen](#screen)
-9. [Finish](#finish)
-10. [Motion and seamless loops](#motion-and-seamless-loops)
-11. [Exporting](#exporting)
-12. [Saving and sharing looks](#saving-and-sharing-looks)
-13. [Performance modes](#performance-modes)
-14. [Recipes](#recipes)
-15. [Keyboard and mouse](#keyboard-and-mouse)
-16. [Troubleshooting](#troubleshooting)
+6. [Surface](#surface)
+7. [Glass](#glass)
+8. [Light](#light)
+9. [Screen](#screen)
+10. [Finish](#finish)
+11. [Motion and seamless loops](#motion-and-seamless-loops)
+12. [Exporting](#exporting)
+13. [Saving and sharing looks](#saving-and-sharing-looks)
+14. [Performance modes](#performance-modes)
+15. [Recipes](#recipes)
+16. [Keyboard and mouse](#keyboard-and-mouse)
+17. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -30,7 +31,7 @@ Everything you need to go from a blank canvas to a finished background. If you j
 | **Looks** (left) | Built-in starting points, plus looks you save yourself. Click one to load it. |
 | **Canvas** (center) | Live preview at the exact proportions of your output size. Drag to pan, scroll to zoom. |
 | **Transport bar** (bottom) | Play/pause, timeline, seamless-loop toggle, performance mode and frame-rate readout. The eye icon hides the interface. |
-| **Controls** (right) | Every setting, grouped into sections: Canvas, Flow, Color, Glass, Light, Screen, Finish, Motion, Export. Canvas and Color start open; click a section title to expand or collapse it. Hover a title for its dice (randomize this section) and reset buttons. |
+| **Controls** (right) | Every setting, grouped into sections: Canvas, Flow, Color, Surface, Glass, Light, Screen, Finish, Motion, Export. Canvas and Color start open; click a section title to expand or collapse it. Hover a title for its dice (randomize this section) and reset buttons. |
 | **Top bar** | Undo/redo, **Surprise me**, **Share**, keyboard shortcuts, source code link and **Export**. |
 
 A few habits that make editing fast:
@@ -65,11 +66,16 @@ The flow is what sits *behind* the glass: the moving color field.
 | **Bands** | Soft beams and stripes of light | Bands, width, spacing, angle, **Length** |
 | **Mesh** | Mesh gradients, color blobs | Points, Sharpness, Drift |
 | **Ribbons** | Flowing line bundles, neon | Lines, bundle width, weight, glow, wave, fan |
+| **Threads** | Light trails, filaments, hyperspace streaks, starbursts | Threads, weight, glow, bundle width, **Converge**, **Depth of field**, **Breakup** |
 | **Shapes** | Crisp spheres, chain links and pills to look *through* glass | Shape, count, size, edge softness, backdrop angle |
 | **Fluid** | Real ink simulation you paint with the mouse | Force, brush size, vorticity, streams, ink amount and fade |
 | **Image** | Your own photo or artwork behind the glass | Drop an image on the canvas or use *Choose image…*; **Gradient map** recolors it with your palette |
 
 Settings shared by most patterns: **Scale**, **Turbulence**, **Soften** (blur), **Swirl**, **Rotate**, **Pan** and **Seed** (the dice gives a new random variation of the same pattern).
+
+**Threads** are thin lines of light that flow side by side. **Converge** pinches them toward the center: halfway gives an hourglass, all the way gives a starburst of rays (rotate 90° for a vertical hourglass). **Depth of field** adds soft, out-of-focus threads behind the sharp ones, and **Breakup** cuts them into streaks that race along the threads as the animation plays.
+
+**Silhouette** shapes any pattern into a single sculpted form over a plain **Backdrop** color: a vertical **Ribbon**, a horizontal **Wave** or a **Blob**. **Meander** bends and swells the form, **Depth** shades it toward its edges so it reads as a rounded body, and Surface effects such as Relief and Chrome treat its rim as a curved edge.
 
 > **Tip:** glass looks most convincing when there is something with clear edges behind it. Try **Shapes** or **Image** with the Tiles, Pyramids or Reeded glass.
 
@@ -81,7 +87,21 @@ Settings shared by most patterns: **Scale**, **Turbulence**, **Soften** (blur), 
 - **Repeat**, **Offset** and **Mirror repeats** cycle the gradient several times across the flow.
 - **Color cycle** animates the palette; with seamless loops it completes whole cycles per loop.
 - **Posterize** turns smooth gradients into flat bands.
-- **Relief** and **Gloss** light the flow like a 3D surface: liquid metal, satin, molten glass.
+
+## Surface
+
+Surface treats the flow as a 3D landscape (bright = high) and lights it. These effects work with every pattern and sit behind any glass.
+
+| Setting | Effect |
+| --- | --- |
+| **Relief** | Shades the slopes facing away from the light: satin, molten wax, embossing |
+| **Gloss** | A highlight of the light source; **Gloss tightness** makes it small and sharp |
+| **Chrome** | Polished metal that mirrors a horizon lit in your palette colors: liquid mercury, silver, colored metals |
+| **Liquid** | A clear liquid: each fold bends the colors beneath it, catches light along its edges and focuses light under its crests |
+| **Iridescence** | Thin-film interference, the rainbow sheen of soap bubbles, oil and holographic foil. Colors follow the flow and shift on slopes. **Film thickness**: thin films give a few vivid bands, thick films many pale ones |
+| **Sparkle** | Tiny glints that twinkle on the bright parts of the flow, with adjustable density and size |
+
+Chrome with Iridescence gives holographic metal. Liquid with Gloss and a little Sparkle gives liquid glass. Light **Direction** and **Elevation** steer all of these.
 
 ## Glass
 
@@ -120,7 +140,7 @@ The glass sits between you and the flow. Light is traced through it: it bends (r
 
 ## Light
 
-**Direction** and **Elevation** of the light, **Intensity**, **Color**, and the **Environment** the glass reflects: a studio softbox, the palette's own colors, a window, or a dark room. Light also drives **Relief**, **Gloss** and the Mosaic bevel.
+**Direction** and **Elevation** of the light, **Intensity**, **Color**, and the **Environment** the glass reflects: a studio softbox, the palette's own colors, a window, or a dark room. Light also drives the Surface effects (Relief, Gloss, Chrome, Liquid) and the Mosaic bevel.
 
 ## Screen
 
@@ -130,6 +150,7 @@ A screen is the "display" the image is seen through, applied after the glass.
 | --- | --- |
 | **Halftone** | Print dots (circle, square, diamond) |
 | **Lines** | Line screen: straight, concentric rings or waves |
+| **Moiré** | Fine engraved lines that **Bend** with the shapes in the image, like hatching on a 3D surface. **Interference** adds a second layer at a slight angle for moiré fringes |
 | **LED** | Dot-matrix display: round, square or RGB subpixels |
 | **CRT** | Shadow mask and scanlines |
 | **Mosaic** | Square or hexagonal tiles |
@@ -140,7 +161,10 @@ A screen is the "display" the image is seen through, applied after the glass.
 
 ## Finish
 
-Brightness, contrast, saturation and hue shift; film **Grain** (size, animated or static); **Vignette**; **Bloom** (glow around bright areas); chromatic **Aberration**; and a technical **Grid overlay** with crosshairs and markers.
+Brightness, contrast, saturation and hue shift; film **Grain** (size, animated or static); **Vignette**; **Bloom** (glow around bright areas); and a technical **Grid overlay** with crosshairs and markers.
+
+- **Aberration** splits light into rainbow fringes like an imperfect lens. **Lens** fringes outward from the center; **Orbit** fringes around it, which colors the sides of lines that point at the center (great with converging Threads).
+- **Streaks** smear the image as if the camera moved during the exposure: **Zoom** away from a center, **Spin** around it, or **Directional** along an angle. Move the center with **Streak center X/Y**.
 
 ## Motion and seamless loops
 
@@ -195,6 +219,10 @@ Whatever the mode, a still preview refines itself to full quality (the readout s
 **Your photo behind glass**: Flow → **Image** → drop a photo on the canvas → Glass → **Reeded** or **Tiles** → raise **Frost** a little. Turn **Gradient map** off to keep the photo's colors.
 
 **Glass panel composition**: Flow → **Shapes** (Sphere) → Glass → **Tiles**, Profile **Glass block**, Coverage **Right side**, Frost ~0.5. Drag the canvas so the sphere sits across the pane edge.
+
+**Liquid chrome**: Flow → **Silk** with Detail 2–3 and a little **Soften** → Surface → **Chrome** 1, **Gloss** 0.4. Add **Iridescence** for holographic metal; choose a palette that ends in a light color.
+
+**Light trails**: Flow → **Threads** → **Converge** 0.6, **Bundle width** ~0.4, **Rotate** 90° → Finish → **Bloom** 0.6, **Streaks** (Zoom) 0.2, **Aberration** (Orbit) 0.5, on a dark palette that ends in white.
 
 **Print poster**: Canvas *A4 @300dpi* → Export as **PNG 16-bit**.
 

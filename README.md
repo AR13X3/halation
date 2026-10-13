@@ -18,7 +18,7 @@
 
 ![Halation looks](assets/banner.jpg)
 
-Halation renders flowing color fields behind physically based glass and screen effects: reeded and frosted glass, crystal, rain on a window, halftone, LED, contour lines and more. Tweak everything live, then export high-resolution stills (up to 16-bit PNG), bursts of frames or seamless-loop videos.
+Halation renders flowing color fields behind physically based glass and screen effects: reeded and frosted glass, crystal, rain on a window, liquid chrome, iridescent films, threads of light, halftone, moiré, contour lines and more. Tweak everything live, then export high-resolution stills (up to 16-bit PNG), bursts of frames or seamless-loop videos.
 
 It runs entirely in your browser on the GPU. Nothing to install, no account, and nothing you make is uploaded.
 
@@ -54,9 +54,11 @@ Then open http://localhost:5173. Any static file server works; the page must be 
 ## Features
 
 **Flow**: the moving color field behind the glass.
-Silk, light bands, mesh gradients, ribbons, crisp lit shapes, a real-time fluid simulation you paint with the mouse, or any image you drop in.
+Silk, light bands, mesh gradients, ribbons, threads of light that can pinch into an hourglass or a starburst, crisp lit shapes, a real-time fluid simulation you paint with the mouse, or any image you drop in. A silhouette can shape any flow into a sculpted ribbon, wave or blob over a plain backdrop.
 
-**Color**: gradient editor with smooth OKLab blending, palette library and generator, repeats, posterize, animated color cycling, and relief and gloss lighting for liquid-metal looks.
+**Color**: gradient editor with smooth OKLab blending, palette library and generator, repeats, posterize and animated color cycling.
+
+**Surface**: lights the flow as a 3D surface: relief, gloss, polished chrome, clear liquid, thin-film iridescence (soap bubbles, oil, holographic foil) and twinkling sparkles.
 
 **Glass**: physically based light transport.
 - Nine glass types: reeded, wavy, rings, glass-block tiles, hammered, water, crystal, rain on a fogged window, and prism pyramids
@@ -64,32 +66,33 @@ Silk, light bands, mesh gradients, ribbons, crisp lit shapes, a real-time fluid 
 - Fresnel reflections, total internal reflection, highlights and tinted glass
 - Partial panes (one side, a window or a band) and a second stacked pane
 
-**Screen**: halftone, line screens, LED matrix, CRT, mosaic, topographic contours and dither.
+**Screen**: halftone, line screens, moiré engraving, LED matrix, CRT, mosaic, topographic contours and dither.
 
-**Finish**: grading, film grain, vignette, bloom, chromatic aberration and a grid overlay.
+**Finish**: grading, film grain, vignette, bloom, spectral chromatic aberration, zoom, spin and directional streaks, and a grid overlay.
 
 **Export**
 - PNG, 16-bit PNG (no banding), JPEG or WebP at 0.5×–4× any canvas size
 - Copy to clipboard, burst capture as a .zip, and seamless-loop video (MP4/WebM)
 - Size presets for phones, desktops up to 5K, banners and A4 print
 
-**Workflow**: 20 built-in looks, searchable settings, Surprise me, undo/redo, saved looks with import/export, and share links that recreate a look exactly.
+**Workflow**: 25 built-in looks, searchable settings, Surprise me, undo/redo, saved looks with import/export, and share links that recreate a look exactly.
 
 **Runs on modest hardware**: performance modes (Auto, Eco, Balanced, Max) and dynamic resolution keep the preview smooth. Paused frames refine to full quality and exports render identically on any machine.
 
 ## How it works
 
-Each frame runs five GPU passes:
+Each frame runs up to six GPU passes:
 
 ```
-field ─▶ glass ─▶ screen ─▶ bloom ─▶ finish
+field ─▶ glass ─▶ screen ─▶ (streaks) ─▶ bloom ─▶ finish
 ```
 
-1. **Field** computes the flow value for each pixel (noise, bands, mesh, ribbons, shapes, fluid dye or image) and maps it through the palette.
-2. **Glass** builds a surface for each pane and traces light through it: refraction, Monte Carlo frost, streaks and spectral dispersion, then tint, caustics, Fresnel reflection, total internal reflection and highlights. Jittered passes are averaged for clean, antialiased stills.
+1. **Field** computes the flow value for each pixel (noise, bands, mesh, ribbons, threads, shapes, fluid dye or image), maps it through the palette and applies the silhouette.
+2. **Glass** lights the flow as a surface (relief, chrome, liquid, thin-film interference, sparkles), then builds a surface for each pane and traces light through it: refraction, Monte Carlo frost, streaks and spectral dispersion, then tint, caustics, Fresnel reflection, total internal reflection and highlights. Jittered passes are averaged for clean, antialiased stills.
 3. **Screen** resamples the result on a cell grid for halftone, LED, contour and other patterns.
-4. **Bloom** blurs the brightest areas at quarter resolution.
-5. **Finish** applies grading, vignette, grid, grain and dithering.
+4. **Streaks** smears the image in three passes of growing length, for a smooth zoom, spin or directional blur.
+5. **Bloom** blurs the brightest areas at quarter resolution.
+6. **Finish** applies spectral aberration, grading, vignette, grid, grain and dithering.
 
 All sizes are relative to the canvas height, so a 4× export looks exactly like the preview, only sharper. Exports render offscreen and stream into a built-in PNG encoder (which makes 16-bit output possible) using the browser's native compression.
 

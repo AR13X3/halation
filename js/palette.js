@@ -135,11 +135,11 @@ export const PALETTES = [
 const rand = (a, b) => a + Math.random() * (b - a);
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-export function randomPalette() {
+export function randomPalette({ dark, harmonious = false } = {}) {
   const H = rand(0, 360);
-  const scheme = pick(['mono', 'analogous', 'complement', 'split', 'duo']);
+  const scheme = pick(harmonious ? ['mono', 'analogous', 'analogous', 'duo'] : ['mono', 'analogous', 'complement', 'split', 'duo']);
   const n = pick([3, 4, 4, 5]);
-  const darkStart = Math.random() < 0.8; // backgrounds usually want a dark end
+  const darkStart = dark ?? Math.random() < 0.8; // backgrounds usually want a dark end
   const stops = [];
   for (let i = 0; i < n; i++) {
     const t = i / (n - 1);
