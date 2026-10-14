@@ -3,3 +3,6 @@ contact_links:
   - name: Report a security vulnerability
     url: https://github.com/AR13X3/halation/security/advisories/new
     about: Please report security issues privately, not as a public issue.
+  - name: Show what you made
+    url: https://github.com/AR13X3/halation/discussions/categories/show-and-tell
+    about: Share images, videos and share links in Show and tell.

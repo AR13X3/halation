@@ -1,0 +1,29 @@
+title: "Made with Halation: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing what you made! Add an image or a short video, and the look's share link so others can open it and make it their own.
+  - type: textarea
+    id: media
+    attributes:
+      label: Image or video
+      description: Drag an export here. PNG, JPEG, WebP and MP4 all work.
+    validations:
+      required: true
+  - type: input
+    id: link
+    attributes:
+      label: Share link
+      description: In Halation, press **Share** in the top bar and paste the link here.
+      placeholder: "https://ar13x3.github.io/halation/#look=..."
+  - type: input
+    id: use
+    attributes:
+      label: What is it for?
+      description: Optional. A wallpaper, a website, a slide deck, a poster…
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else?
+      description: Optional. How you made it, settings you liked, or what you'd like Halation to do next.

@@ -7,7 +7,8 @@ Everyone taking part is expected to follow the [Code of Conduct](CODE_OF_CONDUCT
 ## Ways to contribute
 
 - **Report a bug** or **suggest a feature** through [GitHub Issues](https://github.com/AR13X3/halation/issues). For bugs, include your browser, operating system and GPU, plus steps to reproduce. A share link (top bar → **Share**) to the look you were using helps a lot.
-- **Share a look.** Export it from **My looks → Export** and attach the `.json` to an issue.
+- **Share what you made** in [Show and tell](https://github.com/AR13X3/halation/discussions/categories/show-and-tell), with an image and the look's share link so others can open it.
+- **Suggest a built-in look.** Export it from **My looks → Export** and attach the `.json` to an issue.
 - **Improve the code or docs** with a pull request.
 - **Report a security issue** privately, as described in the [security policy](SECURITY.md). Please don't open a public issue for it.
 

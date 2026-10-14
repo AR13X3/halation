@@ -39,6 +39,8 @@ It runs entirely in your browser on the GPU. Nothing to install, no account, and
 3. Adjust the flow, colors, glass and finish until it's yours.
 4. Pause on a frame you like and press **Export**, or record a seamless loop as video.
 
+Made something you like? Post it in **[Show and tell](https://github.com/AR13X3/halation/discussions/categories/show-and-tell)** with its share link, so others can open the look and make it their own.
+
 The **[user guide](docs/GUIDE.md)** covers every control, export option, recipes for common tasks and troubleshooting.
 
 **Run it locally:** there is no build step and no dependencies.
