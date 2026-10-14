@@ -8,6 +8,7 @@ import { DOC_SIZES, LOOK_SECTIONS, defaultState } from './schema.js';
 import { PRESETS } from './presets.js';
 import { buildPanel } from './ui/panel.js';
 import { buildPresetsPanel } from './ui/presets-panel.js';
+import { createTour } from './ui/tour.js';
 import { ICONS } from './ui/icons.js';
 import { toast } from './ui/controls.js';
 import { randomizeSection, surpriseCandidates, scoreImage } from './randomize.js';
@@ -298,6 +299,7 @@ setIcon('#btn-undo', 'undo').onclick = () => store.undo();
 setIcon('#btn-redo', 'redo').onclick = () => store.redo();
 setIcon('#btn-surprise', 'dice', 'Surprise me').onclick = () => surprise();
 setIcon('#btn-share', 'link', 'Share').onclick = () => share();
+setIcon('#btn-tour', 'compass', 'Tutorial').onclick = () => tour.start();
 setIcon('#btn-help', 'keyboard').onclick = () => $('#help').showModal();
 setIcon('#btn-export', 'download', 'Export').onclick = () => exportImage();
 setIcon('#btn-hide', 'eye').onclick = () => toggleUI();
@@ -486,6 +488,12 @@ function surprise() {
 
 const panel = buildPanel($('#panel'), store, actions);
 const presetsPanel = buildPresetsPanel($('#presets'), store, actions);
+const tour = createTour({
+  store,
+  showUI: () => { if (app.classList.contains('ui-hidden')) toggleUI(); },
+  clearSearch: () => panel.clearSearch(),
+  guideUrl: `${REPO_URL}/blob/main/docs/GUIDE.md`,
+});
 
 let syncQueued = false;
 function queueSync() {

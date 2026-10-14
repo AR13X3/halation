@@ -32,7 +32,9 @@ Everything you need to go from a blank canvas to a finished background. If you j
 | **Canvas** (center) | Live preview at the exact proportions of your output size. Drag to pan, scroll to zoom. |
 | **Transport bar** (bottom) | Play/pause, timeline, seamless-loop toggle, performance mode and frame-rate readout. The eye icon hides the interface. |
 | **Controls** (right) | Every setting, grouped into sections: Canvas, Flow, Color, Surface, Glass, Light, Screen, Finish, Motion, Export. Canvas and Color start open; click a section title to expand or collapse it. Hover a title for its dice (randomize this section) and reset buttons. |
-| **Top bar** | Undo/redo, **Surprise me**, **Share**, keyboard shortcuts, source code link and **Export**. |
+| **Top bar** | Undo/redo, **Surprise me**, **Share**, **Tutorial**, keyboard shortcuts, source code link and **Export**. |
+
+New to Halation? Press **Tutorial** in the top bar for a one-minute guided tour of the basics. It points out each part of the interface and lets you try things as you go; press **End tutorial** or `Esc` to leave it at any time.
 
 A few habits that make editing fast:
 

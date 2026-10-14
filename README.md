@@ -75,7 +75,7 @@ Silk, light bands, mesh gradients, ribbons, threads of light that can pinch into
 - Copy to clipboard, burst capture as a .zip, and seamless-loop video (MP4/WebM)
 - Size presets for phones, desktops up to 5K, banners and A4 print
 
-**Workflow**: 25 built-in looks, searchable settings, Surprise me, undo/redo, saved looks with import/export, and share links that recreate a look exactly.
+**Workflow**: 28 built-in looks, a guided tutorial, searchable settings, Surprise me, undo/redo, saved looks with import/export, and share links that recreate a look exactly.
 
 **Runs on modest hardware**: performance modes (Auto, Eco, Balanced, Max) and dynamic resolution keep the preview smooth. Paused frames refine to full quality and exports render identically on any machine.
 

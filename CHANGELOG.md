@@ -2,6 +2,17 @@
 
 Notable changes to Halation. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **Tutorial**: a guided tour of the basics from the new Tutorial button in the top bar. It spotlights each part of the interface, moves on when you try what it suggests, and can be ended at any time.
+- Five new looks: Indigo Harp, Ember Bow, Moss Reeds, Mercury Silk and Emerald Pour.
+
+### Removed
+
+- The Holo Chrome and Light Speed looks.
+
 ## [1.1.0] - 2026-10-14
 
 ### Added
@@ -38,5 +49,6 @@ First public release.
 - Settings search (`/`), which also lists settings hidden by the current look and the change that reveals them.
 - Performance modes (Auto, Eco, Balanced, Max) with dynamic resolution.
 
+[Unreleased]: https://github.com/AR13X3/halation/compare/v1.1.0...HEAD
 [1.1.0]: https://github.com/AR13X3/halation/releases/tag/v1.1.0
 [1.0.0]: https://github.com/AR13X3/halation/releases/tag/v1.0.0

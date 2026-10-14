@@ -727,6 +727,60 @@ kbd {
   color: var(--text);
 }
 
+/* ── tutorial ────────────────────────────────────────────────────────────── */
+/* The spotlight dims everything around its target with a huge shadow and never
+   takes pointer events, so the app stays usable during the tour. */
+.tour-spot {
+  position: fixed;
+  z-index: 45;
+  border-radius: 10px;
+  box-shadow: 0 0 0 2px var(--accent), 0 0 0 100vmax rgba(4,4,7,.62);
+  pointer-events: none;
+  transition: left .25s ease, top .25s ease, width .25s ease, height .25s ease;
+}
+.tour-spot.none { box-shadow: 0 0 0 100vmax rgba(4,4,7,.62); }
+.tour-card {
+  position: fixed;
+  z-index: 46;
+  width: min(320px, calc(100vw - 32px));
+  padding: 12px 16px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  box-shadow: 0 24px 60px rgba(0,0,0,.55);
+  outline: none;
+  transition: left .25s ease, top .25s ease;
+  animation: tour-in .2s ease;
+}
+@keyframes tour-in { from { opacity: 0; transform: translateY(4px); } }
+.tour-head { display: flex; align-items: center; justify-content: space-between; margin: 0 -8px 4px 0; }
+.tour-count { font-family: var(--mono); font-size: 10.5px; color: var(--faint); }
+.tour-title { display: block; margin-bottom: 6px; color: var(--text); font-size: 14px; font-weight: 600; }
+.tour-body { margin: 0; line-height: 1.55; }
+.tour-body a { color: var(--accent); }
+.tour-try {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(142,162,255,.1);
+  color: var(--text);
+  line-height: 1.45;
+}
+.tour-try-icon { color: var(--accent); }
+.tour-try-icon svg { width: 16px; height: 16px; }
+.tour-try.done { background: rgba(142,162,255,.18); }
+.tour-foot { display: flex; align-items: center; gap: 6px; margin-top: 14px; }
+.tour-foot .spacer { flex: 1; }
+.tour-foot .text-btn { margin-left: -6px; }
+@media (prefers-reduced-motion: reduce) {
+  .tour-spot, .tour-card { transition: none; animation: none; }
+}
+.side-right .section { scroll-margin-top: var(--search-h); }
+
 .boot {
   position: fixed;
   inset: 0;
@@ -776,7 +830,7 @@ kbd {
   .side { overflow: visible; border: 0; }
   .side-left { border-top: 1px solid var(--line); }
   .preset-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  #btn-share span, #btn-surprise span { display: none; }
+  #btn-share span, #btn-surprise span, #btn-tour span { display: none; }
   #btn-help, #btn-github { display: none; }
   .topbar { gap: 4px; padding: 0 8px; }
   .transport .fps, .transport .divider { display: none; }

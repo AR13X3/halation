@@ -237,27 +237,6 @@ export const PRESETS = [
     },
   },
   {
-    id: 'holo-chrome', // chrome + thin-film iridescence
-    name: 'Holo Chrome',
-    look: {
-      source: { type: 'silk', scale: 1, warp: 1.6, ridge: 0.25, detail: 3, rotation: 35, seed: 140 },
-      color: { stops: P('#18191f', '#4a4e5c', '#a3a8b6', '#d4d8e2') },
-      surface: { chrome: 1, iridescence: 0.38, film: 0.55, gloss: 0.5, glossSize: 0.7, sparkle: 0.2 },
-      finish: { grain: 0.03 },
-      anim: { speed: 0.4 },
-    },
-  },
-  {
-    id: 'light-speed', // threads in an hourglass + zoom streaks + orbit aberration
-    name: 'Light Speed',
-    look: {
-      source: { type: 'threads', rotation: 90, thrConverge: 0.6, thrSpread: 0.4, thrCount: 70, thrWeight: 1.8, thrBreak: 0.45, thrGlow: 0.6, thrDepth: 0.5, warp: 0.5, seed: 9 },
-      color: { stops: P('#000000', '#4a1a06', '#ff9a4a', '#fff6ea') },
-      surface: { sparkle: 0.5, sparkleDensity: 0.8 },
-      finish: { bloom: 0.6, aberration: 0.5, aberrationMode: 'orbit', streak: 0.2, grain: 0.04 },
-    },
-  },
-  {
     id: 'prism-filaments', // converging threads with spectral fringes
     name: 'Prism Filaments',
     look: {
@@ -265,6 +244,61 @@ export const PRESETS = [
       color: { stops: P('#04050e', '#151a52', '#6e7dff', '#ffffff') },
       finish: { bloom: 0.55, aberration: 0.8, aberrationMode: 'orbit', grain: 0.03 },
       anim: { speed: 0.4 },
+    },
+  },
+  {
+    id: 'indigo-harp', // many fine threads, loosely converging
+    name: 'Indigo Harp',
+    look: {
+      source: { type: 'threads', scale: 4, thrConverge: 0.69, thrSpread: 1.1, thrCount: 15.5, thrDepth: 0.68, thrGlow: 0.33, thrBreak: 0.14, thrWeight: 1, warp: 1, rotation: 25, seed: 3 },
+      color: { stops: P('#04050e', '#151a52', '#6e7dff', '#ffffff') },
+      finish: { bloom: 0.55, aberration: 0.8, aberrationMode: 'orbit', grain: 0.03 },
+      anim: { speed: 0.4 },
+    },
+  },
+  {
+    id: 'ember-bow', // unbroken threads bowing around an off-frame pinch
+    name: 'Ember Bow',
+    look: {
+      source: { type: 'threads', scale: 2.58, rotation: 90, offsetY: -0.163, thrConverge: 0.6, thrSpread: 0.4, thrCount: 70, thrWeight: 2.1, thrBreak: 0, thrGlow: 0.6, thrDepth: 0.5, warp: 0.5, seed: 9 },
+      color: { stops: P('#000000', '#4a1a06', '#ff9a4a', '#fff6ea') },
+      surface: { sparkle: 0.5, sparkleDensity: 0.8 },
+      finish: { bloom: 0.6, aberration: 0.5, aberrationMode: 'orbit', streak: 0.2, grain: 0.04 },
+    },
+  },
+  {
+    id: 'moss-reeds', // mixed shapes behind frosted linear reeds, raking light
+    name: 'Moss Reeds',
+    look: {
+      source: { type: 'shapes', shape: 'mixed', shapeCount: 5, shapeSoft: 0, shapeDrift: 1.15, scale: 0.479, warp: 0.6, rotation: 68, offsetX: 0.0272, offsetY: 0.265, seed: 21 },
+      color: { stops: P('#06120b', '#1c3b26', '#5a8f5e', '#e1edc5'), spread: 1.15 },
+      glass: { type: 'reeded', count: 12, profile: 'linear', strength: 0.26, ior: 1.19, frost: 0.21, streak: 0.13, reflect: 0.39, highlight: 0.04, shadow: 0.2 },
+      light: { angle: 278, elevation: 7 },
+      finish: { grain: 0 },
+      anim: { speed: 0.07, duration: 7 },
+    },
+  },
+  {
+    id: 'mercury-silk', // liquid chrome, no iridescence
+    name: 'Mercury Silk',
+    look: {
+      source: { type: 'silk', scale: 2.195, warp: 1.6, ridge: 0.25, detail: 3, rotation: 35, seed: 140 },
+      color: { stops: P('#18191f', '#4a4e5c', '#a3a8b6', '#d4d8e2') },
+      surface: { chrome: 1, liquid: 0.6, film: 0.55, gloss: 0.46, glossSize: 0 },
+      light: { angle: 210, elevation: 55 },
+      finish: { grain: 0.03 },
+      anim: { speed: 0.4 },
+    },
+  },
+  {
+    id: 'emerald-pour', // liquid surface + broad gloss + sparse sparkle
+    name: 'Emerald Pour',
+    look: {
+      source: { type: 'silk', scale: 1.53, warp: 1.56, ridge: 0.63, detail: 1, twist: -0.63, seed: 6590 },
+      color: { stops: P('#000b04', '#054021', '#0e8352', '#08d399', '#f3fff5'), spread: 0.96 },
+      surface: { liquid: 0.89, gloss: 0.67, glossSize: 0.79, sparkle: 0.35, sparkleDensity: 0.21 },
+      light: { angle: 211, elevation: 57 },
+      finish: { bloom: 0.33, bloomThreshold: 0.6, grain: 0.03 },
     },
   },
 ];

@@ -67,4 +67,6 @@ export const ICONS = {
   close: svg('<path d="M5 5l10 10M15 5L5 15"/>'),
   search: svg('<circle cx="8.75" cy="8.75" r="5.25"/><path d="M12.6 12.6L17 17"/>'),
   keyboard: svg('<rect x="2" y="5" width="16" height="10" rx="2"/><path d="M5 8h1M8 8h1M11 8h1M14 8h1M6 12h8"/>'),
+  compass: svg('<circle cx="10" cy="10" r="7.5"/><path d="M13 7l-1.8 4.2L7 13l1.8-4.2z"/>'),
+  check: svg('<path d="M4.5 10.5l3.5 3.5 7.5-8"/>'),
 };
