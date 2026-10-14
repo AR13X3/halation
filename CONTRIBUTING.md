@@ -2,11 +2,14 @@
 
 Thanks for your interest in improving Halation. Bug reports, new looks, new effects, performance work and documentation are all welcome.
 
+Everyone taking part is expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## Ways to contribute
 
 - **Report a bug** or **suggest a feature** through [GitHub Issues](https://github.com/AR13X3/halation/issues). For bugs, include your browser, operating system and GPU, plus steps to reproduce. A share link (top bar → **Share**) to the look you were using helps a lot.
 - **Share a look.** Export it from **My looks → Export** and attach the `.json` to an issue.
 - **Improve the code or docs** with a pull request.
+- **Report a security issue** privately, as described in the [security policy](SECURITY.md). Please don't open a public issue for it.
 
 ## Development setup
 

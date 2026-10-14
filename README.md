@@ -100,7 +100,9 @@ Built with plain JavaScript and WebGL 2. No frameworks, no build step, no depend
 
 ## Contributing
 
-Bug reports, new looks, effects and documentation improvements are welcome. Please read the [contributing guide](CONTRIBUTING.md) first; it explains the development setup, guidelines and how contributions are licensed.
+Bug reports, new looks, effects and documentation improvements are welcome. Please read the [contributing guide](CONTRIBUTING.md) first; it explains the development setup, guidelines and how contributions are licensed. Everyone taking part is expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+To report a security issue, see the [security policy](SECURITY.md). For accessibility support and known limitations, see [ACCESSIBILITY.md](ACCESSIBILITY.md).
 
 ## License
 
