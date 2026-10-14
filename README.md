@@ -16,13 +16,15 @@
   <a href="#license">License</a>
 </p>
 
-![Halation looks](assets/banner.jpg)
+![Halation in use: picking a look, switching the glass to Wavy, raising the wave amount and pressing Surprise me](assets/demo.webp)
 
 Halation renders flowing color fields behind physically based glass and screen effects: reeded and frosted glass, crystal, rain on a window, liquid chrome, iridescent films, threads of light, halftone, moiré, contour lines and more. Tweak everything live, then export high-resolution stills (up to 16-bit PNG), bursts of frames or seamless-loop videos.
 
 It runs entirely in your browser on the GPU. Nothing to install, no account, and nothing you make is uploaded.
 
 ## Screenshots
+
+![A selection of Halation's built-in looks](assets/banner.jpg)
 
 ![The Halation interface: looks sidebar, live canvas and controls](assets/screenshots/overview.jpg)
 
