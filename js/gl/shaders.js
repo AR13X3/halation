@@ -245,11 +245,11 @@ uniform float u_source_ribWidth, u_source_ribThick, u_source_ribGlow, u_source_r
 uniform int u_source_imgRecolor;
 uniform int u_source_bgFill, u_source_gradShape;
 uniform vec3 u_source_bgColor;
-uniform float u_source_bgAngle, u_source_gradLength, u_source_gradShift, u_source_gradRange;
+uniform float u_source_bgAngle, u_source_gradLength, u_source_gradShift, u_source_gradRange, u_source_gradX, u_source_gradY, u_source_gradRipple, u_source_gradRippleSize;
 uniform float u_source_fluidGain;
 uniform float u_source_thrCount, u_source_thrWeight, u_source_thrGlow, u_source_thrSpread, u_source_thrConverge, u_source_thrDepth, u_source_thrBreak;
 uniform int u_source_form;
-uniform float u_source_formSize, u_source_formWave, u_source_formSoft, u_source_formDepth;
+uniform float u_source_formSize, u_source_formWave, u_source_formSoft, u_source_formDepth, u_source_formX, u_source_formY, u_source_formAngle;
 uniform vec3 u_source_formBg;
 #ifdef OBJECTS
 uniform float u_objects_soft, u_objects_shadow;
@@ -390,6 +390,7 @@ float threads(vec2 p, vec2 so, vec2 bw) {
 
 // Signed distance to the silhouette (negative inside), in height units.
 float formDist(vec2 p, vec2 so) {
+  p = rot2(radians(-u_source_formAngle)) * (p - vec2(u_source_formX * u_aspect, u_source_formY) * 0.5);   // placed and tilted; ±1 = frame edges
   float R = u_source_formSize * 0.5;
   bool blob = u_source_form == 3;
   vec2 q = u_source_form == 2 ? vec2(p.y, p.x) : p;   // q.y runs along a ribbon
@@ -408,27 +409,61 @@ float formDist(vec2 p, vec2 so) {
   return (abs(q.x - spine) - hw) * 0.8;
 }
 
-// No flow: a still gradient across the canvas, linear or radial, in the palette.
-float background(vec2 p) {
+// No flow: a gradient across the canvas in the palette: linear, radial, or
+// conic (swept around a center). Ripple bends it into slowly moving waves;
+// conic rays instead sway together as they leave the center. The ripple noise
+// w comes from the shared fbm2 call in main (see gradNoiseInputs).
+vec2 gradQ(vec2 p) {
+  return u_source_gradShape == 0 ? p : p - vec2(u_source_gradX * u_aspect, u_source_gradY) * 0.5;   // center: ±1 = frame edges
+}
+float background(vec2 p, vec2 w) {
   float a = radians(u_source_bgAngle);
-  float x = u_source_gradShape == 1
-    ? length(p) * 1.2 / u_source_gradLength + u_source_gradShift
-    : 0.5 + dot(p, vec2(cos(a), sin(a))) * 0.85 / u_source_gradLength + u_source_gradShift;
+  vec2 q = gradQ(p);
+  float rip = u_source_gradRipple;
+  if (u_source_gradShape == 2) {
+    float ang = atan(q.y, q.x) - a + rip * 0.3 * w.x;
+    return fract(ang / TAU + u_source_gradShift) * u_source_gradRange;
+  }
+  q += rip * 0.12 * u_source_gradRippleSize * w;
+  float x;
+  if (u_source_gradShape == 1) x = length(q) * 1.2 / u_source_gradLength + u_source_gradShift;
+  else x = 0.5 + dot(q, vec2(cos(a), sin(a))) * 0.85 / u_source_gradLength + u_source_gradShift;
   return clamp(x, 0.0, 1.0) * u_source_gradRange;
 }
 
 // Value shaping and the palette lookup.
+// Palette step for the k-th band when posterizing: the steps run up and then
+// back down when mirrored, and start over when not.
+float posterStep(float k, float n) {
+  if (u_color_mirror == 1) { float j = mod(k, 2.0 * n); return (j < n ? j : 2.0 * n - 1.0 - j) / (n - 1.0); }
+  return mod(k, n) / (n - 1.0);
+}
 vec3 paletteColor(float t, out float tv) {
   t = clamp((t - 0.5) * u_color_spread + 0.5 + u_color_shift, 0.0, 1.0);
   tv = t;
   float pt = t * u_color_repeat + u_color_offset + u_cycleOffset;
-  if (u_color_mirror == 1) pt = 1.0 - abs(mod(pt, 2.0) - 1.0);
-  else if (pt > 1.0 || pt < 0.0) pt = fract(pt);
+  float pa = pt, pb = pt, b = 0.0;
   if (u_color_posterize > 1.5) {
+    // flat steps, counted along the unwrapped palette so that every edge
+    // (including where the palette repeats) is antialiased over about a pixel
     float n = u_color_posterize;
-    pt = floor(pt * n * 0.9999) / (n - 1.0);
+    float x = pt * n * 0.9999;
+    float k = floor(x);
+    float w = fwidth(x);
+    b = smoothstep(1.0 - (w > 0.5 ? 1e-4 : max(w, 1e-4)), 1.0, x - k);   // no blending across seams (a conic's start line)
+    if (k + 1.0 > floor((u_color_repeat + u_color_offset + u_cycleOffset) * n * 0.9999)) b = 0.0;   // past the palette's last step
+    pa = posterStep(k, n);
+    pb = posterStep(k + 1.0, n);
+  } else if (u_color_mirror == 1) pa = 1.0 - abs(mod(pt, 2.0) - 1.0);
+  else if (pt > 1.0 || pt < 0.0) pa = fract(pt);
+  // both sides of a step edge come from one texture lookup in a loop, which
+  // keeps shader compiles fast
+  vec3 c = vec3(0.0);
+  for (int i = 0; i < 2 + u_zero; i++) {
+    float x = i == 0 ? pa : pb, wgt = i == 0 ? 1.0 - b : b;
+    if (wgt > 0.0) c += wgt * textureLod(u_palette, vec2((x * (u_paletteSize - 1.0) + 0.5) / u_paletteSize, 0.5), 0.0).rgb;
   }
-  return texture(u_palette, vec2((pt * (u_paletteSize - 1.0) + 0.5) / u_paletteSize, 0.5)).rgb;
+  return c;
 }
 
 #ifdef OBJECTS
@@ -508,29 +543,41 @@ void main() {
   bool direct = false;
   vec2 so = seedOffset();
 
-  if (type == 0) {                                 // none: a still background
-    if (u_source_bgFill == 1) { col = u_source_bgColor; t = luma(col); direct = true; }
-    else t = background(p0);
+  if (type == 0 && u_source_bgFill == 1) {         // none: a plain color
+    col = u_source_bgColor; t = luma(col); direct = true;
   } else if (type == 6) {
     float d = texture(u_dye, v_uv).r;
     t = 1.0 - exp(-max(d, 0.0) * u_source_fluidGain);
   } else {
-    p = rot2(u_source_twist * exp(-dot(p, p) * 3.0)) * p;
-    p = rot2(radians(u_source_rotation)) * p;
-    p = p / u_source_scale + vec2(u_source_offsetX, u_source_offsetY);
-    // One shared domain-warp noise for every pattern, each with its own inputs:
-    // a single inlined copy of fbm keeps shader compiles fast.
+    if (type != 0) {
+      p = rot2(u_source_twist * exp(-dot(p, p) * 3.0)) * p;
+      p = rot2(radians(u_source_rotation)) * p;
+      p = p / u_source_scale + vec2(u_source_offsetX, u_source_offsetY);
+    }
+    // One shared domain-warp noise for every pattern (and for the ripple of a
+    // still gradient), each with its own inputs: a single inlined copy of fbm
+    // keeps shader compiles fast.
     vec2 ps = type == 1 ? p * 1.4 : type == 4 ? rot2(radians(u_source_ribAngle)) * p : type == 5 ? threadSpace(p) : p;
-    vec2 pa = ps + so, pb = ps + so, wb = u_W;
+    vec2 pa = ps + so, pb = ps + so, wa = u_W, wb = u_W;
     int oa = 3, ob = 3;
-    if (type == 1) { pb += vec2(5.2, 1.3); wb += vec2(4.1, 2.7); }
+    if (type == 0) {                               // still gradient: one octave of ripple (conic: one value)
+      vec2 q = gradQ(p0), sg = so * 0.05;
+      float rs = u_source_gradRippleSize;
+      bool conic = u_source_gradShape == 2;
+      pa = conic ? vec2(length(q) * 5.0 / rs, sg.x) : q * 2.2 / rs + sg;
+      wa = conic ? vec2(sg.y, u_W.x) : u_W;
+      pb = pa + 7.3; wb = u_W + 3.1;
+      oa = u_source_gradRipple > 0.001 ? 1 : 0;
+      ob = conic ? 0 : oa;
+    } else if (type == 1) { pb += vec2(5.2, 1.3); wb += vec2(4.1, 2.7); }
     else if (type == 2) { pa = p * 1.3 + so; pb = p * 0.9 + so + 4.3; wb += 2.0; oa = u_source_detail; ob = 2; }
     else if (type == 3) { pa = p * 1.1 + so; pb = pa + vec2(7.7, 3.3); wb += vec2(2.0, 5.0); oa = u_source_detail; ob = u_source_detail; }
     else if (type == 4) { pa = ps * 0.9 + so; oa = u_source_detail; ob = 0; }
     else if (type == 5) { pa = ps * vec2(0.8, 1.1) + so; pb = ps * vec2(0.9, 1.3) + so + vec2(4.7, 1.9); wb += vec2(2.3, 5.1); }
     else { pa = p * 1.5 + so; pb = pa + 9.1; wb += 3.3; }
-    vec2 wn = fbm2(pa, u_W, oa, pb, wb, ob);
-    if (type == 1) t = silk(ps, so, wn);
+    vec2 wn = fbm2(pa, wa, oa, pb, wb, ob);
+    if (type == 0) t = background(p0, wn);
+    else if (type == 1) t = silk(ps, so, wn);
     else if (type == 2) t = bands(p, so, wn);
     else if (type == 3) t = mesh(p, wn);
     else if (type == 4) t = ribbons(p, wn);
@@ -614,6 +661,7 @@ uniform float u_objFrost;    // the most frost on any of them
 uniform vec2 u_jitter;       // sub-pixel offset of this accumulation pass (antialiasing)
 uniform float u_samples;     // Monte Carlo samples per pixel in this pass
 uniform float u_frameSeed;   // changes per accumulation pass
+uniform float u_finish_speckle, u_finish_grainSize;
 
 vec4 tap(vec2 p) { return texture(u_field, toUV(p)); }
 
@@ -1029,7 +1077,7 @@ void throughObjects(inout vec2 sp, inout vec3 thru, inout vec3 glow, float fi, f
       // all of it where the light is trapped), plus light along the rim and a
       // small glint, which Edge light controls (rough frosted glass dulls it)
       vec3 scene = tap(entry + nrm.xy * (R * sc * 0.35 + 0.02)).rgb;
-      float spec = max(pow(max(dot(nrm, Hv), 0.0), 300.0) - spec0, 0.0) / (1.0 - spec0);
+      float spec = max(pow(max(dot(nrm, Hv), 0.0), 300.0) - spec0, 0.0) / max(1.0 - spec0, 1e-4);
       float facing = max(dot(normalize(nrm.xy + 1e-6), lxy), 0.0);   // the side of the rim that faces the light
       glow += before * inside * (scene * min(F + (1.0 - trans) * 0.85, 1.0)
                                  + u_objects_rim * lc * (F * facing * 0.5 + spec * 0.7) * (1.0 - 0.7 * frost));
@@ -1045,6 +1093,14 @@ void throughObjects(inout vec2 sp, inout vec3 thru, inout vec3 glow, float fi, f
 
 void main() {
   vec2 p = toP(v_uv + u_jitter / u_res);
+  // Speckle: each grain takes its color from a random point nearby. The
+  // pattern is fixed per grain, so refining passes keep it crisp.
+  if (u_finish_speckle > 0.001) {
+    float gs = max(u_finish_grainSize * u_pxScale, 0.5);
+    vec2 h = hash22(floor(gl_FragCoord.xy / gs) + 0.37);
+    float r = sqrt(h.x) * u_finish_speckle * u_finish_speckle * 0.05;
+    p += r * vec2(cos(h.y * TAU), sin(h.y * TAU));
+  }
   float la = radians(u_light_angle), le = radians(u_light_elevation);
   vec3 Ld = normalize(vec3(cos(la) * cos(le), sin(la) * cos(le), sin(le)));
   vec3 lc = u_light_color * u_light_intensity;
@@ -1173,7 +1229,7 @@ void main() {
     vec3 Hv = normalize(Ld + vec3(0.0, 0.0, 1.0));
     float shin = mix(6.0, 180.0, u_surface_glossSize * u_surface_glossSize);
     float spec0 = pow(Hv.z, shin);
-    float spec = max(pow(max(dot(n, Hv), 0.0), shin) - spec0, 0.0) / (1.0 - spec0);
+    float spec = max(pow(max(dot(n, Hv), 0.0), shin) - spec0, 0.0) / max(1.0 - spec0, 1e-4);   // light overhead: no 0 / 0
     vec3 tint = mix(vec3(1.0), texture(u_palette, vec2(0.99, 0.5)).rgb, 0.35);
     col += spec * u_surface_gloss * 1.25 * tint * mix(vec3(1.0), lc, 0.7) * filmT;
   }
@@ -1227,7 +1283,7 @@ void main() {
     vec3 Hv = normalize(Lk + vec3(0.0, 0.0, 1.0));
     float shin = mix(14.0, 700.0, u_glass_sharpness * u_glass_sharpness);
     float sp0v = pow(Hv.z, shin);
-    float spec = max(pow(max(dot(n, Hv), 0.0), shin) - sp0v, 0.0) / (1.0 - sp0v);
+    float spec = max(pow(max(dot(n, Hv), 0.0), shin) - sp0v, 0.0) / max(1.0 - sp0v, 1e-4);   // light along a flute: no 0 / 0
     col += spec * u_glass_highlight * 1.8 * lc;
   }
 
@@ -1484,7 +1540,7 @@ uniform float u_bloomOn;
 uniform float u_flipY;
 uniform float u_dither;
 uniform float u_grainSeed;
-uniform float u_finish_exposure, u_finish_contrast, u_finish_saturation, u_finish_hue, u_finish_vignette;
+uniform float u_finish_exposure, u_finish_contrast, u_finish_saturation, u_finish_hue, u_finish_vignette, u_finish_vignetteX, u_finish_vignetteY;
 uniform float u_finish_grain, u_finish_grainSize, u_finish_bloom, u_finish_aberration;
 uniform int u_finish_aberrationMode;
 uniform float u_finish_gridSize, u_finish_gridOpacity, u_finish_gridDots;
@@ -1541,7 +1597,7 @@ void main() {
   if (abs(u_finish_hue) > 0.01) col = hueShift(col, radians(u_finish_hue));
 
   if (u_finish_vignette > 0.001) {
-    float vd = length((uv - 0.5) * 2.0) * 0.7071;
+    float vd = length((uv - 0.5) * 2.0 - vec2(u_finish_vignetteX, u_finish_vignetteY)) * 0.7071;
     col *= 1.0 - u_finish_vignette * smoothstep(0.25, 1.05, vd);
   }
 

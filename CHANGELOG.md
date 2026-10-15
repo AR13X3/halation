@@ -7,18 +7,25 @@ Notable changes to Halation. The format follows [Keep a Changelog](https://keepa
 ### Added
 
 - **Objects**: up to six spheres, pills, panes and chain links floating in front of any flow, each in **glass** or a **solid** material with its own shape, color (a palette color, any color, or a gradient from the library), size, position and rotation. Glass objects refract, frost and tint what is behind them, reflect the scene along their edges and cast soft, colored shadows. Drag an object on the canvas to move it.
-- **None** flow: no moving pattern, just a still background in a plain color or a linear or radial gradient, with the gradient library at hand.
+- **None** flow: no moving pattern, just a still background in a plain color or a linear, radial or conic gradient, with the gradient library at hand. **Ripple** bends the gradient into moving waves (wavy stripes, wobbly rings, swaying rays) and **Center** places radial and conic gradients.
+- **Speckle** in Finish: scatters the image into grainy speckles, like sprayed paint or a riso print.
+- Composition controls: **Position** and **Angle** for Silhouette forms, and **Focus** for the vignette, which moves its bright center onto the focal point.
 - **Tutorial**: a guided tour of the basics from the new Tutorial button in the top bar. It spotlights each part of the interface, moves on when you try what it suggests, and can be ended at any time.
 - Five new looks: Indigo Harp, Ember Bow, Moss Reeds, Mercury Silk and Emerald Pour.
 
 ### Changed
 
+- **Posterize** bands now have crisp, antialiased edges, and **Repeat** goes up to 40 for fine stripes and sunburst rays.
 - The **Shapes** flow pattern is now part of **Objects**. Looks and share links made with it open with no flow, a gradient background and the same objects, and look the same.
 - **Surprise me** has a new art direction built around frosted glass objects.
 
 ### Removed
 
 - The Holo Chrome and Light Speed looks.
+
+### Fixed
+
+- A thin black line could cross Wavy glass, and Surface gloss could turn black, when the light stood straight above a flute or the surface.
 
 ## [1.1.0] - 2026-10-14
 

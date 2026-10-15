@@ -65,7 +65,7 @@ The flow is what sits *behind* the glass: the moving color field.
 
 | Pattern | Good for | Key settings |
 | --- | --- | --- |
-| **None** | A still background behind objects or glass: a plain color or a gradient | **Background** (Color or Gradient), and for gradients **Shape** (linear or radial), **Angle**, **Length**, **Offset**, **Palette range** and the **Library** |
+| **None** | A still background behind objects or glass: a plain color or a gradient | **Background** (Color or Gradient), and for gradients **Shape** (linear, radial or conic), **Angle**, **Center**, **Ripple**, **Length**, **Offset**, **Palette range** and the **Library** |
 | **Silk** | Satin folds, smoke, marble | Turbulence, Detail, **Folds** (sharp creases) |
 | **Bands** | Soft beams and stripes of light | Bands, width, spacing, angle, **Length** |
 | **Mesh** | Mesh gradients, color blobs | Points, Sharpness, Drift |
@@ -78,9 +78,11 @@ Settings shared by most patterns: **Scale**, **Turbulence**, **Soften** (blur), 
 
 **None** turns the flow off for a still background. Choose a plain **Color**, or a **Gradient** made from your palette: pick one from the **Library** right there, or edit its colors in the Color section. **Palette range** uses only the start of the palette for the background, leaving its other end for objects colored from the palette.
 
+A gradient can be **Linear**, **Radial** (rings around a **Center**) or **Conic** (swept around a center, like a sunburst). **Ripple** bends it into slowly moving waves: wavy stripes, wobbly rings or swaying rays, and **Ripple size** goes from tight squiggles to broad curves; **Seed** picks a different wave. Center positions are measured in frames (±1 = the edges), so a center on a third stays on that third at any canvas size. Combined with Color → **Repeat** and **Posterize**, these make retro patterns: wavy 70s stripes, concentric arcs and groovy sunbursts.
+
 **Threads** are thin lines of light that flow side by side. **Converge** pinches them toward the center: halfway gives an hourglass, all the way gives a starburst of rays (rotate 90° for a vertical hourglass). **Depth of field** adds soft, out-of-focus threads behind the sharp ones, and **Breakup** cuts them into streaks that race along the threads as the animation plays.
 
-**Silhouette** shapes any pattern into a single sculpted form over a plain **Backdrop** color: a vertical **Ribbon**, a horizontal **Wave** or a **Blob**. **Meander** bends and swells the form, **Depth** shades it toward its edges so it reads as a rounded body, and Surface effects such as Relief and Chrome treat its rim as a curved edge.
+**Silhouette** shapes any pattern into a single sculpted form over a plain **Backdrop** color: a vertical **Ribbon**, a horizontal **Wave** or a **Blob**. **Meander** bends and swells the form, **Depth** shades it toward its edges so it reads as a rounded body, and Surface effects such as Relief and Chrome treat its rim as a curved edge. **Position** and **Angle** place the form anywhere in the frame, for example tilted into a diagonal across one third.
 
 ## Objects
 
@@ -117,9 +119,9 @@ The main **Glass** pane, when there is one, sits in front of everything, objects
 - **Gradient editor**: click the bar to add a color stop, drag stops to move them, drag a stop down off the bar to delete it. Select a stop to set its exact color or position.
 - **Reverse** flips the gradient; **Generate** creates a new harmonious palette; **Library** holds ready-made palettes.
 - **Contrast** and **Balance** decide how the flow spreads across the gradient.
-- **Repeat**, **Offset** and **Mirror repeats** cycle the gradient several times across the flow.
+- **Repeat**, **Offset** and **Mirror repeats** cycle the gradient several times across the flow (up to 40 times, for fine stripes or sunburst rays).
 - **Color cycle** animates the palette; with seamless loops it completes whole cycles per loop.
-- **Posterize** turns smooth gradients into flat bands.
+- **Posterize** turns smooth gradients into flat bands with crisp, antialiased edges.
 
 ## Surface
 
@@ -194,7 +196,7 @@ A screen is the "display" the image is seen through, applied after the glass.
 
 ## Finish
 
-Brightness, contrast, saturation and hue shift; film **Grain** (size, animated or static); **Vignette**; **Bloom** (glow around bright areas); and a technical **Grid overlay** with crosshairs and markers.
+Brightness, contrast, saturation and hue shift; film **Grain** (size, animated or static); **Speckle**, which scatters the image into grainy speckles like sprayed paint or a riso print; **Vignette**, whose **Focus** moves the bright center onto your focal point; **Bloom** (glow around bright areas); and a technical **Grid overlay** with crosshairs and markers.
 
 - **Aberration** splits light into rainbow fringes like an imperfect lens. **Lens** fringes outward from the center; **Orbit** fringes around it, which colors the sides of lines that point at the center (great with converging Threads).
 - **Streaks** smear the image as if the camera moved during the exposure: **Zoom** away from a center, **Spin** around it, or **Directional** along an angle. Move the center with **Streak center X/Y**.
@@ -256,6 +258,10 @@ Whatever the mode, a still preview refines itself to full quality (the readout s
 **Frosted glass objects**: Flow → **None** with a light **Color** or a soft gradient (or a gentle **Mesh**) → Objects → **3**, all **Glass**, Shape **Pane** or **Pill**, **Frost** 0.6–0.8, **Tint** 0.4–0.6 → **Shadow** ~0.4. Turn the objects to the same angle and drag them so they overlap.
 
 **Liquid chrome**: Flow → **Silk** with Detail 2–3 and a little **Soften** → Surface → **Chrome** 1, **Gloss** 0.4. Add **Iridescence** for holographic metal; choose a palette that ends in a light color.
+
+**Groovy sunburst**: Flow → **None** → Gradient, Shape **Conic**, **Ripple** ~0.7 → Color: a 3-color palette, **Repeat** 40, **Posterize** 3.
+
+**Grainy gradient**: Flow → **Silk** with a large **Scale** and a little **Soften**, on a palette that is mostly one dark or light color → Finish → **Speckle** 0.3–0.7, **Grain** ~0.1.
 
 **Light trails**: Flow → **Threads** → **Converge** 0.6, **Bundle width** ~0.4, **Rotate** 90° → Finish → **Bloom** 0.6, **Streaks** (Zoom) 0.2, **Aberration** (Orbit) 0.5, on a dark palette that ends in white.
 
