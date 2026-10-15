@@ -3,12 +3,26 @@
 // Orchestrates the render passes. The same code path renders the live preview,
 // preset thumbnails and full-resolution exports — only the target size changes.
 
-import { createProgram, createTarget, draw } from './gl/gl.js';
-import { VERT, FIELD_FRAG, BLUR_FRAG, GLASS_FRAG, SCREEN_FRAG, STREAK_FRAG, BRIGHT_FRAG, FINAL_FRAG } from './gl/shaders.js';
-import { PARAMS, getPath, uniformName, optionIndex } from './schema.js';
+import { createProgram, startProgram, createTarget, draw } from './gl/gl.js';
+import { VERT, FIELD_FRAG, BLUR_FRAG, GLASS_FRAG, SCREEN_FRAG, STREAK_FRAG, BRIGHT_FRAG, FINAL_FRAG, withObjects } from './gl/shaders.js';
+import { PARAMS, getPath, uniformName, optionIndex, objectValue, gradientStops, MAX_OBJECTS } from './schema.js';
 import { buildPaletteData, hexToRgb, PALETTE_SIZE } from './palette.js';
+import { objectUniforms } from './objects.js';
 
 const TAU = Math.PI * 2;
+
+/**
+ * Loop angle at `time`: periodic motion (mesh points, object drift, streaks)
+ * uses whole multiples of it, so seamless loops stay seamless.
+ */
+export function loopPhase(anim, time) {
+  if (!anim.loop) return time * anim.speed * 0.5;
+  const L = Math.max(anim.duration, 0.1);
+  const cycles = anim.speed > 0 ? Math.max(1, Math.round((anim.speed * 0.5 * L) / TAU)) : 0;
+  return (time / L) * TAU * cycles;
+}
+
+const countMaterial = (state, m) => Array.from({ length: state.objects.count }, (_, k) => objectValue(state, k + 1, 'Material')).filter((x) => x === m).length;
 
 // Low-discrepancy sequence for sub-pixel jitter.
 function halton(i, base) {
@@ -49,6 +63,10 @@ export class Renderer {
       bright: createProgram(gl, VERT, BRIGHT_FRAG, 'bright'),
       final: createProgram(gl, VERT, FINAL_FRAG, 'final'),
     };
+    // field and glass with the object code: compiled when first needed, or
+    // ahead of time in the background (warmObjects)
+    this.objPending = null;
+    this.objProg = null;
 
     this.paletteTex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this.paletteTex);
@@ -57,6 +75,15 @@ export class Renderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     this.paletteKey = '';
+
+    // one gradient per row, for objects filled with a gradient
+    this.objPalTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this.objPalTex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    this.objPalKey = null;
 
     this.blackTex = this.solidTexture([0, 0, 0, 255]);
     this.imageTex = this.solidTexture([128, 128, 128, 255]);
@@ -103,6 +130,41 @@ export class Renderer {
     this.hasImage = true;
   }
 
+  /** Starts compiling the object shaders in the background, if the browser can. */
+  warmObjects() {
+    if (this.objPending || !this.gl.getExtension('KHR_parallel_shader_compile')) return;
+    this.startObjects();
+  }
+
+  /**
+   * True once the object shaders can be used without waiting: compiled, or
+   * nothing to wait for because this browser compiles them on demand anyway.
+   */
+  objectsReady() {
+    if (this.objProg || !this.gl.getExtension('KHR_parallel_shader_compile')) return true;
+    const p = this.startObjects();
+    return p.field.done() && p.glass.done();
+  }
+
+  startObjects() {
+    const gl = this.gl;
+    this.objPending ??= {
+      field: startProgram(gl, VERT, withObjects(FIELD_FRAG), 'field+objects'),
+      glass: startProgram(gl, VERT, withObjects(GLASS_FRAG), 'glass+objects'),
+    };
+    return this.objPending;
+  }
+
+  // The field and glass programs a look needs.
+  programsFor(state) {
+    if (!state.objects.count) return this.prog;
+    if (!this.objProg) {
+      const p = this.startObjects();
+      this.objProg = { field: p.field.finish(), glass: p.glass.finish() };
+    }
+    return this.objProg;
+  }
+
   updatePalette(stops) {
     const key = JSON.stringify(stops);
     if (key === this.paletteKey) return;
@@ -110,6 +172,19 @@ export class Renderer {
     const gl = this.gl;
     gl.bindTexture(gl.TEXTURE_2D, this.paletteTex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, PALETTE_SIZE, 1, 0, gl.RGBA, gl.FLOAT, buildPaletteData(stops));
+  }
+
+  updateObjectPalettes(state) {
+    const rows = Array.from({ length: MAX_OBJECTS }, (_, k) =>
+      k < state.objects.count && objectValue(state, k + 1, 'Fill') === 'gradient' ? gradientStops(state, objectValue(state, k + 1, 'Gradient')) : null);
+    const key = JSON.stringify(rows);
+    if (key === this.objPalKey) return;
+    this.objPalKey = key;
+    const data = new Float32Array(PALETTE_SIZE * MAX_OBJECTS * 4);
+    rows.forEach((stops, k) => { if (stops) data.set(buildPaletteData(stops), k * PALETTE_SIZE * 4); });
+    const gl = this.gl;
+    gl.bindTexture(gl.TEXTURE_2D, this.objPalTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, PALETTE_SIZE, MAX_OBJECTS, 0, gl.RGBA, gl.FLOAT, data);
   }
 
   // Converts the state into a dictionary of uniform values.
@@ -132,14 +207,13 @@ export class Renderer {
       const ang = (time / L) * TAU;
       const R = (rate * L) / TAU;
       U.u_W = [R * Math.cos(ang), R * Math.sin(ang)];
-      const cycles = a.speed > 0 ? Math.max(1, Math.round((a.speed * 0.5 * L) / TAU)) : 0;
-      U.u_phase = ang * cycles;
       U.u_cycleOffset = (state.color.cycle * (state.color.mirror ? 2 : 1) * time) / L;
     } else {
       U.u_W = [time * rate, 0];
-      U.u_phase = time * a.speed * 0.5;
       U.u_cycleOffset = state.color.cycle * time * 0.05;
     }
+    U.u_phase = loopPhase(a, time);
+    Object.assign(U, objectUniforms(state, U.u_phase));
     U.u_time = time;
     U.u_grainSeed = state.finish.grainAnim ? Math.floor(time * 24) % 97 : 0;
     U.u_paletteSize = PALETTE_SIZE;
@@ -152,7 +226,7 @@ export class Renderer {
   // the hard seams between flutes, tiles and facets.
   static needsAccumulation(state) {
     const g = state.glass;
-    return g.type !== 'none' || g.backType !== 'none';
+    return g.type !== 'none' || g.backType !== 'none' || countMaterial(state, 'glass') > 0;
   }
 
   /**
@@ -169,6 +243,7 @@ export class Renderer {
    */
   render(state, set, out, opts) {
     const { gl, ctx, prog } = this;
+    const progs = this.programsFor(state);
     const { w, h } = out;
     const hdr = ctx.caps.hdr;
     const docAspect = state.doc.width / state.doc.height;
@@ -179,13 +254,14 @@ export class Renderer {
     const accum = opts.accum ?? 0;
 
     this.updatePalette(state.color.stops);
+    this.updateObjectPalettes(state);
     const U = this.uniforms(state, time);
     U.u_aspect = docAspect;
 
     // 1. field -------------------------------------------------------------
     let fs = opts.fieldScale ?? 0.5;
     // thin lines and crisp edges need the field at full resolution
-    if (state.screen.type === 'contour' || ['ribbons', 'threads', 'shapes'].includes(state.source.type) || state.source.form !== 'none') fs = Math.max(fs, 1);
+    if (state.screen.type === 'contour' || ['ribbons', 'threads'].includes(state.source.type) || state.source.form !== 'none' || countMaterial(state, 'solid') > 0) fs = Math.max(fs, 1);
     const maxField = Math.min(ctx.caps.maxTexture, 4096);
     let fw = iw * fs, fh = ih * fs;
     if (Math.max(fw, fh) > maxField) { const k = maxField / Math.max(fw, fh); fw *= k; fh *= k; }
@@ -195,10 +271,11 @@ export class Renderer {
       field.bind();
       U.u_res = [field.w, field.h];
       U.u_pxScale = field.h / 1080;
-      const pf = prog.field.use().apply(U);
+      const pf = progs.field.use().apply(U);
       pf.texture('u_palette', 0, this.paletteTex);
       pf.texture('u_dye', 1, opts.dyeTex || this.blackTex);
       pf.texture('u_image', 2, this.imageTex);
+      pf.texture('u_objPal', 3, this.objPalTex);
       pf.set('u_imageSize', this.imageSize);
       draw(gl);
     }
@@ -227,8 +304,8 @@ export class Renderer {
     // blending: pass k contributes 1/(k+1), giving a running mean.
     const glass = set.get('glass', iw, ih, hdr);
     glass.bind();
-    const pg = prog.glass.use().apply(U);
-    pg.texture('u_field', 0, field.tex).texture('u_palette', 1, this.paletteTex);
+    const pg = progs.glass.use().apply(U);
+    pg.texture('u_field', 0, field.tex).texture('u_palette', 1, this.paletteTex).texture('u_objPal', 2, this.objPalTex);
     pg.set('u_samples', Math.max(1, Math.round(opts.samples ?? 6)));
     const passes = Renderer.needsAccumulation(state) ? Math.max(1, opts.passes ?? 1) : 1;
     for (let k = 0; k < passes; k++) {

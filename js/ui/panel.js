@@ -3,8 +3,9 @@
 // Builds the right-hand control panel from the schema, with a search box that
 // filters it.
 
-import { PARAMS, SECTIONS, PARAM_MAP, DOC_SIZES } from '../schema.js';
-import { createControl, h, labelText } from './controls.js';
+import { PARAMS, SECTIONS, PARAM_MAP, DOC_SIZES, objectValue } from '../schema.js';
+import { gradientCss, PALETTES } from '../palette.js';
+import { createControl, h, labelText, gradientGrid } from './controls.js';
 import { gradientEditor } from './gradient.js';
 import { ICONS } from './icons.js';
 
@@ -78,9 +79,25 @@ export function buildPanel(root, store, actions) {
         body.append(c.el);
         track(c.el, p);
         syncers.push(c.sync);
+        // the palette-color slider shows the palette along its track
+        if (p.obj && p.key.endsWith('Tone')) {
+          c.el.classList.add('palette-track');
+          syncers.push(() => { if (!c.el.hidden) c.el.style.setProperty('--track', gradientCss(store.state.color.stops)); });
+        }
         if (p.key === 'source.type') syncers.push(sourceExtras(body, store, actions, track));
+        if (p.key === 'source.gradRange') syncers.push(backgroundLibrary(body, store, track));
       }
       if (sec.id === 'export') syncers.push(exportActions(body, store, actions, track));
+      if (sec.id === 'objects') {
+        const hint = h('p', { class: 'hint' });
+        body.append(hint);
+        track(hint, null, 'move drag order front add');
+        syncers.push(() => {
+          hint.textContent = store.state.objects.count === 0
+            ? 'Raise Objects to float up to six glass or solid shapes in front of the flow: frosted panes, pills, spheres and links.'
+            : 'Drag an object on the canvas to move it. Higher numbers sit in front, and glass objects always float in front of solid ones.';
+        });
+      }
       if (sec.id === 'anim') {
         const hint = h('p', { class: 'hint' }, 'With “Seamless loop” on, the last frame flows back into the first — record one loop for a perfect video wallpaper.');
         body.append(hint);
@@ -98,6 +115,11 @@ export function buildPanel(root, store, actions) {
       } else if (sec.id === 'light') t = optLabel('light.env', store);
       else if (sec.id === 'screen') t = store.state.screen.type === 'none' ? '' : optLabel('screen.type', store);
       else if (sec.id === 'doc') t = `${store.state.doc.width} × ${store.state.doc.height}`;
+      else if (sec.id === 'objects') {
+        const s = store.state;
+        const mats = Array.from({ length: s.objects.count }, (_, k) => objectValue(s, k + 1, 'Material'));
+        t = ['glass', 'solid'].map((m) => [mats.filter((x) => x === m).length, m]).filter(([n]) => n).map(([n, m]) => `${n} ${m}`).join(' · ');
+      }
       badge.textContent = t;
     });
 
@@ -125,7 +147,7 @@ export function buildPanel(root, store, actions) {
       it.el.classList.toggle('miss', !it.match);
       if (!on) continue;
       if (it.match && !it.el.hidden) shown.push(it);
-      else if (it.p && it.el.hidden && words.every((w) => core.includes(w))) unavailable.push(it);
+      else if (it.p && it.el.hidden && !otherObject(it.p, store.state) && words.every((w) => core.includes(w))) unavailable.push(it);
     }
     for (const g of groups) g.el.classList.toggle('miss', on && !shown.some((it) => it.sec === g.sec && it.p?.group === g.name));
     for (const s of sections) s.el.classList.toggle('miss', on && !shown.some((it) => it.sec === s.sec));
@@ -217,6 +239,9 @@ function searchBox({ onChange, onEnter }) {
   clear.addEventListener('click', () => { reset(); input.focus(); });
   return { el, input, clear: reset, words: () => words, text: () => input.value.trim(), active: () => words.length > 0 };
 }
+
+// Settings of objects other than the one being edited never count as hidden.
+const otherObject = (p, s) => !!p.obj && (p.obj !== s.objects.edit || p.obj > s.objects.count);
 
 const paramWords = (p, s) => [
   labelText(p, s),
@@ -320,7 +345,29 @@ function sourceExtras(body, store, actions, track) {
     const t = store.state.source.type;
     imgBox.hidden = t !== 'image';
     fluidBox.hidden = t !== 'fluid';
-    panHint.hidden = t === 'fluid';
+    panHint.hidden = t === 'fluid' || t === 'none';
+  };
+}
+
+// ── None: the gradient library for the background ───────────────────────────
+// Choosing one sets the palette, which the Color section can then edit.
+function backgroundLibrary(body, store, track) {
+  const sameStops = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const grid = gradientGrid({
+    store,
+    get: () => PALETTES.find((p) => sameStops(p.stops, store.state.color.stops))?.name,
+    choose: (o) => { store.set('color.stops', structuredClone(o.stops)); store.commit(); },
+  });
+  const box = h('div', { class: 'extra bg-library' },
+    h('div', { class: 'subhead' }, 'Library'),
+    grid.el,
+    h('p', { class: 'hint' }, 'The background uses your palette: pick one here, or edit its colors in the Color section.'));
+  body.append(box);
+  track(box, null, 'gradient library palette background colors');
+  return () => {
+    const s = store.state.source;
+    box.hidden = !(s.type === 'none' && s.bgFill === 'gradient');
+    if (!box.hidden) grid.sync();
   };
 }
 

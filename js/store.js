@@ -3,6 +3,7 @@
 // Central app state with change notifications, undo/redo and share-link encoding.
 
 import { defaultState, getPath, setPath, LOOK_SECTIONS, PARAMS } from './schema.js';
+import { upgradeShapes } from './objects.js';
 
 export class Store {
   constructor() {
@@ -30,6 +31,7 @@ export class Store {
     for (const k of LOOK_SECTIONS) out[k] = structuredClone(this.state[k]);
     delete out.anim.time;
     delete out.anim.playing;
+    delete out.objects.edit;
     return out;
   }
 
@@ -38,12 +40,14 @@ export class Store {
     look = migrateLook(look);
     const time = this.state.anim?.time ?? 0;
     const playing = this.state.anim?.playing ?? true;
+    const edit = this.state.objects?.edit ?? 1;
     const d = defaultState();
     for (const k of LOOK_SECTIONS) {
       this.state[k] = { ...d[k], ...structuredClone(look?.[k] || {}) };
     }
     this.state.anim.time = time;
     this.state.anim.playing = playing;
+    this.state.objects.edit = edit;
     sanitize(this.state);
     this.emit('*');
   }
@@ -93,6 +97,8 @@ export function migrateLook(look) {
       delete look.color[k];
     }
   }
+  // 1.1 drew objects as the Shapes flow.
+  if (look.source?.type === 'shapes') look = upgradeShapes(look);
   return look;
 }
 
@@ -107,7 +113,7 @@ export function sanitize(state) {
       if (p.key.startsWith('doc.')) continue;
       n = Math.min(p.max, Math.max(p.min, n));
       setPath(state, p.key, p.type === 'range' ? n : Math.round(n));
-    } else if (p.type === 'select' || p.type === 'chips') {
+    } else if (p.type === 'select' || p.type === 'chips' || p.type === 'gradient') {
       if (!p.options.some((o) => o.value === v)) setPath(state, p.key, p.def);
     } else if (p.type === 'toggle') {
       setPath(state, p.key, !!v);
@@ -115,6 +121,8 @@ export function sanitize(state) {
       if (typeof v !== 'string' || !/^#[0-9a-f]{6}$/i.test(v)) setPath(state, p.key, p.def);
     }
   }
+  const o = state.objects;
+  o.edit = Math.min(Math.max(o.count, 1), Math.max(1, Math.round(Number(o.edit)) || 1));
   const stops = state.color.stops;
   if (!Array.isArray(stops) || stops.length < 2) state.color.stops = defaultState().color.stops;
   else {

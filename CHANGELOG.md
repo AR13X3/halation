@@ -6,8 +6,15 @@ Notable changes to Halation. The format follows [Keep a Changelog](https://keepa
 
 ### Added
 
+- **Objects**: up to six spheres, pills, panes and chain links floating in front of any flow, each in **glass** or a **solid** material with its own shape, color (a palette color, any color, or a gradient from the library), size, position and rotation. Glass objects refract, frost and tint what is behind them, reflect the scene along their edges and cast soft, colored shadows. Drag an object on the canvas to move it.
+- **None** flow: no moving pattern, just a still background in a plain color or a linear or radial gradient, with the gradient library at hand.
 - **Tutorial**: a guided tour of the basics from the new Tutorial button in the top bar. It spotlights each part of the interface, moves on when you try what it suggests, and can be ended at any time.
 - Five new looks: Indigo Harp, Ember Bow, Moss Reeds, Mercury Silk and Emerald Pour.
+
+### Changed
+
+- The **Shapes** flow pattern is now part of **Objects**. Looks and share links made with it open with no flow, a gradient background and the same objects, and look the same.
+- **Surprise me** has a new art direction built around frosted glass objects.
 
 ### Removed
 

@@ -8,19 +8,20 @@ Everything you need to go from a blank canvas to a finished background. If you j
 2. [Your first background in five steps](#your-first-background-in-five-steps)
 3. [Canvas](#canvas)
 4. [Flow](#flow)
-5. [Color](#color)
-6. [Surface](#surface)
-7. [Glass](#glass)
-8. [Light](#light)
-9. [Screen](#screen)
-10. [Finish](#finish)
-11. [Motion and seamless loops](#motion-and-seamless-loops)
-12. [Exporting](#exporting)
-13. [Saving and sharing looks](#saving-and-sharing-looks)
-14. [Performance modes](#performance-modes)
-15. [Recipes](#recipes)
-16. [Keyboard and mouse](#keyboard-and-mouse)
-17. [Troubleshooting](#troubleshooting)
+5. [Objects](#objects)
+6. [Color](#color)
+7. [Surface](#surface)
+8. [Glass](#glass)
+9. [Light](#light)
+10. [Screen](#screen)
+11. [Finish](#finish)
+12. [Motion and seamless loops](#motion-and-seamless-loops)
+13. [Exporting](#exporting)
+14. [Saving and sharing looks](#saving-and-sharing-looks)
+15. [Performance modes](#performance-modes)
+16. [Recipes](#recipes)
+17. [Keyboard and mouse](#keyboard-and-mouse)
+18. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -29,9 +30,9 @@ Everything you need to go from a blank canvas to a finished background. If you j
 | Area | What it does |
 | --- | --- |
 | **Looks** (left) | Built-in starting points, plus looks you save yourself. Click one to load it. |
-| **Canvas** (center) | Live preview at the exact proportions of your output size. Drag to pan, scroll to zoom. |
+| **Canvas** (center) | Live preview at the exact proportions of your output size. Drag to pan, scroll to zoom, or drag an object to move it. |
 | **Transport bar** (bottom) | Play/pause, timeline, seamless-loop toggle, performance mode and frame-rate readout. The eye icon hides the interface. |
-| **Controls** (right) | Every setting, grouped into sections: Canvas, Flow, Color, Surface, Glass, Light, Screen, Finish, Motion, Export. Canvas and Color start open; click a section title to expand or collapse it. Hover a title for its dice (randomize this section) and reset buttons. |
+| **Controls** (right) | Every setting, grouped into sections: Canvas, Flow, Objects, Color, Surface, Glass, Light, Screen, Finish, Motion, Export. Canvas and Color start open; click a section title to expand or collapse it. Hover a title for its dice (randomize this section) and reset buttons. |
 | **Top bar** | Undo/redo, **Surprise me**, **Share**, **Tutorial**, keyboard shortcuts, source code link and **Export**. |
 
 New to Halation? Press **Tutorial** in the top bar for a one-minute guided tour of the basics. It points out each part of the interface and lets you try things as you go; press **End tutorial** or `Esc` to leave it at any time.
@@ -64,22 +65,52 @@ The flow is what sits *behind* the glass: the moving color field.
 
 | Pattern | Good for | Key settings |
 | --- | --- | --- |
+| **None** | A still background behind objects or glass: a plain color or a gradient | **Background** (Color or Gradient), and for gradients **Shape** (linear or radial), **Angle**, **Length**, **Offset**, **Palette range** and the **Library** |
 | **Silk** | Satin folds, smoke, marble | Turbulence, Detail, **Folds** (sharp creases) |
 | **Bands** | Soft beams and stripes of light | Bands, width, spacing, angle, **Length** |
 | **Mesh** | Mesh gradients, color blobs | Points, Sharpness, Drift |
 | **Ribbons** | Flowing line bundles, neon | Lines, bundle width, weight, glow, wave, fan |
 | **Threads** | Light trails, filaments, hyperspace streaks, starbursts | Threads, weight, glow, bundle width, **Converge**, **Depth of field**, **Breakup** |
-| **Shapes** | Crisp spheres, chain links and pills to look *through* glass | Shape, count, size, edge softness, backdrop angle |
 | **Fluid** | Real ink simulation you paint with the mouse | Force, brush size, vorticity, streams, ink amount and fade |
 | **Image** | Your own photo or artwork behind the glass | Drop an image on the canvas or use *Choose image…*; **Gradient map** recolors it with your palette |
 
 Settings shared by most patterns: **Scale**, **Turbulence**, **Soften** (blur), **Swirl**, **Rotate**, **Pan** and **Seed** (the dice gives a new random variation of the same pattern).
 
+**None** turns the flow off for a still background. Choose a plain **Color**, or a **Gradient** made from your palette: pick one from the **Library** right there, or edit its colors in the Color section. **Palette range** uses only the start of the palette for the background, leaving its other end for objects colored from the palette.
+
 **Threads** are thin lines of light that flow side by side. **Converge** pinches them toward the center: halfway gives an hourglass, all the way gives a starburst of rays (rotate 90° for a vertical hourglass). **Depth of field** adds soft, out-of-focus threads behind the sharp ones, and **Breakup** cuts them into streaks that race along the threads as the animation plays.
 
 **Silhouette** shapes any pattern into a single sculpted form over a plain **Backdrop** color: a vertical **Ribbon**, a horizontal **Wave** or a **Blob**. **Meander** bends and swells the form, **Depth** shades it toward its edges so it reads as a rounded body, and Surface effects such as Relief and Chrome treat its rim as a curved edge.
 
-> **Tip:** glass looks most convincing when there is something with clear edges behind it. Try **Shapes** or **Image** with the Tiles, Pyramids or Reeded glass.
+## Objects
+
+Objects float in front of the flow: up to six spheres, pills, panes and chain links, each made of **glass** or a **solid** material. Raise **Objects** to add them; each new one has its own starting place, so they build up a composition. Glass objects are best over a calm background, such as **None** with a gradient or a light color, or a soft **Mesh**, where their frost, tint and edges read clearly.
+
+**Edit** chooses which object the settings below it change; each button shows that object's color. You can also click an object on the canvas, and **drag it to move it**. Higher numbers sit in front, and glass objects always float in front of solid ones.
+
+Each object has its own:
+
+- **Material**: **Glass** refracts, frosts and tints what is behind it; **Solid** is an opaque, softly lit body.
+- **Shape**: **Sphere**, **Pill**, **Pane** (a flat sheet with a rounded bevel) or **Link** (a chain link).
+- **Color**: a position along your palette (**Palette color**, so objects follow palette changes), a **Custom color**, or a **Gradient** across the object, chosen from the library (or your own palette) with its own **Gradient angle**.
+- **Tint** (glass): how strongly the glass is colored. Thicker parts, toward the edges, are deeper.
+- **Frost** (glass): clear glass, or frosted glass that blurs what is behind it.
+- **Size**, **Length** (pills, panes and links), **Corners** (panes), **Position** and **Rotation**.
+
+Shared by all objects:
+
+- **Refraction**: how strongly rounded glass bends the view. Spheres and pills act as lenses; past about 0.7 they show the scene upside down, like a glass ball. Panes bend light only at their bevel.
+- **Bevel**: the width of the rounded edge on glass panes.
+- **Edge light**: highlights and reflections along the edges, from the light in the **Light** section. The edges also mirror the scene around them, so they look light on a light background and dark on a dark one.
+- **Thickness**: shows the side of each piece of glass as a darker, deeply tinted band.
+- **Shadow**: soft shadows on the flow behind, falling away from the light. Glass casts colored shadows.
+- **Edge softness** (solid objects) blurs their outline.
+- **Arrange all** scales, rotates and moves every object together.
+- **Drift** lets the objects float gently as the animation plays (it loops seamlessly); **Drift seed** varies the motion.
+
+The main **Glass** pane, when there is one, sits in front of everything, objects included: frosted panes over a glass ball, or objects seen through reeded glass.
+
+> **Tip:** glass looks most convincing when there is something with clear edges behind it. Try solid **Objects** or **Image** with the Tiles, Pyramids or Reeded glass.
 
 ## Color
 
@@ -220,7 +251,9 @@ Whatever the mode, a still preview refines itself to full quality (the readout s
 
 **Your photo behind glass**: Flow → **Image** → drop a photo on the canvas → Glass → **Reeded** or **Tiles** → raise **Frost** a little. Turn **Gradient map** off to keep the photo's colors.
 
-**Glass panel composition**: Flow → **Shapes** (Sphere) → Glass → **Tiles**, Profile **Glass block**, Coverage **Right side**, Frost ~0.5. Drag the canvas so the sphere sits across the pane edge.
+**Glass panel composition**: Flow → **None** → Objects → **1**, Material **Solid**, Shape **Sphere** → Glass → **Tiles**, Profile **Glass block**, Coverage **Right side**, Frost ~0.5. Drag the sphere so it sits across the pane edge.
+
+**Frosted glass objects**: Flow → **None** with a light **Color** or a soft gradient (or a gentle **Mesh**) → Objects → **3**, all **Glass**, Shape **Pane** or **Pill**, **Frost** 0.6–0.8, **Tint** 0.4–0.6 → **Shadow** ~0.4. Turn the objects to the same angle and drag them so they overlap.
 
 **Liquid chrome**: Flow → **Silk** with Detail 2–3 and a little **Soften** → Surface → **Chrome** 1, **Gloss** 0.4. Add **Iridescence** for holographic metal; choose a palette that ends in a light color.
 
@@ -244,6 +277,7 @@ Whatever the mode, a still preview refines itself to full quality (the readout s
 | `H` | Hide / show the interface |
 | `F` | Fullscreen |
 | `Ctrl/⌘ Z` | Undo (`Shift` to redo) |
+| Drag an object | Move it (and edit it in Objects) |
 | Drag canvas | Pan the flow (paint, in Fluid mode) |
 | Scroll on canvas | Zoom the flow |
 | Double-click canvas | Recenter |

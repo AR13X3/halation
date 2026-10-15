@@ -86,13 +86,38 @@ function testRenderable(gl, fmt) {
 
 // ── programs ────────────────────────────────────────────────────────────────
 export function createProgram(gl, vsSrc, fsSrc, name = 'program') {
-  const vs = compile(gl, gl.VERTEX_SHADER, vsSrc, name);
-  const fs = compile(gl, gl.FRAGMENT_SHADER, fsSrc, name);
+  return startProgram(gl, vsSrc, fsSrc, name).finish();
+}
+
+/**
+ * Starts compiling a program without waiting for it. With
+ * KHR_parallel_shader_compile the driver compiles in the background: done()
+ * says when it has finished, and finish() returns the program (waiting only
+ * if it hasn't).
+ */
+export function startProgram(gl, vsSrc, fsSrc, name = 'program') {
+  const parallel = gl.getExtension('KHR_parallel_shader_compile');
+  const vs = gl.createShader(gl.VERTEX_SHADER);
+  const fs = gl.createShader(gl.FRAGMENT_SHADER);
+  gl.shaderSource(vs, vsSrc);
+  gl.shaderSource(fs, fsSrc);
+  gl.compileShader(vs);
+  gl.compileShader(fs);
   const prog = gl.createProgram();
   gl.attachShader(prog, vs);
   gl.attachShader(prog, fs);
   gl.bindAttribLocation(prog, 0, 'a_pos');
   gl.linkProgram(prog);
+  let done = null;
+  return {
+    done: () => !parallel || gl.getProgramParameter(prog, parallel.COMPLETION_STATUS_KHR),
+    finish: () => (done ??= finishProgram(gl, prog, vs, fs, vsSrc, fsSrc, name)),
+  };
+}
+
+function finishProgram(gl, prog, vs, fs, vsSrc, fsSrc, name) {
+  checkShader(gl, vs, vsSrc, name, 'vertex');
+  checkShader(gl, fs, fsSrc, name, 'fragment');
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
     throw new Error(`[${name}] link failed: ${gl.getProgramInfoLog(prog)}`);
   }
@@ -145,7 +170,10 @@ function setUniform(gl, u, v) {
     case gl.FLOAT: gl.uniform1f(u.loc, v); break;
     case gl.FLOAT_VEC2: gl.uniform2f(u.loc, v[0], v[1]); break;
     case gl.FLOAT_VEC3: gl.uniform3f(u.loc, v[0], v[1], v[2]); break;
-    case gl.FLOAT_VEC4: gl.uniform4f(u.loc, v[0], v[1], v[2], v[3]); break;
+    case gl.FLOAT_VEC4:
+      if (v.length > 4) gl.uniform4fv(u.loc, v);   // a vec4 array, set in one call
+      else gl.uniform4f(u.loc, v[0], v[1], v[2], v[3]);
+      break;
     case gl.INT:
     case gl.BOOL: gl.uniform1i(u.loc, Math.round(v)); break;
     case gl.SAMPLER_2D: gl.uniform1i(u.loc, v); break;
@@ -153,17 +181,12 @@ function setUniform(gl, u, v) {
   }
 }
 
-function compile(gl, type, src, name) {
-  const sh = gl.createShader(type);
-  gl.shaderSource(sh, src);
-  gl.compileShader(sh);
-  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-    const log = gl.getShaderInfoLog(sh);
-    const lines = src.split('\n').map((l, i) => `${String(i + 1).padStart(4)}: ${l}`).join('\n');
-    console.error(`[${name}] shader compile error\n${log}\n${lines}`);
-    throw new Error(`[${name}] ${type === gl.VERTEX_SHADER ? 'vertex' : 'fragment'} shader failed: ${log}`);
-  }
-  return sh;
+function checkShader(gl, sh, src, name, kind) {
+  if (gl.getShaderParameter(sh, gl.COMPILE_STATUS)) return;
+  const log = gl.getShaderInfoLog(sh);
+  const lines = src.split('\n').map((l, i) => `${String(i + 1).padStart(4)}: ${l}`).join('\n');
+  console.error(`[${name}] shader compile error\n${log}\n${lines}`);
+  throw new Error(`[${name}] ${kind} shader failed: ${log}`);
 }
 
 // ── render targets ──────────────────────────────────────────────────────────

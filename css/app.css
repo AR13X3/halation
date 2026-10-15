@@ -455,6 +455,32 @@ button.un-row:hover .un-fix { color: var(--text); }
 .chip.active .chip-icon { color: var(--accent); }
 .chip-label { font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 
+/* object picker: which object the panel edits */
+.obj-picker { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; min-width: 0; }
+.obj-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 8px 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.obj-pick:hover { color: var(--text); background: var(--surface-3); }
+.obj-pick.active { color: var(--text); border-color: var(--accent); background: rgba(142,162,255,.1); }
+.obj-dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
+
+/* sliders that pick a position along the palette */
+.palette-track .slider::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: var(--track); }
+.palette-track .slider::-webkit-slider-thumb { margin-top: -3.5px; }
+.palette-track .slider::-moz-range-track { height: 6px; border-radius: 3px; background: var(--track); }
+.palette-track .slider::-moz-range-progress { background: transparent; }
+
 .switch { position: relative; display: inline-block; width: 30px; height: 18px; flex: none; cursor: pointer; }
 .switch-input { position: absolute; opacity: 0; width: 0; height: 0; }
 .switch-track { position: absolute; inset: 0; border-radius: 9px; background: var(--line-2); transition: background .15s; }
@@ -540,6 +566,13 @@ button.un-row:hover .un-fix { color: var(--text); }
   transition: transform .1s;
 }
 .grad-swatch:hover { transform: scale(1.06); box-shadow: inset 0 0 0 1px rgba(255,255,255,.3); }
+.grad-swatch.active { box-shadow: 0 0 0 2px var(--accent), inset 0 0 0 1px rgba(0,0,0,.35); }
+
+/* gradient pickers outside the Color section */
+.ctl-gradients { display: block; padding: 4px 0 6px; }
+.ctl-gradients .ctl-label { display: block; margin-bottom: 6px; }
+.grad-pick { grid-template-columns: repeat(5, 1fr); }
+.bg-library .subhead { margin-top: 6px; }
 
 /* ── export ──────────────────────────────────────────────────────────────── */
 .export-info {
@@ -578,6 +611,7 @@ button.un-row:hover .un-fix { color: var(--text); }
 #app.ui-hidden .frame { border-radius: 0; box-shadow: none; }
 #canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
 #canvas.grabbing { cursor: grabbing; }
+#canvas.over-object { cursor: move; }
 #canvas.paint { cursor: crosshair; }
 
 .transport {

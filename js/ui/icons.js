@@ -26,7 +26,13 @@ export const ICONS = {
   water: svg('<path d="M2 6.5c2-2 4-2 6 0s4 2 6 0 3-1.5 4-1M2 11c2-2 4-2 6 0s4 2 6 0 3-1.5 4-1M2 15.5c2-2 4-2 6 0s4 2 6 0 3-1.5 4-1"/>'),
   crystal: svg('<path d="M10 2.5l6.5 5-2.5 9.5h-8L3.5 7.5z"/><path d="M3.5 7.5h13M10 2.5L7.5 7.5 10 17M10 2.5l2.5 5L10 17" opacity=".6"/>'),
   pyramid: svg('<rect x="3" y="3" width="14" height="14" rx="1"/><path d="M3 3l14 14M17 3L3 17M10 3v14M3 10h14" opacity=".55"/>'),
-  shapes: svg('<circle cx="8" cy="8" r="5"/><rect x="10.5" y="9" width="6" height="9" rx="3" opacity=".6"/>'),
+  // objects
+  sphere: svg('<circle cx="10" cy="10" r="6.5"/><path d="M6.2 8.2a4.2 4.2 0 0 1 3-2.6" opacity=".6"/>'),
+  pill: svg('<rect x="3" y="7" width="14" height="6" rx="3" transform="rotate(-35 10 10)"/>'),
+  pane: svg('<rect x="4.5" y="3.5" width="11" height="13" rx="1.3" transform="rotate(-18 10 10)"/><path d="M7.4 6.9l4.6-1.5" opacity=".55" transform="rotate(-18 10 10)"/>'),
+  link: svg('<rect x="6" y="2.5" width="8" height="15" rx="4"/><rect x="8.2" y="6" width="3.6" height="8" rx="1.8" opacity=".55"/>'),
+  glassObject: svg('<rect x="3.5" y="3.5" width="9" height="9" rx="1.5" opacity=".55"/><rect x="7.5" y="7.5" width="9" height="9" rx="1.5"/>'),
+  solidObject: svg('<circle cx="10" cy="10" r="6.5" fill="currentColor" stroke="none"/>'),
   rain: svg('<path d="M6.5 3.5c1.5 2 2.5 3.3 2.5 4.6a2.5 2.5 0 0 1-5 0c0-1.3 1-2.6 2.5-4.6zM13.5 9c1.5 2 2.5 3.3 2.5 4.6a2.5 2.5 0 0 1-5 0c0-1.3 1-2.6 2.5-4.6z"/><circle cx="6" cy="15.5" r="1.2"/><circle cx="15" cy="4.5" r="0.9"/>'),
   // screens
   halftone: svg(dots([[4, 4, 0.8], [10, 4, 1.3], [16, 4, 1.9], [4, 10, 1.3], [10, 10, 1.9], [16, 10, 2.4], [4, 16, 1.9], [10, 16, 2.4], [16, 16, 2.8]])),

@@ -11,6 +11,7 @@
 import { PARAMS, setPath } from './schema.js';
 import { PALETTES, randomPalette, hexToRgb, rgbToHex, rgbToOklab, oklabToRgb, oklchToHex } from './palette.js';
 import { PRESETS } from './presets.js';
+import { upgradeShapes } from './objects.js';
 
 const rand = (a, b) => a + Math.random() * (b - a);
 const chance = (p) => Math.random() < p;
@@ -86,6 +87,13 @@ function backdrop(stops) {
   return rgbToHex(oklabToRgb([Math.min(L, 0.3) * 0.45, a * 0.5, b * 0.5]));
 }
 
+// A plain light background for glass: the palette's lightest color, softened.
+function softBackground(stops) {
+  const s = darkFirst(stops);
+  const [L, a, b] = lab(s[s.length - 1].color);
+  return rgbToHex(oklabToRgb([Math.max(L, 0.86), a * 0.4, b * 0.4]));
+}
+
 const INK_PAPER = [
   ['#1a1a1a', '#f3efe6'], ['#ff3d7f', '#f6f0e4'], ['#1f3fbf', '#f2efe8'], ['#f2efe8', '#141217'],
   ['#ffd23f', '#121019'], ['#0f5c4d', '#efe9dc'], ['#e5482d', '#f7f1e3'], ['#7fd1ff', '#0b1020'],
@@ -100,13 +108,14 @@ function smoothFlow() {
   return { type: 'bands', bandCount: ri(1, 3), bandWidth: r(0.1, 0.28), bandSpacing: r(0.2, 0.45), bandAngle: ri(-60, 60), bandLength: chance(0.5) ? 3 : r(1, 2.5), warp: r(0.5, 1.4) };
 }
 
-// Crisp edges for heavily distorting glass to break up.
-const crispFlow = () => weighted({ shapes: 4, bands: 3, mesh: 3 }) === 'shapes' ? shapesFlow()
-  : chance(0.5) ? { type: 'bands', bandCount: ri(2, 4), bandWidth: r(0.06, 0.16), bandSpacing: r(0.15, 0.35), bandAngle: ri(-60, 60), bandLength: 3, warp: r(0.6, 1.4) }
-  : { type: 'mesh', meshCount: ri(4, 7), meshBlend: r(2, 3), warp: r(0.4, 1) };
+// Something crisp to look through glass at: solid objects over a gradient
+// (composed the way the old Shapes flow composed them).
+const shapesScene = () => upgradeShapes({ source: { type: 'shapes', shape: pick(['sphere', 'sphere', 'link', 'pill', 'mixed']), shapeCount: ri(1, 3), shapeSize: r(0.55, 0.85), shapeSoft: r(0, 0.04), shapeDrift: r(0.3, 0.8), bgAngle: ri(-180, 180) } });
 
-// Something crisp to look through glass at.
-const shapesFlow = () => ({ type: 'shapes', shape: pick(['sphere', 'sphere', 'link', 'pill', 'mixed']), shapeCount: ri(1, 3), shapeSize: r(0.55, 0.85), shapeSoft: r(0, 0.04), shapeDrift: r(0.3, 0.8), bgAngle: ri(-180, 180) });
+// Crisp edges for heavily distorting glass to break up.
+const crispScene = () => weighted({ shapes: 4, bands: 3, mesh: 3 }) === 'shapes' ? shapesScene()
+  : { source: chance(0.5) ? { type: 'bands', bandCount: ri(2, 4), bandWidth: r(0.06, 0.16), bandSpacing: r(0.15, 0.35), bandAngle: ri(-60, 60), bandLength: 3, warp: r(0.6, 1.4) }
+    : { type: 'mesh', meshCount: ri(4, 7), meshBlend: r(2, 3), warp: r(0.4, 1) } };
 
 const light = () => ({ angle: ri(0, 359), elevation: ri(35, 65), env: weighted({ studio: 4, palette: 2, window: 1 }) });
 const finish = () => ({ grain: r(0.02, 0.1), vignette: chance(0.3) ? r(0.15, 0.35) : 0 });
@@ -118,12 +127,12 @@ const glassBase = () => ({ shadow: r(0.1, 0.35), highlight: r(0, 0.08), reflect:
 // A built-in look with a new seed, usually a new palette of the same kind, and
 // its numbers nudged a little: the composition stays, the result is new.
 const REMIXABLE = PRESETS.filter((p) => !['fluid', 'image'].includes(p.look.source?.type));
-const NUDGE = ['source', 'glass', 'screen', 'surface', 'finish'];
+const NUDGE = ['source', 'objects', 'glass', 'screen', 'surface', 'finish'];
 function remix(preset) {
   const look = structuredClone(preset.look);
   for (const sec of NUDGE) {
     for (const [k, v] of Object.entries(look[sec] || {})) {
-      if (typeof v !== 'number' || k === 'seed' || v === 0) continue;
+      if (typeof v !== 'number' || k === 'seed' || k === 'count' || v === 0) continue;
       const deg = /angle|rotation|Angle/.test(k);
       const nv = deg ? v + rand(-20, 20) : v * rand(0.85, 1.15);
       look[sec][k] = Number.isInteger(v) && !deg ? Math.round(nv) : +nv.toFixed(3);
@@ -184,7 +193,7 @@ const RECIPES = {
       ...pane(0.2),
     };
     if (type === 'tiles') g.profile = weighted({ block: 3, round: 1, bevel: 1 });
-    return { source: chance(0.6) ? shapesFlow() : smoothFlow(), color: { stops: palette(), spread: r(1.1, 1.5) }, glass: g, light: light(), finish: finish() };
+    return { ...(chance(0.6) ? shapesScene() : { source: smoothFlow() }), color: { stops: palette(), spread: r(1.1, 1.5) }, glass: g, light: light(), finish: finish() };
   } },
 
   weathered: { w: 0.7, make: () => {
@@ -192,7 +201,42 @@ const RECIPES = {
     const g = type === 'hammered' ? { count: r(6, 14, 1), strength: r(0.5, 0.9), jitter: r(0.3, 0.7), caustics: chance(0.5) ? r(0.2, 0.4) : 0 }
       : type === 'water' ? { count: r(3, 8, 1), strength: r(0.5, 1), caustics: r(0, 0.3) }
       : { count: r(7, 14, 1), strength: r(0.7, 1), frost: r(0.35, 0.7), coverage: r(0.35, 0.65), jitter: r(0.2, 0.5), highlight: r(0.1, 0.25) };
-    return { source: type === 'water' ? shapesFlow() : crispFlow(), color: { stops: palette(), spread: r(1.1, 1.5) }, glass: { type, ...glassBase(), ...g }, light: light(), finish: finish() };
+    return { ...(type === 'water' ? shapesScene() : crispScene()), color: { stops: palette(), spread: r(1.1, 1.5) }, glass: { type, ...glassBase(), ...g }, light: light(), finish: finish() };
+  } },
+
+  // frosted glass objects floating over a soft gradient: overlapping panes,
+  // a stack of pills, or a few glass balls
+  glassObjects: { w: 1.6, make: ({ aspect }) => {
+    const theme = weighted({ panes: 1.2, pills: 1, spheres: 1, mixed: 0.8 });
+    const w = Math.min(aspect, 1);                   // stay inside narrow canvases
+    const flow = weighted({ mesh: 3, silk: 1.2, gradient: 1.5, color: 0.6 });
+    const stops = palette();
+    const source = flow === 'mesh' ? { type: 'mesh', meshCount: ri(3, 6), meshBlend: r(0.9, 1.6), meshMotion: r(0.4, 1), warp: r(0.4, 1) }
+      : flow === 'silk' ? { type: 'silk', scale: r(1.4, 2.2), warp: r(0.5, 1), detail: 2, blur: r(0.1, 0.25) }
+      : flow === 'gradient' ? { type: 'none', bgFill: 'gradient', gradShape: chance(0.3) ? 'radial' : 'linear', bgAngle: ri(-180, 180), gradLength: r(0.8, 1.5) }
+      : { type: 'none', bgFill: 'color', bgColor: softBackground(stops) };
+    const gradientFill = chance(0.25);              // the palette laid across every object
+    const n = theme === 'spheres' ? ri(1, 3) : ri(2, 3);
+    const objects = { count: n, refraction: r(0.3, 0.9), bevel: r(0.15, 0.45), rim: r(0.2, 0.5), thickness: chance(0.6) ? r(0.15, 0.5) : 0, shadow: r(0.2, 0.5), drift: r(0.1, 0.5) };
+    const base = ri(-60, 60);                        // panes and pills share a direction
+    const across = ((base + 90) * Math.PI) / 180;
+    for (let i = 1; i <= n; i++) {
+      const shape = { panes: 'pane', pills: 'pill', spheres: 'sphere' }[theme] || pick(['pane', 'pill', 'sphere']);
+      const k = i - (n + 1) / 2;                      // places the objects around the center
+      let size, x, y, angle = base + ri(-12, 12), length = 1;
+      if (shape === 'pane') { size = r(0.5, 0.85) * w; length = r(1.2, 1.7); x = k * r(0.12, 0.2) * w; y = k * r(0.1, 0.22); }
+      else if (shape === 'pill') { size = r(0.45, 0.7) * w; length = r(1.8, 2.6); x = Math.cos(across) * k * size * 0.75; y = Math.sin(across) * k * size * 0.75; angle = base + ri(-4, 4); }
+      else { size = r(0.35, 0.75) * w; x = r(-0.15, 0.15) * w; y = k * r(0.15, 0.3); }
+      const o = `o${i}`;
+      Object.assign(objects, {
+        [o + 'Material']: 'glass', [o + 'Shape']: shape, [o + 'Size']: +size.toFixed(3), [o + 'Length']: +length.toFixed(2),
+        [o + 'X']: +x.toFixed(3), [o + 'Y']: +y.toFixed(3), [o + 'Angle']: angle,
+        [o + 'Tone']: r(0.45, 1), [o + 'Tint']: r(0.25, 0.7), [o + 'Frost']: r(0.25, 0.85),
+        [o + 'Corner']: chance(0.5) ? r(0, 0.1) : r(0.3, 0.8),
+        ...(gradientFill ? { [o + 'Fill']: 'gradient', [o + 'Gradient']: 'palette', [o + 'GradAngle']: base + 90 } : {}),
+      });
+    }
+    return { source, objects, color: { stops, spread: r(1, 1.4) }, light: light(), finish: { grain: r(0.02, 0.08) } };
   } },
 
   print: { w: 1.1, make: () => {
@@ -432,6 +476,13 @@ export function randomizeSection(state, section) {
       g.reflect = Math.min(g.reflect, 0.25);
       g.panel = 'full';
       g.backType = chance(0.85) ? 'none' : pick(['reeded', 'tiles', 'hammered', 'water']);
+      break;
+    }
+    case 'objects': {
+      const o = state.objects;
+      if (o.count === 0) o.count = ri(2, 3);
+      randomizeParams(state, 'objects');
+      for (let i = 1; i <= o.count; i++) o[`o${i}Shape`] = weighted({ pane: 3, pill: 2.5, sphere: 2.5, link: 0.6 });
       break;
     }
     case 'light': {

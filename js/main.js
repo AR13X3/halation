@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 AR13X3 — Halation (https://github.com/AR13X3/halation)
 import { createContext, createTarget } from './gl/gl.js';
-import { Renderer, TargetSet } from './renderer.js';
+import { Renderer, TargetSet, loopPhase } from './renderer.js';
 import { Fluid } from './fluid.js';
 import { Store, sanitize, encodeLook, decodeLook, migrateLook } from './store.js';
-import { DOC_SIZES, LOOK_SECTIONS, defaultState } from './schema.js';
+import { DOC_SIZES, LOOK_SECTIONS, defaultState, objectKey, objectValue } from './schema.js';
+import { objectAt, toObjectDelta } from './objects.js';
 import { PRESETS } from './presets.js';
 import { buildPanel } from './ui/panel.js';
 import { buildPresetsPanel } from './ui/presets-panel.js';
@@ -186,6 +187,8 @@ new ResizeObserver(layout).observe(stage);
 
 // ── render loop ─────────────────────────────────────────────────────────────
 function isFluid() { return store.state.source.type === 'fluid'; }
+// patterns the canvas can pan and zoom (not the fluid, which is painted, or no flow)
+function pannable() { return !['fluid', 'none'].includes(store.state.source.type); }
 
 let liveScale = 1;
 
@@ -260,7 +263,11 @@ function tick(now) {
       if (fluidOn && simDt > 0) { fluid.step((simDt * a.speed) / 0.6, s.source); simDt = 0; }
       if (lastRender && a.playing && !rec) adaptResolution(now - lastRender, t);
       renderLive();
-      if (!lastRender) hideBoot();
+      if (!lastRender) {
+        hideBoot();
+        // get the object shaders ready while the user looks around
+        setTimeout(() => renderer.warmObjects(), 200);
+      }
       lastRender = now;
       dirty = false;
       refineK = 0;
@@ -422,6 +429,7 @@ const actions = {
     store.state[id] = { ...d[id] };
     if ('type' in cur) store.state[id].type = cur.type;
     if (id === 'color') store.state.color.stops = cur.stops;
+    if (id === 'objects') Object.assign(store.state.objects, { count: cur.count, edit: cur.edit });
     afterBulkChange();
   },
   uploadImage: () => $('#file-image').click(),
@@ -440,6 +448,8 @@ const actions = {
     if (isFluid()) fluid.reset();
   },
   thumbnail: (look) => thumbnail(look),
+  // false while a look's shaders are still compiling in the background
+  thumbnailReady: (look) => !(migrateLook(look)?.objects?.count > 0) || renderer.objectsReady(),
   download: (blob, name) => download(blob, name),
 };
 
@@ -514,7 +524,7 @@ store.on((path) => {
     if (d && d.w) { store.state.doc.width = d.w; store.state.doc.height = d.h; }
   }
   if (path === '*' || path.startsWith('doc')) layout();
-  if (!applyingLook && path !== 'doc.size' && !path.startsWith('doc') && !path.startsWith('export')) presetsPanel.clearActive();
+  if (!applyingLook && path !== 'objects.edit' && !path.startsWith('doc') && !path.startsWith('export')) presetsPanel.clearActive();
   queueSync();
   saveSession();
 });
@@ -523,18 +533,46 @@ store.on((path) => {
 const match = PRESETS.find((p) => p.name === lookName);
 if (match) presetsPanel.setActive(match.id);
 
-// ── canvas interaction: pan / zoom / paint ──────────────────────────────────
+// ── canvas interaction: move objects / pan / zoom / paint ───────────────────
+// The object (1–6) under the pointer, or 0.
+function objectUnder(e, rect) {
+  const px = ((e.clientX - rect.left) / rect.width - 0.5) * docAspect();
+  const py = 0.5 - (e.clientY - rect.top) / rect.height;
+  const a = store.state.anim;
+  return objectAt(store.state, loopPhase(a, a.time), px, py, 4 / rect.height);
+}
+
 let drag = null;
 canvas.addEventListener('pointerdown', (e) => {
   if (e.button !== 0) return;
   canvas.setPointerCapture(e.pointerId);
+  const rect = canvas.getBoundingClientRect();
+  const hit = objectUnder(e, rect);
+  if (hit) {
+    store.set('objects.edit', hit);
+    drag = { obj: hit, x: e.clientX, y: e.clientY, ox: objectValue(store.state, hit, 'X'), oy: objectValue(store.state, hit, 'Y'), rect, moved: false };
+    canvas.classList.add('grabbing');
+    return;
+  }
   const s = store.state.source;
   drag = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, ox: s.offsetX, oy: s.offsetY, rect: canvas.getBoundingClientRect(), moved: false };
-  canvas.classList.toggle('grabbing', !isFluid());
+  canvas.classList.toggle('grabbing', pannable());
 });
 canvas.addEventListener('pointermove', (e) => {
-  if (!drag) return;
+  if (!drag) {
+    canvas.classList.toggle('over-object', !!objectUnder(e, canvas.getBoundingClientRect()));
+    return;
+  }
   const { rect } = drag;
+  if (drag.obj) {
+    const [dx, dy] = toObjectDelta(store.state, (e.clientX - drag.x) / rect.height, -(e.clientY - drag.y) / rect.height);
+    if (Math.abs(dx) + Math.abs(dy) > 0.002) drag.moved = true;
+    const clamp = (v) => +Math.min(2, Math.max(-2, v)).toFixed(4);
+    store.state.objects[`o${drag.obj}X`] = clamp(drag.ox + dx);
+    store.state.objects[`o${drag.obj}Y`] = clamp(drag.oy + dy);
+    store.emit(objectKey(drag.obj, 'X'));
+    return;
+  }
   const s = store.state.source;
   if (isFluid()) {
     const x = (e.clientX - rect.left) / rect.width;
@@ -548,6 +586,7 @@ canvas.addEventListener('pointermove', (e) => {
     dirty = true;
     return;
   }
+  if (!pannable()) return;
   const H = rect.height;
   const dX = (e.clientX - drag.x) / H;
   const dY = -(e.clientY - drag.y) / H;
@@ -566,11 +605,12 @@ const endDrag = () => {
   canvas.classList.remove('grabbing');
 };
 canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointerleave', () => canvas.classList.remove('over-object'));
 canvas.addEventListener('pointercancel', endDrag);
 
 let wheelTimer = 0;
 canvas.addEventListener('wheel', (e) => {
-  if (isFluid()) return;
+  if (!pannable()) return;
   e.preventDefault();
   const s = store.state.source;
   const k = Math.exp(-e.deltaY * 0.0015);
@@ -580,7 +620,7 @@ canvas.addEventListener('wheel', (e) => {
 }, { passive: false });
 
 canvas.addEventListener('dblclick', () => {
-  if (isFluid()) return;
+  if (!pannable()) return;
   store.state.source.offsetX = 0;
   store.state.source.offsetY = 0;
   store.emit('source.offset');

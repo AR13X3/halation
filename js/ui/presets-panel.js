@@ -75,6 +75,7 @@ export function buildPresetsPanel(root, store, actions) {
   let i = 0;
   const next = () => {
     if (i >= builtin.length) return;
+    if (!actions.thumbnailReady(builtin[i].look)) { setTimeout(next, 250); return; }
     const b = builtin[i++];
     const url = actions.thumbnail(b.look);
     if (url) b.card.img.style.backgroundImage = `url(${url})`;

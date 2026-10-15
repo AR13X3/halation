@@ -39,6 +39,7 @@ js/gl/shaders.js     all GLSL for the main pipeline
 js/gl/gl.js          WebGL 2 helpers (programs auto-bind uniforms by name)
 js/renderer.js       render passes for preview, thumbnails and exports
 js/fluid.js          GPU stable-fluids solver
+js/objects.js        objects: positions over time, shader data, dragging, upgrading old looks
 js/palette.js        OKLab gradients, palette library and generator
 js/presets.js        built-in looks
 js/randomize.js      "Surprise me"

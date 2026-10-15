@@ -141,8 +141,90 @@ vec2 fbm2(vec2 pa, vec2 wa, int oa, vec2 pb, vec2 wb, int ob) {
 }
 `;
 
+// Objects float in front of the flow. Their drift is applied on the CPU
+// (objects.js), so these are positions at this moment, in object space.
+// Solid objects are drawn into the field, glass ones in the glass pass.
+// The object code only compiles into the OBJECTS variants of those shaders
+// (see withObjects), so looks without objects don't pay for it.
+const OBJECTS = /* glsl */ `
+#ifdef OBJECTS
+uniform int u_objects_count;
+uniform float u_objects_scale, u_objects_rotation, u_objects_offsetX, u_objects_offsetY, u_objects_bevel;
+uniform vec4 u_objA[6];   // center x, y · size · length
+uniform vec4 u_objB[6];   // shape · glass (0 / 1) · rotation (radians) · corners
+uniform vec4 u_objC[6];   // custom color · palette position
+uniform vec4 u_objD[6];   // fill (0 palette, 1 custom, 2 gradient) · tint · frost · gradient angle (radians)
+uniform sampler2D u_objPal;  // one gradient per row, for objects filled with a gradient
+
+// Canvas point → object space (undoes Arrange all).
+vec2 objSpace(vec2 p) {
+  return rot2(-radians(u_objects_rotation)) * p / u_objects_scale - vec2(u_objects_offsetX, u_objects_offsetY);
+}
+
+// The gradient of object i at q (its own frame), laid across the object at
+// its gradient angle, from one side of the shape to the other.
+vec3 objGradient(int i, vec2 q) {
+  int kind = int(u_objB[i].x);
+  float R = u_objA[i].z * 0.5, L = u_objA[i].w;
+  vec2 hs = kind == 0 ? vec2(1.0) : kind == 1 ? vec2(0.42, 0.55 * L + 0.42) : kind == 2 ? vec2(0.6, 0.6 * L) : vec2(0.84, 0.38 * L + 0.84);
+  vec2 dir = vec2(cos(u_objD[i].w), sin(u_objD[i].w));
+  float x = clamp(0.5 + dot(q, dir) / (2.0 * R * dot(abs(dir), hs)), 0.0, 1.0);
+  return texture(u_objPal, vec2((x * 511.0 + 0.5) / 512.0, (float(i) + 0.5) / 6.0)).rgb;   // 512 = PALETTE_SIZE
+}
+
+float sdSeg(vec2 q, vec2 a, vec2 b, out vec2 closest) {
+  vec2 pa = q - a, ba = b - a;
+  float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+  closest = a + ba * h;
+  return length(q - closest);
+}
+
+// Signed distance (negative inside) and surface normal of object i at q, in
+// the object's own frame. Spheres, pills and links are rounded bodies; a pane
+// is a flat sheet with a rounded bevel along its edge.
+float objShape(int i, vec2 q, out vec3 nrm) {
+  int kind = int(u_objB[i].x);
+  float R = u_objA[i].z * 0.5, L = u_objA[i].w;
+  float d;
+  if (kind == 0) {                                 // sphere
+    float r = length(q);
+    d = r - R;
+    nrm = normalize(vec3(q, sqrt(max(R * R - r * r, 0.0)) + 1e-4));
+  } else if (kind == 1) {                          // pill: a capsule
+    float tube = R * 0.42;
+    vec2 cl;
+    float ds = sdSeg(q, vec2(0.0, -R * 0.55 * L), vec2(0.0, R * 0.55 * L), cl);
+    d = ds - tube;
+    float u = clamp(ds / tube, 0.0, 1.0);
+    nrm = normalize(vec3((q - cl) / max(ds, 1e-5) * u, sqrt(max(1.0 - u * u, 0.0)) + 1e-4));
+  } else if (kind == 2) {                          // pane: a rounded rectangle
+    vec2 b = vec2(0.6, 0.6 * L) * R;
+    float cr = u_objB[i].w * min(b.x, b.y);
+    vec2 a = abs(q) - b + cr;
+    d = length(max(a, 0.0)) + min(max(a.x, a.y), 0.0) - cr;
+    vec2 o = max(a.x, a.y) > 0.0 ? normalize(max(a, 0.0) + 1e-6) : a.x > a.y ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+    o *= vec2(q.x < 0.0 ? -1.0 : 1.0, q.y < 0.0 ? -1.0 : 1.0);
+    float u = clamp(1.0 + d / max(u_objects_bevel * min(b.x, b.y), 1e-4), 0.0, 1.0);   // 0 on the flat top … 1 at the rim
+    nrm = normalize(vec3(o * u, sqrt(max(1.0 - u * u, 0.0)) + 1e-4));
+  } else {                                         // link: a stadium-shaped tube
+    float rr = R * 0.6, tube = R * 0.24;
+    vec2 cl;
+    float ds = sdSeg(q, vec2(0.0, -R * 0.38 * L), vec2(0.0, R * 0.38 * L), cl);
+    float dd = ds - rr;
+    d = abs(dd) - tube;
+    float u = clamp(dd / tube, -1.0, 1.0);
+    nrm = normalize(vec3((q - cl) / max(ds, 1e-5) * u, sqrt(max(1.0 - u * u, 0.0)) + 1e-4));
+  }
+  return d;
+}
+#endif
+`;
+
+/** The same shader with the object code compiled in. */
+export const withObjects = (src) => src.replace('#version 300 es\n', '#version 300 es\n#define OBJECTS\n');
+
 // ── 1. Field ────────────────────────────────────────────────────────────────
-export const FIELD_FRAG = HEADER + NOISE + /* glsl */ `
+export const FIELD_FRAG = HEADER + NOISE + OBJECTS + /* glsl */ `
 uniform sampler2D u_palette;
 uniform sampler2D u_dye;
 uniform sampler2D u_image;
@@ -161,13 +243,18 @@ uniform float u_source_meshBlend, u_source_meshMotion;
 uniform int u_source_ribLines;
 uniform float u_source_ribWidth, u_source_ribThick, u_source_ribGlow, u_source_ribAmp, u_source_ribFreq, u_source_ribFan, u_source_ribAngle;
 uniform int u_source_imgRecolor;
-uniform int u_source_shape, u_source_shapeCount;
-uniform float u_source_shapeSize, u_source_shapeSoft, u_source_shapeDrift, u_source_bgAngle;
+uniform int u_source_bgFill, u_source_gradShape;
+uniform vec3 u_source_bgColor;
+uniform float u_source_bgAngle, u_source_gradLength, u_source_gradShift, u_source_gradRange;
 uniform float u_source_fluidGain;
 uniform float u_source_thrCount, u_source_thrWeight, u_source_thrGlow, u_source_thrSpread, u_source_thrConverge, u_source_thrDepth, u_source_thrBreak;
 uniform int u_source_form;
 uniform float u_source_formSize, u_source_formWave, u_source_formSoft, u_source_formDepth;
 uniform vec3 u_source_formBg;
+#ifdef OBJECTS
+uniform float u_objects_soft, u_objects_shadow;
+uniform float u_light_angle, u_light_elevation;
+#endif
 
 uniform float u_color_spread, u_color_shift, u_color_repeat, u_color_offset, u_color_posterize;
 uniform int u_color_mirror;
@@ -321,65 +408,89 @@ float formDist(vec2 p, vec2 so) {
   return (abs(q.x - spine) - hw) * 0.8;
 }
 
-float sdSeg(vec2 q, vec2 a, vec2 b, out vec2 closest) {
-  vec2 pa = q - a, ba = b - a;
-  float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
-  closest = a + ba * h;
-  return length(q - closest);
+// No flow: a still gradient across the canvas, linear or radial, in the palette.
+float background(vec2 p) {
+  float a = radians(u_source_bgAngle);
+  float x = u_source_gradShape == 1
+    ? length(p) * 1.2 / u_source_gradLength + u_source_gradShift
+    : 0.5 + dot(p, vec2(cos(a), sin(a))) * 0.85 / u_source_gradLength + u_source_gradShift;
+  return clamp(x, 0.0, 1.0) * u_source_gradRange;
 }
 
-// Crisp, softly lit objects (spheres, chain links, pills) floating over a
-// gradient — something solid for the glass to break up. The backdrop uses the
-// lower part of the palette, the objects the upper part.
-float shapes(vec2 p) {
-  float ba = radians(u_source_bgAngle);
-  float t = clamp(0.5 + dot(p, vec2(cos(ba), sin(ba))) * 0.85, 0.0, 1.0) * 0.4;
-  vec3 L = normalize(vec3(-0.45, 0.65, 0.62));
-  float n = float(u_source_shapeCount);
-  for (int i = 0; i < u_source_shapeCount + u_zero; i++) {
-    float fi = float(i);
-    vec2 h = hash22(vec2(fi * 3.17 + 1.3, u_source_seed * 0.211 + 5.0));
-    float R = u_source_shapeSize * 0.5 * (n > 1.0 ? mix(0.8, 1.0, fract(h.x * 7.3)) : 1.0);
-    float ca = hash11(u_source_seed * 0.37 + 2.1) * TAU;
-    vec2 c = vec2(cos(ca), sin(ca)) * (fi - (n - 1.0) * 0.5) * u_source_shapeSize * 0.62 + (h - 0.5) * u_source_shapeSize * 0.18;
-    float sp = 1.0 + mod(fi, 2.0);
-    c += 0.07 * u_source_shapeDrift * vec2(sin(u_phase * sp + h.x * TAU), cos(u_phase * (3.0 - sp) + h.y * TAU));
-    int kind = u_source_shape == 3 ? int(mod(fi, 3.0)) : u_source_shape;
-    float ang = (h.y - 0.5) * 2.4 + 0.35 * u_source_shapeDrift * sin(u_phase + fi * 1.7);
-    vec2 q = rot2(-ang) * (p - c);
-    float d;
-    vec3 nrm;
-    if (kind == 0) {                               // sphere
-      float r = length(q);
-      d = r - R;
-      nrm = normalize(vec3(q, sqrt(max(R * R - r * r, 0.0)) + 1e-4));
-    } else if (kind == 1) {                        // chain link: a stadium-shaped tube
-      float rr = R * 0.6, tube = R * 0.24;
-      vec2 cl;
-      float ds = sdSeg(q, vec2(0.0, -R * 0.38), vec2(0.0, R * 0.38), cl);
-      float dd = ds - rr;
-      d = abs(dd) - tube;
-      float u = clamp(dd / tube, -1.0, 1.0);
-      nrm = normalize(vec3((q - cl) / max(ds, 1e-5) * u, sqrt(max(1.0 - u * u, 0.0)) + 1e-4));
-    } else {                                       // pill
-      float tube = R * 0.42;
-      vec2 cl;
-      float ds = sdSeg(q, vec2(0.0, -R * 0.55), vec2(0.0, R * 0.55), cl);
-      d = ds - tube;
-      float u = clamp(ds / tube, 0.0, 1.0);
-      nrm = normalize(vec3((q - cl) / max(ds, 1e-5) * u, sqrt(max(1.0 - u * u, 0.0)) + 1e-4));
+// Value shaping and the palette lookup.
+vec3 paletteColor(float t, out float tv) {
+  t = clamp((t - 0.5) * u_color_spread + 0.5 + u_color_shift, 0.0, 1.0);
+  tv = t;
+  float pt = t * u_color_repeat + u_color_offset + u_cycleOffset;
+  if (u_color_mirror == 1) pt = 1.0 - abs(mod(pt, 2.0) - 1.0);
+  else if (pt > 1.0 || pt < 0.0) pt = fract(pt);
+  if (u_color_posterize > 1.5) {
+    float n = u_color_posterize;
+    pt = floor(pt * n * 0.9999) / (n - 1.0);
+  }
+  return texture(u_palette, vec2((pt * (u_paletteSize - 1.0) + 0.5) / u_paletteSize, 0.5)).rgb;
+}
+
+#ifdef OBJECTS
+// Solid objects, softly lit, drawn back to front over the flow; each casts a
+// soft shadow on what lies behind it. Palette-colored objects take a stretch
+// of the palette that darkens away from the light, and blend into what is
+// behind them through the palette (as the old Shapes flow did), so soft edges
+// pass through the colors in between.
+vec3 solidObjects(vec2 p0, float t, vec3 pb, vec3 col, inout float tv) {
+  vec2 pa = objSpace(p0);
+  // how far one pixel reaches in object space, for antialiasing (taken here,
+  // outside the loops, where derivatives are reliable)
+  vec2 dx = dFdx(pa), dy = dFdy(pa);
+  vec3 L = normalize(vec3(-0.45, 0.65, 0.62));     // shading light, in object space
+  float la = radians(u_light_angle), le = radians(u_light_elevation);
+  vec3 Ld = vec3(cos(la) * cos(le), sin(la) * cos(le), sin(le));
+  vec2 sOff = rot2(-radians(u_objects_rotation)) * (Ld.xy / max(Ld.z, 0.3) * 0.03) / u_objects_scale;
+  bool shadows = u_objects_shadow > 0.001;
+  float tb = t, tvb = tv;                          // the value behind and its color (pb), which
+                                                   // equal col until something else changes it
+  for (int i = 0; i < u_objects_count + u_zero; i++) {
+    if (u_objB[i].y > 0.5) continue;               // glass: drawn in the glass pass
+    vec2 c = u_objA[i].xy;
+    float ang = u_objB[i].z, R = u_objA[i].z * 0.5;
+    vec2 q = rot2(-ang) * (pa - c);
+    vec3 nrm = vec3(0.0, 0.0, 1.0);
+    float d = 1.0, ds = 1.0;
+    for (int m = shadows ? 0 : 1; m < 2 + u_zero; m++) {   // m = 0: where the shadow falls
+      vec3 nn;
+      float dm = objShape(i, m == 0 ? rot2(-ang) * (pa + sOff - c) : q, nn);
+      if (m == 0) ds = dm; else { d = dm; nrm = nn; }
     }
+    if (shadows) {
+      float soft = R * 0.3 + 0.004 / u_objects_scale;
+      col *= 1.0 - u_objects_shadow * 0.6 * (1.0 - smoothstep(-soft, soft, ds));
+    }
+    vec2 g = normalize(nrm.xy + 1e-6);              // the outline's normal: fwidth(d) for a distance field
+    float aa = (abs(dot(g, rot2(-ang) * dx)) + abs(dot(g, rot2(-ang) * dy))) * 1.2 + u_objects_soft * R * 0.5 + 1e-5;
     nrm.xy = rot2(ang) * nrm.xy;
-    float aa = fwidth(d) * 1.2 + u_source_shapeSoft * R * 0.5 + 1e-5;
     float cov = 1.0 - smoothstep(-aa, aa, d);
     float diff = clamp(dot(nrm, L), 0.0, 1.0);
     float spec = pow(max(reflect(-L, nrm).z, 0.0), 30.0);
-    float tone = n > 1.0 ? mix(0.62, 1.0, fi / (n - 1.0)) : 1.0;
-    float st = clamp(mix(max(0.47, tone - 0.26), tone, 0.2 + 0.8 * diff) + spec * 0.05, 0.0, 1.0);
-    t = mix(t, st, cov);
+    if (u_objD[i].x > 0.5) {                       // a custom color or a gradient
+      float lit = 0.2 + 0.8 * diff;
+      vec3 base = u_objD[i].x > 1.5 ? objGradient(i, q) : u_objC[i].rgb;
+      col = mix(col, base * mix(0.42, 1.0, lit) + spec * 0.06, cov);
+      tv = mix(tv, 0.4 + 0.6 * lit, cov);
+    } else {
+      float tone = u_objC[i].w;
+      float tn = mix(tb, clamp(mix(max(0.47, tone - 0.26), tone, 0.2 + 0.8 * diff) + spec * 0.05, 0.0, 1.0), cov);
+      float tvn;
+      vec3 pn = paletteColor(tn, tvn);
+      // anything that changed the color behind (shadows, a silhouette,
+      // custom-colored objects) fades out across the edge
+      col = pn + (col - pb) * (1.0 - cov);
+      tv = tvn + (tv - tvb) * (1.0 - cov);
+      tb = tn; pb = pn; tvb = tvn;
+    }
   }
-  return t;
+  return col;
 }
+#endif
 
 vec4 imageSample(vec2 p, vec2 wn) {
   vec2 wp = p + u_source_warp * 0.06 * wn;
@@ -397,7 +508,10 @@ void main() {
   bool direct = false;
   vec2 so = seedOffset();
 
-  if (type == 6) {
+  if (type == 0) {                                 // none: a still background
+    if (u_source_bgFill == 1) { col = u_source_bgColor; t = luma(col); direct = true; }
+    else t = background(p0);
+  } else if (type == 6) {
     float d = texture(u_dye, v_uv).r;
     t = 1.0 - exp(-max(d, 0.0) * u_source_fluidGain);
   } else {
@@ -406,23 +520,21 @@ void main() {
     p = p / u_source_scale + vec2(u_source_offsetX, u_source_offsetY);
     // One shared domain-warp noise for every pattern, each with its own inputs:
     // a single inlined copy of fbm keeps shader compiles fast.
-    vec2 ps = type == 0 ? p * 1.4 : type == 3 ? rot2(radians(u_source_ribAngle)) * p : type == 4 ? threadSpace(p) : p;
+    vec2 ps = type == 1 ? p * 1.4 : type == 4 ? rot2(radians(u_source_ribAngle)) * p : type == 5 ? threadSpace(p) : p;
     vec2 pa = ps + so, pb = ps + so, wb = u_W;
     int oa = 3, ob = 3;
-    if (type == 0) { pb += vec2(5.2, 1.3); wb += vec2(4.1, 2.7); }
-    else if (type == 1) { pa = p * 1.3 + so; pb = p * 0.9 + so + 4.3; wb += 2.0; oa = u_source_detail; ob = 2; }
-    else if (type == 2) { pa = p * 1.1 + so; pb = pa + vec2(7.7, 3.3); wb += vec2(2.0, 5.0); oa = u_source_detail; ob = u_source_detail; }
-    else if (type == 3) { pa = ps * 0.9 + so; oa = u_source_detail; ob = 0; }
-    else if (type == 4) { pa = ps * vec2(0.8, 1.1) + so; pb = ps * vec2(0.9, 1.3) + so + vec2(4.7, 1.9); wb += vec2(2.3, 5.1); }
-    else if (type == 5) { oa = 0; ob = 0; }
+    if (type == 1) { pb += vec2(5.2, 1.3); wb += vec2(4.1, 2.7); }
+    else if (type == 2) { pa = p * 1.3 + so; pb = p * 0.9 + so + 4.3; wb += 2.0; oa = u_source_detail; ob = 2; }
+    else if (type == 3) { pa = p * 1.1 + so; pb = pa + vec2(7.7, 3.3); wb += vec2(2.0, 5.0); oa = u_source_detail; ob = u_source_detail; }
+    else if (type == 4) { pa = ps * 0.9 + so; oa = u_source_detail; ob = 0; }
+    else if (type == 5) { pa = ps * vec2(0.8, 1.1) + so; pb = ps * vec2(0.9, 1.3) + so + vec2(4.7, 1.9); wb += vec2(2.3, 5.1); }
     else { pa = p * 1.5 + so; pb = pa + 9.1; wb += 3.3; }
     vec2 wn = fbm2(pa, u_W, oa, pb, wb, ob);
-    if (type == 0) t = silk(ps, so, wn);
-    else if (type == 1) t = bands(p, so, wn);
-    else if (type == 2) t = mesh(p, wn);
-    else if (type == 3) t = ribbons(p, wn);
-    else if (type == 4) t = threads(p, so, wn);
-    else if (type == 5) t = shapes(p);
+    if (type == 1) t = silk(ps, so, wn);
+    else if (type == 2) t = bands(p, so, wn);
+    else if (type == 3) t = mesh(p, wn);
+    else if (type == 4) t = ribbons(p, wn);
+    else if (type == 5) t = threads(p, so, wn);
     else {
       vec4 im = imageSample(p, wn);
       t = luma(im.rgb);
@@ -430,17 +542,9 @@ void main() {
     }
   }
 
-  // value shaping
-  t = clamp((t - 0.5) * u_color_spread + 0.5 + u_color_shift, 0.0, 1.0);
-  float tv = t;
-  float pt = t * u_color_repeat + u_color_offset + u_cycleOffset;
-  if (u_color_mirror == 1) pt = 1.0 - abs(mod(pt, 2.0) - 1.0);
-  else if (pt > 1.0 || pt < 0.0) pt = fract(pt);
-  if (u_color_posterize > 1.5) {
-    float n = u_color_posterize;
-    pt = floor(pt * n * 0.9999) / (n - 1.0);
-  }
-  if (!direct) col = texture(u_palette, vec2((pt * (u_paletteSize - 1.0) + 0.5) / u_paletteSize, 0.5)).rgb;
+  float tv;
+  vec3 pc = paletteColor(t, tv);
+  if (!direct) col = pc;
 
   // silhouette: the flow fills a sculpted form placed on the canvas; its height
   // falls off toward the rim so Relief, Chrome and Liquid see a rounded body
@@ -453,6 +557,9 @@ void main() {
     col = mix(u_source_formBg, col, cov);
     tv = mix(tv, tv * 0.5 + 0.5 * inner, u_source_formDepth * 0.6) * cov;
   }
+#ifdef OBJECTS
+  if (u_objects_count > 0) col = solidObjects(p0, t, pc, col, tv);
+#endif
   fragColor = vec4(col, tv);
 }
 `;
@@ -481,7 +588,7 @@ void main() {
 //   → total internal reflection at steep seams → specular highlight.
 // Samples are stratified with a per-pixel random rotation; the renderer
 // averages several passes (different u_frameSeed) for noise-free stills.
-export const GLASS_FRAG = HEADER + NOISE + /* glsl */ `
+export const GLASS_FRAG = HEADER + NOISE + OBJECTS + /* glsl */ `
 uniform sampler2D u_field;
 uniform sampler2D u_palette;
 uniform float u_paletteSize;
@@ -499,6 +606,11 @@ uniform vec3 u_light_color;
 uniform int u_light_env;
 uniform int u_glass_panel;
 uniform float u_glass_panelSize, u_glass_panelOffset;
+#ifdef OBJECTS
+uniform float u_objects_refraction, u_objects_rim, u_objects_thickness, u_objects_shadow;
+uniform int u_objGlass;      // how many objects are glass
+uniform float u_objFrost;    // the most frost on any of them
+#endif
 uniform vec2 u_jitter;       // sub-pixel offset of this accumulation pass (antialiasing)
 uniform float u_samples;     // Monte Carlo samples per pixel in this pass
 uniform float u_frameSeed;   // changes per accumulation pass
@@ -844,6 +956,93 @@ float sparkles(vec2 q) {
   return s;
 }
 
+#ifdef OBJECTS
+// Light reaching the eye through the glass objects. The ray visits them front
+// to back (later objects are in front): each one it crosses bends it (a lens
+// for rounded bodies, only the bevel for panes), scatters it (frost) and tints
+// it. Toward the rim, where glass reflects more and finally traps the light,
+// it mirrors the scene around it — so edges are light on a light background
+// and dark on a dark one. The side of each piece shows as a dark, deeply
+// tinted band. Then the flow behind receives soft, colored shadows.
+void throughObjects(inout vec2 sp, inout vec3 thru, inout vec3 glow, float fi, float r1, float r2, vec3 Ld, vec3 lc) {
+  int n = u_objects_count;
+  float px = 1.5 / u_res.y;                        // edge antialiasing, height units
+  float sc = u_objects_scale;
+  mat2 toCanvas = rot2(radians(u_objects_rotation));
+  vec2 lxy = length(Ld.xy) > 1e-3 ? normalize(Ld.xy) : vec2(0.0, 1.0);
+  vec2 sOff = Ld.xy / max(Ld.z, 0.3) * 0.03;        // shadows fall away from the light
+  vec2 tOff = -lxy * u_objects_thickness * 0.016;  // the side we see faces away from it
+  bool side = u_objects_thickness > 0.001;
+  vec3 Hv = normalize(Ld + vec3(0.0, 0.0, 1.0));
+  float spec0 = pow(Hv.z, 300.0);
+  for (int j = 0; j < 2 * n + u_zero; j++) {
+    bool sh = j >= n;                              // second round: shadows
+    int i = sh ? j - n : n - 1 - j;
+    if (u_objB[i].y < 0.5 || (sh && u_objects_shadow < 0.001)) continue;
+    vec2 c = u_objA[i].xy;
+    float ang = u_objB[i].z, R = u_objA[i].z * 0.5;
+    vec2 q = rot2(-ang) * (objSpace(sh ? sp + sOff : sp) - c);
+    float reach = R * (1.3 + 0.6 * u_objA[i].w) + 0.06 / sc;
+    if (dot(q, q) > reach * reach) continue;
+    vec2 tq = rot2(-ang) * (transpose(toCanvas) * tOff) / sc;
+    vec3 nrm = vec3(0.0, 0.0, 1.0);
+    float d = 1.0, d2 = 1.0;
+    for (int m = 0; m < 2 + u_zero; m++) {         // m = 1: the shape moved to its side
+      if (m == 1 && (sh || !side)) break;
+      vec3 nn;
+      float dm = objShape(i, m == 0 ? q : q - tq, nn);
+      if (m == 0) { d = dm; nrm = nn; } else d2 = dm;
+    }
+    float fill = u_objD[i].x;
+    vec3 oc = fill < 0.5 ? pal(u_objC[i].w) : fill < 1.5 ? u_objC[i].rgb : objGradient(i, q);
+    float tint = u_objD[i].y, frost = u_objD[i].z;
+    if (sh) {
+      float soft = R * sc * 0.3 + 0.004;
+      float m = (1.0 - smoothstep(-soft, soft, d * sc)) * u_objects_shadow;
+      thru *= mix(vec3(1.0), mix(vec3(0.42), oc * 0.8, tint), m * 0.85);
+      continue;
+    }
+    float inside = 1.0 - smoothstep(-px, px, d * sc);
+    float sideM = side ? (1.0 - smoothstep(-px, px, d2 * sc)) * (1.0 - inside) : 0.0;
+    if (inside + sideM < 1e-4) continue;
+    vec3 before = thru;
+    if (inside > 0.0) {
+      nrm.xy = toCanvas * (rot2(ang) * nrm.xy);
+      vec2 entry = sp;
+      // past about 0.7 a rounded body shows the scene upside down, like a glass ball
+      sp -= nrm.xy * R * sc * u_objects_refraction * (int(u_objB[i].x) == 2 ? 0.8 : 1.4) * inside;
+      if (frost > 0.001) {
+        float u = fract(fi * 0.618034 + r1 + float(i) * 0.4142);
+        float r = (u < 0.7 ? sqrt(u / 0.7) * 0.55 : 0.55 + (u - 0.7) / 0.3 * 1.6) * frost * frost * 0.06;
+        float th = fi * 2.39996323 + r2 * TAU + float(i) * 1.7;
+        sp += r * vec2(cos(th), sin(th)) * inside;
+      }
+      float F = 0.04 + 0.96 * pow(1.0 - nrm.z, 5.0);
+      vec3 t1 = refract(vec3(0.0, 0.0, -1.0), nrm, 1.0 / 1.5);
+      float trans = smoothstep(-0.04, 0.04, 1.0 - 2.25 * (1.0 - t1.z * t1.z));   // trapped at steep edges
+      float path = 1.0 / max(nrm.z, 0.3);           // longer path toward the edges: deeper color
+      vec3 absorb = mix(vec3(1.0), pow(max(oc, vec3(0.002)), vec3(path * 0.7)), tint);
+      thru *= mix(vec3(1.0), absorb * trans * (1.0 - F) / 0.96, inside);
+      // frosted glass scatters room light: milky, in its own color
+      glow += before * inside * frost * mix(vec3(1.0), oc, tint) * 0.07 * mix(vec3(1.0), lc, 0.5);
+      // reflections: the scene beside the object (stronger toward the rim, and
+      // all of it where the light is trapped), plus light along the rim and a
+      // small glint, which Edge light controls (rough frosted glass dulls it)
+      vec3 scene = tap(entry + nrm.xy * (R * sc * 0.35 + 0.02)).rgb;
+      float spec = max(pow(max(dot(nrm, Hv), 0.0), 300.0) - spec0, 0.0) / (1.0 - spec0);
+      float facing = max(dot(normalize(nrm.xy + 1e-6), lxy), 0.0);   // the side of the rim that faces the light
+      glow += before * inside * (scene * min(F + (1.0 - trans) * 0.85, 1.0)
+                                 + u_objects_rim * lc * (F * facing * 0.5 + spec * 0.7) * (1.0 - 0.7 * frost));
+    }
+    if (sideM > 0.0) {
+      // light crossing the glass edgewise comes out dark and deeply tinted
+      thru *= mix(vec3(1.0), mix(vec3(0.3), oc * oc * 0.5, tint), sideM);
+      glow += before * sideM * u_objects_rim * 0.08 * lc;
+    }
+  }
+}
+#endif
+
 void main() {
   vec2 p = toP(v_uv + u_jitter / u_res);
   float la = radians(u_light_angle), le = radians(u_light_elevation);
@@ -887,6 +1086,9 @@ void main() {
   float streakL = anyGlass ? u_glass_streak * u_glass_streak * 0.14 : 0.0;
   float disp = anyGlass ? u_glass_dispersion : 0.0;
   bool multi = frostR > 1e-5 || streakL > 1e-5 || disp > 0.001;
+#ifdef OBJECTS
+  multi = multi || u_objFrost > 0.001;
+#endif
   int N = multi ? int(u_samples) : 1;
   float r1 = hash12(gl_FragCoord.xy + u_frameSeed * 61.7);
   float r2 = hash12(gl_FragCoord.yx * 1.37 + u_frameSeed * 17.3 + 4.1);
@@ -926,8 +1128,12 @@ void main() {
       sp += (off + along * 0.004) * (lam - 0.5) * disp * 1.2;
       wgt = spectrum(lam);
     }
+    vec3 thru = vec3(1.0), glow = vec3(0.0);
+#ifdef OBJECTS
+    if (u_objGlass > 0) throughObjects(sp, thru, glow, fi, r1, r2, Ld, lc);
+#endif
     vec4 c = tap(sp);
-    acc += c.rgb * wgt;
+    acc += (c.rgb * thru + glow) * wgt;
     wsum += wgt;
     aacc += c.a;
   }

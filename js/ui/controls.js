@@ -4,6 +4,10 @@
 // value + visibility from the store.
 
 import { ICONS } from './icons.js';
+import { objectValue, gradientStops } from '../schema.js';
+import { sampleGradient, rgbToHex, gradientCss, PALETTES } from '../palette.js';
+
+const PALETTE_OPTIONS = PALETTES.map((p) => ({ value: p.name, label: p.name, stops: p.stops }));
 
 export function h(tag, attrs = {}, ...children) {
   const el = document.createElement(tag);
@@ -45,6 +49,8 @@ export function createControl(p, store) {
     case 'chips': return chipsControl(p, store);
     case 'toggle': return toggleControl(p, store);
     case 'color': return colorControl(p, store);
+    case 'picker': return pickerControl(p, store);
+    case 'gradient': return gradientPickControl(p, store);
     default: throw new Error('Unknown control type ' + p.type);
   }
 }
@@ -254,6 +260,66 @@ function colorControl(p, store) {
     input.value = v;
     swatch.style.background = v;
     if (force || document.activeElement !== hex) hex.value = v;
+  }
+  return { el, sync };
+}
+
+// The color an object shows in the interface (a CSS background).
+export function objectSwatch(s, i) {
+  const fill = objectValue(s, i, 'Fill');
+  if (fill === 'custom') return objectValue(s, i, 'Color');
+  if (fill === 'gradient') return gradientCss(gradientStops(s, objectValue(s, i, 'Gradient')), 135);
+  return rgbToHex(sampleGradient(s.color.stops, objectValue(s, i, 'Tone')));
+}
+
+/**
+ * A grid of gradient swatches: the library, as in the Color section. `get`
+ * says which one is chosen, `choose` applies one; `palette` adds a swatch
+ * for the current palette first.
+ */
+export function gradientGrid({ store, palette = false, get, choose }) {
+  const items = [...(palette ? [{ value: 'palette', label: 'Your palette' }] : []), ...PALETTE_OPTIONS];
+  const buttons = items.map((o) => h('button', { class: 'grad-swatch', title: o.label, 'aria-label': o.label, onclick: () => choose(o) }));
+  const el = h('div', { class: 'grad-lib grad-pick' }, buttons);
+  const sync = () => {
+    const cur = get();
+    items.forEach((o, k) => {
+      buttons[k].classList.toggle('active', o.value === cur);
+      buttons[k].style.background = gradientCss(o.value === 'palette' ? store.state.color.stops : o.stops);
+    });
+  };
+  return { el, sync };
+}
+
+// An object's gradient, picked from the library.
+function gradientPickControl(p, store) {
+  const grid = gradientGrid({ store, palette: true, get: () => store.get(p.key), choose: (o) => { store.set(p.key, o.value); store.commit(); } });
+  const el = h('div', { class: 'ctl ctl-gradients' }, h('label', { class: 'ctl-label', title: 'Double-click to reset' }, p.label), grid.el);
+  el.querySelector('.ctl-label').addEventListener('dblclick', () => { store.set(p.key, p.def); store.commit(); });
+  function sync() {
+    if (visible(p, store, el)) grid.sync();
+  }
+  return { el, sync };
+}
+
+// One numbered button per object, to choose the one the panel edits.
+function pickerControl(p, store) {
+  const row = h('div', { class: 'obj-picker', role: 'group', 'aria-label': 'Object to edit' });
+  const el = h('div', { class: 'ctl ctl-picker' }, h('label', { class: 'ctl-label' }, p.label), row);
+  let sig = '';
+  function sync() {
+    if (!visible(p, store, el)) return;
+    const s = store.state;
+    const cur = store.get(p.key);
+    const colors = Array.from({ length: s.objects.count }, (_, k) => objectSwatch(s, k + 1));
+    const next = `${cur}|${colors.join()}`;
+    if (next === sig) return;
+    sig = next;
+    row.replaceChildren(...colors.map((c, k) => {
+      const on = k + 1 === cur;
+      return h('button', { class: on ? 'obj-pick active' : 'obj-pick', 'aria-pressed': String(on), title: `Edit object ${k + 1}`, onclick: () => store.set(p.key, k + 1) },
+        h('span', { class: 'obj-dot', style: { background: c } }), String(k + 1));
+    }));
   }
   return { el, sync };
 }

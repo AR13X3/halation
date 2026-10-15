@@ -58,7 +58,9 @@ Then open http://localhost:5173. Any static file server works; the page must be 
 ## Features
 
 **Flow**: the moving color field behind the glass.
-Silk, light bands, mesh gradients, ribbons, threads of light that can pinch into an hourglass or a starburst, crisp lit shapes, a real-time fluid simulation you paint with the mouse, or any image you drop in. A silhouette can shape any flow into a sculpted ribbon, wave or blob over a plain backdrop.
+Silk, light bands, mesh gradients, ribbons, threads of light that can pinch into an hourglass or a starburst, a real-time fluid simulation you paint with the mouse, or any image you drop in. Or no flow at all: a still color or gradient background. A silhouette can shape any flow into a sculpted ribbon, wave or blob over a plain backdrop.
+
+**Objects**: up to six spheres, pills, panes and chain links floating in front of the flow, in frosted or clear glass or a solid material. Each has its own shape, color (from the palette, any color, or a gradient from the library), tint, frost, size, position and rotation; drag them on the canvas to compose. Glass objects refract and blur what is behind them, catch light along their edges and cast soft, colored shadows.
 
 **Color**: gradient editor with smooth OKLab blending, palette library and generator, repeats, posterize and animated color cycling.
 
@@ -91,8 +93,8 @@ Each frame runs up to six GPU passes:
 field ─▶ glass ─▶ screen ─▶ (streaks) ─▶ bloom ─▶ finish
 ```
 
-1. **Field** computes the flow value for each pixel (noise, bands, mesh, ribbons, threads, shapes, fluid dye or image), maps it through the palette and applies the silhouette.
-2. **Glass** lights the flow as a surface (relief, chrome, liquid, thin-film interference, sparkles), then builds a surface for each pane and traces light through it: refraction, Monte Carlo frost, streaks and spectral dispersion, then tint, caustics, Fresnel reflection, total internal reflection and highlights. Jittered passes are averaged for clean, antialiased stills.
+1. **Field** computes the flow value for each pixel (noise, bands, mesh, ribbons, threads, fluid dye, image or a still background), maps it through the palette, applies the silhouette and draws solid objects.
+2. **Glass** lights the flow as a surface (relief, chrome, liquid, thin-film interference, sparkles), then traces light through the glass objects and each pane: refraction, Monte Carlo frost, streaks and spectral dispersion, then tint, caustics, Fresnel reflection, total internal reflection and highlights. Jittered passes are averaged for clean, antialiased stills.
 3. **Screen** resamples the result on a cell grid for halftone, LED, contour and other patterns.
 4. **Streaks** smears the image in three passes of growing length, for a smooth zoom, spin or directional blur.
 5. **Bloom** blurs the brightest areas at quarter resolution.

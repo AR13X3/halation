@@ -4,18 +4,21 @@
 // and shader uniforms are all generated from this list.
 //
 // key      'section.name' -> state path, and uniform `u_section_name` (unless uniform:false)
-// type     range | int | select | chips | toggle | color | seed
+// type     range | int | select | chips | toggle | color | seed | picker | gradient
 // show     (state) => boolean  — visibility in the panel
+// obj      the object (1–6) a per-object setting belongs to
 // rnd      [lo, hi] range used by the randomizer, or false to never randomize
 // tags     extra words the settings search should match (synonyms)
 
+import { PALETTES } from './palette.js';
+
 export const SOURCE_TYPES = [
+  { value: 'none', label: 'None', icon: 'none' },
   { value: 'silk', label: 'Silk', icon: 'silk' },
   { value: 'bands', label: 'Bands', icon: 'bands' },
   { value: 'mesh', label: 'Mesh', icon: 'mesh' },
   { value: 'ribbons', label: 'Ribbons', icon: 'ribbons' },
   { value: 'threads', label: 'Threads', icon: 'threads' },
-  { value: 'shapes', label: 'Shapes', icon: 'shapes' },
   { value: 'fluid', label: 'Fluid', icon: 'fluid' },
   { value: 'image', label: 'Image', icon: 'image' },
 ];
@@ -74,6 +77,70 @@ export const STREAK_TYPES = [
   { value: 'linear', label: 'Directional' },
 ];
 
+// ── Objects ─────────────────────────────────────────────────────────────────
+// Up to six objects float in front of the flow. Each has its own settings
+// under objects.o1… objects.o6; the shared ones apply to all of them.
+export const MAX_OBJECTS = 6;
+
+export const OBJECT_SHAPES = [
+  { value: 'sphere', label: 'Sphere', icon: 'sphere' },
+  { value: 'pill', label: 'Pill', icon: 'pill' },
+  { value: 'pane', label: 'Pane', icon: 'pane' },
+  { value: 'link', label: 'Link', icon: 'link' },
+];
+
+export const OBJECT_MATERIALS = [
+  { value: 'glass', label: 'Glass', icon: 'glassObject' },
+  { value: 'solid', label: 'Solid', icon: 'solidObject' },
+];
+
+// Each slot has its own defaults, so objects added one by one build up a
+// composition instead of stacking in the middle.
+const OBJECT_SLOTS = [
+  { shape: 'pane', size: 0.62, length: 1.45, corner: 0.06, x: -0.06, y: 0.08, angle: -24, tone: 0.78, color: '#8ed8e6', gradient: 'Lagoon' },
+  { shape: 'pill', size: 0.46, length: 1.5, x: 0.12, y: -0.17, angle: 38, tone: 0.55, color: '#9db8ff', gradient: 'Glacier' },
+  { shape: 'sphere', size: 0.34, x: -0.14, y: -0.3, tone: 0.92, color: '#b6f0c8', gradient: 'Candy' },
+  { shape: 'pane', size: 0.34, length: 1.2, corner: 0.5, x: 0.17, y: 0.3, angle: 14, tone: 0.66, color: '#ffc9a8', gradient: 'Peach' },
+  { shape: 'sphere', size: 0.18, x: 0.2, y: 0.02, tone: 0.45, color: '#f2b6e4', gradient: 'Pearl' },
+  { shape: 'pill', size: 0.28, length: 1.2, x: -0.18, y: 0.34, angle: -62, tone: 0.85, color: '#fff1b0', gradient: 'Gold' },
+];
+
+// Gradients an object can use: the palette from Color, or one from the library.
+export const OBJECT_GRADIENTS = [{ value: 'palette', label: 'Your palette' }, ...PALETTES.map((p) => ({ value: p.name, label: p.name }))];
+export const gradientStops = (s, name) => PALETTES.find((p) => p.name === name)?.stops ?? s.color.stops;
+
+export const objectKey = (i, name) => `objects.o${i}${name}`;
+export const objectValue = (s, i, name) => s.objects[`o${i}${name}`];
+const objectsOn = (s) => s.objects.count > 0;
+const hasMaterial = (m) => (s) => Array.from({ length: s.objects.count }, (_, k) => objectValue(s, k + 1, 'Material')).includes(m);
+const hasGlassPane = (s) => Array.from({ length: s.objects.count }, (_, k) => k + 1).some((i) => objectValue(s, i, 'Material') === 'glass' && objectValue(s, i, 'Shape') === 'pane');
+
+// The settings of object i, shown while it is the one being edited.
+function objectParams(i) {
+  const d = OBJECT_SLOTS[i - 1];
+  const k = (name) => objectKey(i, name);
+  const on = (s) => s.objects.count >= i && s.objects.edit === i;
+  const is = (name, ...values) => (s) => on(s) && values.includes(objectValue(s, i, name));
+  const common = { obj: i, uniform: false };
+  return [
+    { ...common, key: k('Material'), label: 'Material', type: 'chips', options: OBJECT_MATERIALS, def: 'glass', rnd: false, show: on },
+    { ...common, key: k('Shape'), label: 'Shape', type: 'chips', options: OBJECT_SHAPES, def: d.shape, rnd: false, show: on },
+    { ...common, key: k('Fill'), label: 'Color', type: 'select', options: [{ value: 'palette', label: 'From palette' }, { value: 'custom', label: 'Custom color' }, { value: 'gradient', label: 'Gradient' }], def: 'palette', rnd: false, show: on, tags: 'colour tint library' },
+    { ...common, key: k('Tone'), label: 'Palette color', type: 'range', min: 0, max: 1, step: 0.01, def: d.tone, rnd: [0.35, 1], show: is('Fill', 'palette'), hint: 'Where along the palette the color is taken from', tags: 'colour hue' },
+    { ...common, key: k('Color'), label: 'Custom color', type: 'color', def: d.color, rnd: false, show: is('Fill', 'custom'), tags: 'colour' },
+    { ...common, key: k('Gradient'), label: 'Gradient', type: 'gradient', options: OBJECT_GRADIENTS, def: d.gradient, rnd: false, show: is('Fill', 'gradient'), tags: 'library palette colors' },
+    { ...common, key: k('GradAngle'), label: 'Gradient angle', type: 'range', min: -180, max: 180, step: 1, def: 90, unit: '°', rnd: [-180, 180], show: is('Fill', 'gradient'), hint: 'Direction of the gradient across the object (it turns with the object)', tags: 'direction' },
+    { ...common, key: k('Tint'), label: 'Tint', type: 'range', min: 0, max: 1, step: 0.01, def: 0.5, rnd: [0.25, 0.75], show: is('Material', 'glass'), hint: 'How strongly the glass is colored', tags: 'color stained' },
+    { ...common, key: k('Frost'), label: 'Frost', type: 'range', min: 0, max: 1, step: 0.01, def: 0.5, rnd: [0.1, 0.9], show: is('Material', 'glass'), hint: 'Clear glass, or frosted glass that blurs what is behind it', tags: 'blur matte fog' },
+    { ...common, key: k('Size'), label: 'Size', type: 'range', min: 0.05, max: 1.5, step: 0.01, def: d.size, rnd: [0.2, 0.7], show: on, tags: 'scale' },
+    { ...common, key: k('Length'), label: 'Length', type: 'range', min: 0.5, max: 4, step: 0.01, def: d.length ?? 1, rnd: [0.8, 2], show: is('Shape', 'pill', 'pane', 'link'), tags: 'stretch aspect long' },
+    { ...common, key: k('Corner'), label: 'Corners', type: 'range', min: 0, max: 1, step: 0.01, def: d.corner ?? 0.1, rnd: [0, 0.6], show: is('Shape', 'pane'), hint: 'Square or rounded corners', tags: 'radius round' },
+    { ...common, key: k('X'), label: 'Position X', type: 'range', min: -2, max: 2, step: 0.001, def: d.x, rnd: [-0.3, 0.3], show: on, hint: 'Tip: drag the object on the canvas', tags: 'move horizontal' },
+    { ...common, key: k('Y'), label: 'Position Y', type: 'range', min: -2, max: 2, step: 0.001, def: d.y, rnd: [-0.35, 0.35], show: on, tags: 'move vertical' },
+    { ...common, key: k('Angle'), label: 'Rotation', type: 'range', min: -180, max: 180, step: 1, def: d.angle ?? 0, unit: '°', rnd: [-180, 180], show: (s) => on(s) && objectValue(s, i, 'Shape') !== 'sphere', tags: 'angle rotate' },
+  ];
+}
+
 export const DOC_SIZES = [
   { value: 'phone', label: 'Phone — 1080 × 1920', w: 1080, h: 1920 },
   { value: 'iphone', label: 'iPhone Pro Max — 1290 × 2796', w: 1290, h: 2796 },
@@ -93,6 +160,8 @@ export const DOC_SIZES = [
 
 const isSrc = (...types) => (s) => types.includes(s.source.type);
 const notSrc = (...types) => (s) => !types.includes(s.source.type);
+const moving = notSrc('fluid', 'none');            // patterns that scale, turn and pan
+const isBg = (fill) => (s) => s.source.type === 'none' && s.source.bgFill === fill;
 const isGlass = (...types) => (s) => types.includes(s.glass.type) || types.includes(s.glass.backType);
 const glassOn = (s) => s.glass.type !== 'none' || s.glass.backType !== 'none';
 const isScreen = (...types) => (s) => types.includes(s.screen.type);
@@ -103,6 +172,7 @@ const streakOn = (s) => s.finish.streak > 0;
 export const SECTIONS = [
   { id: 'doc', title: 'Canvas', randomizable: false },
   { id: 'source', title: 'Flow' },
+  { id: 'objects', title: 'Objects' },
   { id: 'color', title: 'Color' },
   { id: 'surface', title: 'Surface' },
   { id: 'glass', title: 'Glass' },
@@ -120,9 +190,18 @@ export const PARAMS = [
   { key: 'doc.height', label: 'Height', type: 'int', min: 64, max: 8192, step: 1, def: 1920, uniform: false, unit: 'px', noSlider: true },
 
   // ── Flow (source) ─────────────────────────────────────────────────────────
-  { key: 'source.type', label: 'Pattern', type: 'chips', options: SOURCE_TYPES, def: 'silk', rnd: false, tags: 'style source' },
-  { key: 'source.scale', label: 'Scale', type: 'range', min: 0.15, max: 4, step: 0.01, def: 1, rnd: [0.6, 1.8], show: notSrc('fluid'), tags: 'zoom size' },
-  { key: 'source.warp', label: 'Turbulence', type: 'range', min: 0, max: 3, step: 0.01, def: 1.1, rnd: [0.3, 2], show: notSrc('fluid', 'shapes'), tags: 'warp distortion noise' },
+  { key: 'source.type', label: 'Pattern', type: 'chips', options: SOURCE_TYPES, def: 'silk', rnd: false, tags: 'style source none static still' },
+  // None: a still background, a color or a gradient from the palette
+  { key: 'source.bgFill', label: 'Background', type: 'select', options: [{ value: 'gradient', label: 'Gradient' }, { value: 'color', label: 'Color' }], def: 'gradient', rnd: false, show: isSrc('none'), tags: 'backdrop still static fill' },
+  { key: 'source.bgColor', label: 'Color', type: 'color', def: '#dfe5ec', rnd: false, show: isBg('color'), tags: 'background backdrop solid plain' },
+  { key: 'source.gradShape', label: 'Shape', type: 'select', options: [{ value: 'linear', label: 'Linear' }, { value: 'radial', label: 'Radial' }], def: 'linear', rnd: false, show: isBg('gradient'), tags: 'radial linear circle' },
+  { key: 'source.bgAngle', label: 'Angle', type: 'range', min: -180, max: 180, step: 1, def: -90, unit: '°', rnd: [-180, 180], show: (s) => isBg('gradient')(s) && s.source.gradShape === 'linear', hint: 'Direction of the gradient, from the start of the palette to its end', tags: 'direction' },
+  { key: 'source.gradLength', label: 'Length', type: 'range', min: 0.15, max: 4, step: 0.001, def: 1, rnd: [0.6, 1.6], show: isBg('gradient'), hint: 'How far the gradient stretches', tags: 'scale spread size' },
+  { key: 'source.gradShift', label: 'Offset', type: 'range', min: -3, max: 3, step: 0.001, def: 0, rnd: [-0.2, 0.2], show: isBg('gradient'), hint: 'Moves the gradient along its direction', tags: 'position move' },
+  { key: 'source.gradRange', label: 'Palette range', type: 'range', min: 0.1, max: 1, step: 0.01, def: 1, rnd: [0.6, 1], show: isBg('gradient'), hint: 'How much of the palette the background uses, from its start. Lower values leave the rest of the palette for objects.', tags: 'portion span' },
+
+  { key: 'source.scale', label: 'Scale', type: 'range', min: 0.15, max: 4, step: 0.01, def: 1, rnd: [0.6, 1.8], show: moving, tags: 'zoom size' },
+  { key: 'source.warp', label: 'Turbulence', type: 'range', min: 0, max: 3, step: 0.01, def: 1.1, rnd: [0.3, 2], show: moving, tags: 'warp distortion noise' },
   { key: 'source.detail', label: 'Detail', type: 'int', min: 1, max: 8, step: 1, def: 4, rnd: [2, 6], show: isSrc('silk', 'bands', 'mesh', 'ribbons'), tags: 'octaves complexity' },
   { key: 'source.ridge', label: 'Folds', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.7], show: isSrc('silk'), hint: 'Turns soft swirls into sharp silk-like creases', tags: 'creases ridges' },
 
@@ -153,12 +232,6 @@ export const PARAMS = [
   { key: 'source.thrDepth', label: 'Depth of field', type: 'range', min: 0, max: 1, step: 0.01, def: 0.4, rnd: [0, 0.8], show: isSrc('threads'), hint: 'Soft, out-of-focus threads behind the sharp ones', tags: 'bokeh blur layers defocus' },
   { key: 'source.thrBreak', label: 'Breakup', type: 'range', min: 0, max: 1, step: 0.01, def: 0.3, rnd: [0, 0.8], show: isSrc('threads'), hint: 'Breaks threads into streaks of light that race along them', tags: 'dashes streaks speed trails' },
 
-  { key: 'source.shape', label: 'Shape', type: 'select', options: [{ value: 'sphere', label: 'Sphere' }, { value: 'link', label: 'Chain link' }, { value: 'pill', label: 'Pill' }, { value: 'mixed', label: 'Mixed' }], def: 'sphere', show: isSrc('shapes') },
-  { key: 'source.shapeCount', label: 'Count', type: 'int', min: 1, max: 6, step: 1, def: 1, rnd: [1, 3], show: isSrc('shapes') },
-  { key: 'source.shapeSize', label: 'Size', type: 'range', min: 0.1, max: 1.4, step: 0.01, def: 0.7, rnd: [0.4, 0.9], show: isSrc('shapes') },
-  { key: 'source.shapeSoft', label: 'Edge softness', type: 'range', min: 0, max: 1, step: 0.01, def: 0.02, rnd: [0, 0.15], show: isSrc('shapes') },
-  { key: 'source.shapeDrift', label: 'Drift', type: 'range', min: 0, max: 2, step: 0.01, def: 0.6, rnd: [0.2, 1], show: isSrc('shapes') },
-  { key: 'source.bgAngle', label: 'Backdrop angle', type: 'range', min: -180, max: 180, step: 1, def: -90, unit: '°', rnd: [-180, 180], show: isSrc('shapes'), hint: 'Direction of the background gradient (lower part of the palette)' },
   { key: 'source.imgRecolor', label: 'Gradient map', type: 'toggle', def: true, rnd: false, show: isSrc('image'), hint: 'Recolor the image with your palette' },
 
   { key: 'source.fluidForce', label: 'Force', type: 'range', min: 0, max: 3, step: 0.01, def: 1, rnd: false, show: isSrc('fluid'), uniform: false },
@@ -172,11 +245,11 @@ export const PARAMS = [
   { key: 'source.fluidQuality', label: 'Sim quality', type: 'select', options: [{ value: 'low', label: 'Low' }, { value: 'med', label: 'Medium' }, { value: 'high', label: 'High' }], def: 'med', rnd: false, show: isSrc('fluid'), uniform: false, tags: 'resolution performance' },
 
   { key: 'source.blur', label: 'Soften', type: 'range', min: 0, max: 1, step: 0.01, def: 0, rnd: [0, 0.2], tags: 'blur smooth' },
-  { key: 'source.twist', label: 'Swirl', type: 'range', min: -6, max: 6, step: 0.01, def: 0, rnd: [-2, 2], show: notSrc('fluid'), tags: 'twist spiral vortex' },
-  { key: 'source.rotation', label: 'Rotate', type: 'range', min: -180, max: 180, step: 1, def: 0, unit: '°', rnd: [-180, 180], show: notSrc('fluid'), tags: 'rotation angle' },
-  { key: 'source.offsetX', label: 'Pan X', type: 'range', min: -3, max: 3, step: 0.001, def: 0, rnd: false, show: notSrc('fluid'), hint: 'Tip: drag the canvas to pan, scroll to zoom', tags: 'position move' },
-  { key: 'source.offsetY', label: 'Pan Y', type: 'range', min: -3, max: 3, step: 0.001, def: 0, rnd: false, show: notSrc('fluid'), tags: 'position move' },
-  { key: 'source.seed', label: 'Seed', type: 'seed', min: 0, max: 9999, def: 7, rnd: [0, 9999], show: notSrc('fluid', 'image'), tags: 'random variation' },
+  { key: 'source.twist', label: 'Swirl', type: 'range', min: -6, max: 6, step: 0.01, def: 0, rnd: [-2, 2], show: moving, tags: 'twist spiral vortex' },
+  { key: 'source.rotation', label: 'Rotate', type: 'range', min: -180, max: 180, step: 1, def: 0, unit: '°', rnd: [-180, 180], show: moving, tags: 'rotation angle' },
+  { key: 'source.offsetX', label: 'Pan X', type: 'range', min: -3, max: 3, step: 0.001, def: 0, rnd: false, show: moving, hint: 'Tip: drag the canvas to pan, scroll to zoom', tags: 'position move' },
+  { key: 'source.offsetY', label: 'Pan Y', type: 'range', min: -3, max: 3, step: 0.001, def: 0, rnd: false, show: moving, tags: 'position move' },
+  { key: 'source.seed', label: 'Seed', type: 'seed', min: 0, max: 9999, def: 7, rnd: [0, 9999], show: notSrc('fluid', 'image', 'none'), tags: 'random variation' },
 
   { key: 'source.form', group: 'Silhouette', label: 'Form', type: 'select', options: FORMS, def: 'none', rnd: false, hint: 'Shape the flow into a sculpted form over a plain backdrop', tags: 'mask shape cutout silhouette sculpture' },
   { key: 'source.formSize', group: 'Silhouette', label: 'Size', type: 'range', min: 0.1, max: 1.5, step: 0.01, def: 0.55, rnd: [0.35, 0.8], show: formOn, tags: 'width' },
@@ -184,6 +257,28 @@ export const PARAMS = [
   { key: 'source.formSoft', group: 'Silhouette', label: 'Edge softness', type: 'range', min: 0, max: 1, step: 0.01, def: 0.02, rnd: [0, 0.1], show: formOn, tags: 'feather blur' },
   { key: 'source.formDepth', group: 'Silhouette', label: 'Depth', type: 'range', min: 0, max: 1, step: 0.01, def: 0.5, rnd: [0.2, 0.8], show: formOn, hint: 'Shades the form toward its edges so it reads as a rounded body', tags: 'volume 3d shading roundness' },
   { key: 'source.formBg', group: 'Silhouette', label: 'Backdrop', type: 'color', def: '#060709', rnd: false, show: formOn, tags: 'background color' },
+
+  // ── Objects ───────────────────────────────────────────────────────────────
+  { key: 'objects.count', label: 'Objects', type: 'int', min: 0, max: MAX_OBJECTS, step: 1, def: 0, rnd: false, hint: 'Solid or glass objects floating in front of the flow', tags: 'shapes glass panes pills spheres links add' },
+  // Which object the panel is editing: an interface setting, not part of the look.
+  { key: 'objects.edit', label: 'Edit', type: 'picker', min: 1, max: MAX_OBJECTS, def: 1, rnd: false, uniform: false, show: objectsOn },
+  ...Array.from({ length: MAX_OBJECTS }, (_, k) => objectParams(k + 1)).flat(),
+
+  { key: 'objects.refraction', group: 'All objects', label: 'Refraction', type: 'range', min: -1, max: 2, step: 0.01, def: 0.5, rnd: [0.2, 1.1], show: hasMaterial('glass'), hint: 'How strongly rounded glass bends what is behind it: spheres and pills act as lenses, and past about 0.7 they turn the view upside down', tags: 'lens bend magnify distortion' },
+  { key: 'objects.bevel', group: 'All objects', label: 'Bevel', type: 'range', min: 0, max: 1, step: 0.01, def: 0.3, rnd: [0.1, 0.6], show: hasGlassPane, hint: 'Width of the rounded edge of panes', tags: 'edge round' },
+  { key: 'objects.rim', group: 'All objects', label: 'Edge light', type: 'range', min: 0, max: 1, step: 0.01, def: 0.35, rnd: [0.15, 0.6], show: hasMaterial('glass'), hint: 'Reflections and highlights caught by the edges of the glass (see Light)', tags: 'highlight reflection shine rim' },
+  { key: 'objects.thickness', group: 'All objects', label: 'Thickness', type: 'range', min: 0, max: 1, step: 0.01, def: 0.25, rnd: [0, 0.6], show: hasMaterial('glass'), hint: 'The visible side of each piece of glass', tags: 'depth edge 3d extrude side' },
+  { key: 'objects.shadow', group: 'All objects', label: 'Shadow', type: 'range', min: 0, max: 1, step: 0.01, def: 0.35, rnd: [0.15, 0.6], show: objectsOn, hint: 'Soft shadows on the flow behind, colored by glass. They fall away from the light (see Light)', tags: 'drop shadow depth' },
+  { key: 'objects.soft', group: 'All objects', label: 'Edge softness', type: 'range', min: 0, max: 1, step: 0.01, def: 0.02, rnd: [0, 0.1], show: hasMaterial('solid'), hint: 'Blurs the outline of solid objects', tags: 'feather blur' },
+
+  { key: 'objects.scale', group: 'Arrange all', label: 'Scale', type: 'range', min: 0.2, max: 3, step: 0.001, def: 1, rnd: false, show: objectsOn, tags: 'size zoom group' },
+  { key: 'objects.rotation', group: 'Arrange all', label: 'Rotate', type: 'range', min: -180, max: 180, step: 1, def: 0, unit: '°', rnd: false, show: objectsOn, tags: 'angle group' },
+  { key: 'objects.offsetX', group: 'Arrange all', label: 'Move X', type: 'range', min: -2, max: 2, step: 0.001, def: 0, rnd: false, show: objectsOn, tags: 'position group pan' },
+  { key: 'objects.offsetY', group: 'Arrange all', label: 'Move Y', type: 'range', min: -2, max: 2, step: 0.001, def: 0, rnd: false, show: objectsOn, tags: 'position group pan' },
+
+  // drift is applied in objects.js, before the shaders see the positions
+  { key: 'objects.drift', group: 'Motion', label: 'Drift', type: 'range', min: 0, max: 2, step: 0.01, def: 0.3, rnd: [0.1, 0.8], uniform: false, show: objectsOn, hint: 'Objects float gently as the animation plays', tags: 'float move animate' },
+  { key: 'objects.seed', group: 'Motion', label: 'Drift seed', type: 'seed', min: 0, max: 9999, def: 7, rnd: [0, 9999], uniform: false, show: (s) => objectsOn(s) && s.objects.drift > 0, tags: 'random variation' },
 
   // ── Color ─────────────────────────────────────────────────────────────────
   // color.stops is edited by the gradient editor (not a schema control)
@@ -318,7 +413,7 @@ export const PARAMS = [
 export const PARAM_MAP = Object.fromEntries(PARAMS.map((p) => [p.key, p]));
 
 // Sections that make up a "look" — saved in presets, history, share links.
-export const LOOK_SECTIONS = ['source', 'color', 'surface', 'glass', 'light', 'screen', 'finish', 'anim'];
+export const LOOK_SECTIONS = ['source', 'objects', 'color', 'surface', 'glass', 'light', 'screen', 'finish', 'anim'];
 
 export const DEFAULT_STOPS = [
   { pos: 0, color: '#1b0f2e' },

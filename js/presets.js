@@ -267,10 +267,18 @@ export const PRESETS = [
     },
   },
   {
-    id: 'moss-reeds', // mixed shapes behind frosted linear reeds, raking light
+    id: 'moss-reeds', // a diagonal chain of solid objects behind frosted linear reeds, raking light
     name: 'Moss Reeds',
     look: {
-      source: { type: 'shapes', shape: 'mixed', shapeCount: 5, shapeSoft: 0, shapeDrift: 1.15, scale: 0.479, warp: 0.6, rotation: 68, offsetX: 0.0272, offsetY: 0.265, seed: 21 },
+      source: { type: 'none', bgAngle: -158, gradLength: 0.479, gradShift: -0.22525, gradRange: 0.4 },
+      objects: {
+        count: 5, drift: 1.15, seed: 21, soft: 0, shadow: 0, scale: 0.479, rotation: -68, offsetX: -0.0272, offsetY: -0.265,
+        o1Material: 'solid', o1Shape: 'sphere', o1Tone: 0.62, o1Size: 0.5806, o1X: 0.3347, o1Y: 0.8171, o1Angle: 13.8651,
+        o2Material: 'solid', o2Shape: 'link', o2Tone: 0.715, o2Size: 0.6483, o2Length: 1, o2X: 0.1109, o2Y: 0.3761, o2Angle: -28.4688,
+        o3Material: 'solid', o3Shape: 'pill', o3Tone: 0.81, o3Size: 0.6486, o3X: -0.0348, o3Y: 0.0497, o3Angle: 54.2519,
+        o4Material: 'solid', o4Shape: 'sphere', o4Tone: 0.905, o4Size: 0.5696, o4Length: 1, o4X: -0.1386, o4Y: -0.3614, o4Angle: 44.5833,
+        o5Material: 'solid', o5Shape: 'link', o5Tone: 1, o5Size: 0.6334, o5X: -0.38, o5Y: -0.8638, o5Angle: -64.7935,
+      },
       color: { stops: P('#06120b', '#1c3b26', '#5a8f5e', '#e1edc5'), spread: 1.15 },
       glass: { type: 'reeded', count: 12, profile: 'linear', strength: 0.26, ior: 1.19, frost: 0.21, streak: 0.13, reflect: 0.39, highlight: 0.04, shadow: 0.2 },
       light: { angle: 278, elevation: 7 },
