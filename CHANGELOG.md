@@ -11,7 +11,7 @@ Notable changes to Halation. The format follows [Keep a Changelog](https://keepa
 - **Speckle** in Finish: scatters the image into grainy speckles, like sprayed paint or a riso print.
 - Composition controls: **Position** and **Angle** for Silhouette forms, and **Focus** for the vignette, which moves its bright center onto the focal point.
 - **Tutorial**: a guided tour of the basics from the new Tutorial button in the top bar. It spotlights each part of the interface, moves on when you try what it suggests, and can be ended at any time.
-- Five new looks: Indigo Harp, Ember Bow, Moss Reeds, Mercury Silk and Emerald Pour.
+- 29 new looks: Indigo Harp, Ember Bow, Moss Reeds, Mercury Silk, Emerald Pour, Berry Wave, Neon Contours, Navy Rings, Pearl Orbs, Onyx Prism, Opal Wave, Cobalt Flutes, Indigo Satin, Ivory Matrix, Neon Hourglass, Amber Smoke, Night Survey, Pearl Marble, Blue Mercury, Azure Spray, Violet Aurora, Thermal Bloom, Molten Glow, Dusk Horizon, Coral Arcs, Tangerine Groove, Zebra Swirl, Sky Sunburst and Saffron River.
 
 ### Changed
 
@@ -21,7 +21,7 @@ Notable changes to Halation. The format follows [Keep a Changelog](https://keepa
 
 ### Removed
 
-- The Holo Chrome and Light Speed looks.
+- The Holo Chrome, Light Speed, Neon Rain, Plum Halftone, Lilac Waves, Peach Streaks, Teal Blocks, Dusk Pool, Slate Quilt, Pearl Waves, Riso Print, Terracotta Mosaic and Saffron Ink looks.
 
 ### Fixed
 

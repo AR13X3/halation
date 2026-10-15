@@ -20,16 +20,6 @@ export const PRESETS = [
     },
   },
   {
-    id: 'plum-halftone', // diamond halftone screen
-    name: 'Plum Halftone',
-    look: {
-      source: { type: 'silk', scale: 1.2, warp: 1.2, ridge: 0.3, detail: 3, twist: -1.2, seed: 58 },
-      color: { stops: P('#14060f', '#5a1640', '#c94f7c', '#f7d6c4'), spread: 1.35, shift: 0.02 },
-      screen: { type: 'halftone', size: 72, angle: 15, dotShape: 'diamond', background: 0.15, glow: 0.1, contrast: 1.2 },
-      finish: { grain: 0.05 },
-    },
-  },
-  {
     id: 'lava-flutes', // round flutes with caustics
     name: 'Lava Flutes',
     look: {
@@ -47,16 +37,6 @@ export const PRESETS = [
       color: { stops: P('#000000', '#2a1300', '#ff9a1f', '#ffe0a3'), spread: 2.2, shift: -0.25 },
       screen: { type: 'led', size: 90, ledShape: 'square', dotScale: 0.72, glow: 0.35, background: 0 },
       finish: { bloom: 0.4, bloomRadius: 0.35, bloomThreshold: 0.45, grain: 0 },
-    },
-  },
-  {
-    id: 'lilac-waves', // wavy line screen
-    name: 'Lilac Waves',
-    look: {
-      source: { type: 'mesh', meshCount: 5, meshBlend: 1.2, warp: 1.1, seed: 44 },
-      color: { stops: P('#2b1a4a', '#7d5fc4', '#c9b6f2', '#fbf7ff'), spread: 1.4 },
-      screen: { type: 'lines', lineShape: 'waves', size: 80, angle: 0, dotScale: 0.6, background: 0.85, glow: 0.35, invert: true },
-      finish: { grain: 0.25 },
     },
   },
   {
@@ -102,38 +82,6 @@ export const PRESETS = [
     },
   },
   {
-    id: 'neon-rain', // rain drops on a fogged window
-    name: 'Neon Rain',
-    look: {
-      source: { type: 'mesh', meshCount: 7, meshBlend: 2.6, warp: 0.6, seed: 5 },
-      color: { stops: P('#03030a', '#1d0a3a', '#ff2e88', '#38e8ff'), spread: 1.6, shift: -0.1 },
-      glass: { type: 'rain', count: 10, strength: 0.9, frost: 0.65, coverage: 0.5, jitter: 0.4, highlight: 0.3, reflect: 0.2 },
-      finish: { grain: 0.06, vignette: 0.3 },
-      anim: { speed: 0.4 },
-    },
-  },
-  {
-    id: 'peach-streaks', // streaks + tint + caustics
-    name: 'Peach Streaks',
-    look: {
-      source: { type: 'mesh', meshCount: 5, meshBlend: 1.6, warp: 0.8, seed: 64 },
-      color: { stops: P('#0d0612', '#5a2340', '#ff9e7a', '#fff4e8'), spread: 1.35, shift: 0.06 },
-      glass: { type: 'reeded', count: 18, strength: 0.7, streak: 0.6, caustics: 0.45, tintAmount: 0.35, tint: '#ffc2a8', highlight: 0.15, reflect: 0.25, sharpness: 0.45 },
-      light: { angle: 50, color: '#ffe4d6' },
-      finish: { grain: 0.05, bloom: 0.3, bloomThreshold: 0.6 },
-    },
-  },
-  {
-    id: 'teal-blocks', // glass-block tiles with frost
-    name: 'Teal Blocks',
-    look: {
-      source: { type: 'mesh', meshCount: 5, meshBlend: 1.4, warp: 1, seed: 71 },
-      color: { stops: P('#04222a', '#0f6b70', '#f29b55', '#fff1d6'), spread: 1.25, shift: -0.08 },
-      glass: { type: 'tiles', count: 6, profile: 'block', strength: 0.6, frost: 0.2, shadow: 0.08, highlight: 0, reflect: 0.1 },
-      finish: { grain: 0.08 },
-    },
-  },
-  {
     id: 'copper-hammered', // hammered glass
     name: 'Copper Hammered',
     look: {
@@ -144,37 +92,6 @@ export const PRESETS = [
     },
   },
   {
-    id: 'dusk-pool', // water surface
-    name: 'Dusk Pool',
-    look: {
-      source: { type: 'bands', bandCount: 3, bandWidth: 0.12, bandSpacing: 0.22, bandAngle: 25, warp: 1.4, seed: 61 },
-      color: { stops: P('#1b1035', '#3f3a9c', '#ff8fab', '#ffe6c9'), spread: 1.1 },
-      glass: { type: 'water', count: 5, strength: 0.8, shadow: 0.25, highlight: 0, reflect: 0.1, caustics: 0.1 },
-      finish: { grain: 0.08, vignette: 0.2 },
-    },
-  },
-  {
-    id: 'slate-quilt', // two crossed panes of reeded glass
-    name: 'Slate Quilt',
-    look: {
-      source: { type: 'bands', bandCount: 2, bandWidth: 0.2, bandSpacing: 0.4, bandAngle: 35, warp: 1.1, seed: 5 },
-      color: { stops: P('#1e2433', '#55607a', '#d9a5a0', '#f7efe9'), spread: 1.5, shift: -0.05 },
-      glass: { type: 'reeded', count: 7, strength: 0.6, backType: 'reeded', backCount: 7, backAngle: 90, backStrength: 0.6, profile: 'wave', highlight: 0, reflect: 0.08, caustics: 0, shadow: 0.25 },
-      finish: { grain: 0.06 },
-    },
-  },
-  {
-    id: 'pearl-waves', // wavy flutes, dispersion, palette reflections
-    name: 'Pearl Waves',
-    look: {
-      source: { type: 'silk', scale: 1.3, warp: 1, ridge: 0.3, seed: 300 },
-      color: { stops: P('#6f63a8', '#8fc8e0', '#f2b8d4', '#fffaf0'), spread: 1.6, shift: -0.05 },
-      glass: { type: 'wavy', count: 12, strength: 0.7, wave: 0.7, waveFreq: 1.2, profile: 'round', dispersion: 0.6, highlight: 0.15, reflect: 0.25, shadow: 0.2 },
-      light: { env: 'palette' },
-      finish: { grain: 0.03 },
-    },
-  },
-  {
     id: 'synth-crt', // CRT shadow mask + bloom + aberration
     name: 'Synth CRT',
     look: {
@@ -182,36 +99,6 @@ export const PRESETS = [
       color: { stops: P('#0a0014', '#5b0f8a', '#ff3fa4', '#ffd23f'), spread: 1.3 },
       screen: { type: 'crt', size: 150, dotScale: 0.85, glow: 0.4, contrast: 1.1 },
       finish: { bloom: 0.5, bloomRadius: 0.4, bloomThreshold: 0.4, vignette: 0.45, aberration: 0.3, grain: 0.04 },
-    },
-  },
-  {
-    id: 'riso-print', // 1-bit dither in ink & paper
-    name: 'Riso Print',
-    look: {
-      source: { type: 'silk', scale: 1.4, warp: 1.5, detail: 4, seed: 19 },
-      color: { stops: P('#000000', '#ffffff'), spread: 1.4 },
-      screen: { type: 'dither', size: 240, levels: 2, colorMode: 'mono', ink: '#ff3d7f', paper: '#f6f0e4', contrast: 1.2 },
-      finish: { grain: 0 },
-    },
-  },
-  {
-    id: 'terracotta-mosaic', // hexagon mosaic
-    name: 'Terracotta Mosaic',
-    look: {
-      source: { type: 'bands', bandCount: 2, bandWidth: 0.2, bandAngle: -30, warp: 1.3, seed: 48 },
-      color: { stops: P('#2a120b', '#a0452a', '#e79a6c', '#f8e6d2'), spread: 1.7, shift: -0.2 },
-      screen: { type: 'mosaic', mosaicShape: 'hex', size: 34, dotScale: 0.92, glow: 0.5, background: 0.05 },
-      finish: { grain: 0.05 },
-    },
-  },
-  {
-    id: 'saffron-ink', // interactive fluid behind wavy glass
-    name: 'Saffron Ink',
-    look: {
-      source: { type: 'fluid', fluidStreams: 3, fluidCurl: 18, fluidInk: 2.2, fluidInkFade: 0.3, fluidGain: 1.8, blur: 0.06 },
-      color: { stops: P('#0a0a24', '#2b1f6e', '#e0821b', '#ffe7a8'), spread: 1.1 },
-      glass: { type: 'wavy', count: 18, strength: 0.5, wave: 0.4, waveFreq: 1, shadow: 0.3, highlight: 0.05 },
-      finish: { grain: 0.12 },
     },
   },
   {
@@ -307,6 +194,239 @@ export const PRESETS = [
       surface: { liquid: 0.89, gloss: 0.67, glossSize: 0.79, sparkle: 0.35, sparkleDensity: 0.21 },
       light: { angle: 211, elevation: 57 },
       finish: { bloom: 0.33, bloomThreshold: 0.6, grain: 0.03 },
+    },
+  },
+  {
+    id: 'berry-wave', // bands behind wavy glass
+    name: 'Berry Wave',
+    look: {
+      source: { type: 'bands', bandCount: 4, bandWidth: 0.14, bandSpacing: 0.32, bandAngle: 20, warp: 0.9, seed: 23 },
+      color: { stops: P('#12030d', '#6d0f3c', '#ff4f8b', '#ffd6e5'), spread: 1.25 },
+      glass: { type: 'wavy', count: 9, strength: 0.75, wave: 0.8, waveFreq: 1.3, highlight: 0.04, reflect: 0.1, shadow: 0.35 },
+      finish: { grain: 0.04 },
+    },
+  },
+  {
+    id: 'neon-contours', // glowing contour screen over a mesh
+    name: 'Neon Contours',
+    look: {
+      source: { type: 'mesh', warp: 1.2, seed: 13 },
+      color: { stops: P('#05020f', '#2a0b5c', '#ff3fa4', '#ffe36e') },
+      screen: { type: 'contour', lineCount: 22, lineWidth: 1.6, indexEvery: 5, glow: 0.8, background: 0.05 },
+      finish: { bloom: 0.5, bloomThreshold: 0.35, grain: 0.03 },
+    },
+  },
+  {
+    id: 'navy-rings', // ring line screen in ink & paper
+    name: 'Navy Rings',
+    look: {
+      source: { type: 'mesh', meshCount: 4, meshBlend: 1.3, warp: 1, seed: 52 },
+      color: { stops: P('#000000', '#ffffff'), spread: 1.3 },
+      screen: { type: 'lines', lineShape: 'rings', size: 70, centerX: -0.4, centerY: -0.5, colorMode: 'mono', ink: '#1b2a6b', paper: '#efe9dc', contrast: 1.2 },
+      finish: { grain: 0.04 },
+    },
+  },
+  {
+    id: 'pearl-orbs', // frosted glass spheres filled with library gradients
+    name: 'Pearl Orbs',
+    look: {
+      source: { type: 'none', gradShape: 'radial', gradLength: 1.4 },
+      objects: { count: 3, refraction: 0.35, rim: 0.45, seed: 4, o1Shape: 'sphere', o1Fill: 'gradient', o1Gradient: 'Pearl', o1GradAngle: 60, o1Size: 0.56, o1Y: 0.12, o1Tint: 0.75, o1Frost: 0.85, o2Shape: 'sphere', o2Fill: 'gradient', o2Gradient: 'Candy', o2GradAngle: -30, o2Size: 0.34, o2X: 0.13, o2Y: -0.16, o2Tint: 0.7, o2Frost: 0.85, o3Fill: 'gradient', o3Gradient: 'Lilac', o3GradAngle: 120, o3Size: 0.2, o3X: -0.12, o3Y: -0.28, o3Tint: 0.6, o3Frost: 0.8 },
+      color: { stops: P('#fdf7f2', '#efe2f2', '#d8d6f0') },
+      light: { angle: 115, elevation: 55 },
+      finish: { grain: 0.02 },
+    },
+  },
+  {
+    id: 'onyx-prism', // thick converging threads, liquid + iridescent surface, orbit aberration
+    name: 'Onyx Prism',
+    look: {
+      source: { type: 'threads', thrCount: 4, thrSpread: 1, thrConverge: 0.45, thrWeight: 16, thrGlow: 0.12, thrBreak: 0, warp: 1.8, rotation: 35, seed: 12 },
+      color: { stops: P('#000000', '#000000', '#060709', '#22252c', '#8a909c') },
+      surface: { liquid: 0.8, iridescence: 0.8, film: 0.55, relief: 0.5, gloss: 1, glossSize: 0.7 },
+      light: { angle: 50, elevation: 22, intensity: 2 },
+      finish: { exposure: 0.35, aberration: 1, aberrationMode: 'orbit', bloom: 0.7, bloomThreshold: 0.35, grain: 0.03, vignette: 0.5 },
+    },
+  },
+  {
+    id: 'opal-wave', // ribbon lines with relief + iridescence, like holographic grooves
+    name: 'Opal Wave',
+    look: {
+      source: { type: 'ribbons', ribLines: 30, ribWidth: 0.18, ribThick: 0.07, ribAmp: 1, ribFan: 0.5, warp: 0.2, seed: 8 },
+      color: { stops: P('#000000', '#0a0a20', '#8090c0', '#e0e8ff', '#ffffff'), spread: 1.4 },
+      surface: { relief: 0.5, iridescence: 1, film: 0.5, gloss: 0.4, glossSize: 0.6 },
+      finish: { exposure: 0.45, saturation: 1.35, bloom: 0.55, bloomThreshold: 0.45, aberration: 0.6, aberrationMode: 'orbit', grain: 0.03, contrast: 1.2 },
+    },
+  },
+  {
+    id: 'cobalt-flutes', // radial glow on the upper-left third behind fine reeded glass
+    name: 'Cobalt Flutes',
+    look: {
+      source: { type: 'none', gradShape: 'radial', gradX: -0.4, gradY: 0.4, gradLength: 1.2, gradRipple: 0.8, gradRippleSize: 2 },
+      color: { stops: P('#9af2ff', '#22b4f0', '#0a5ad0', '#04204e', '#010612', '#000205'), spread: 1 },
+      glass: { type: 'reeded', count: 46, jitter: 0.35, shadow: 0.55, highlight: 0.05, streak: 0.35 },
+      finish: { grain: 0.04 },
+    },
+  },
+  {
+    id: 'indigo-satin', // silhouette ribbon tilted into a diagonal, liquid + gloss satin
+    name: 'Indigo Satin',
+    look: {
+      source: { scale: 2.6, warp: 1.4, ridge: 0.4, detail: 1, rotation: 20, seed: 140, form: 'ribbon', formSize: 0.75, formWave: 1.2, formSoft: 0.05, formAngle: -35, formBg: '#03040e' },
+      color: { stops: P('#04051a', '#0a0f4a', '#1e2a90', '#4a5ad0', '#9aa4f0', '#e4e2ff') },
+      surface: { liquid: 0.5, relief: 0.5, gloss: 0.9, glossSize: 0.45 },
+      light: { angle: 140, elevation: 35, intensity: 1.3 },
+      finish: { saturation: 0.85, grain: 0.04 },
+    },
+  },
+  {
+    id: 'ivory-matrix', // rippled gradient band on an LED screen
+    name: 'Ivory Matrix',
+    look: {
+      source: { type: 'none', bgAngle: 60, gradLength: 0.9, gradShift: -0.04, gradRipple: 1.6, gradRippleSize: 2.6 },
+      color: { stops: P('#000000', '#000000', '#2a2826', '#a8a094', '#f6f1e8'), spread: 1, repeat: 2.6 },
+      screen: { type: 'led', size: 90, dotScale: 0.95, glow: 0.25, background: 0 },
+      finish: { bloom: 0.15, grain: 0 },
+    },
+  },
+  {
+    id: 'neon-hourglass', // converging threads as a soft hourglass, speckle grain
+    name: 'Neon Hourglass',
+    look: {
+      source: { type: 'threads', thrCount: 10, thrConverge: 0.55, thrSpread: 0.22, thrWeight: 3.5, thrGlow: 1, thrDepth: 1, thrBreak: 0, warp: 0.9, blur: 0.4, rotation: 90, seed: 6 },
+      color: { stops: P('#000000', '#05030f', '#1a2a8a', '#4a6aff', '#ff5ab0', '#ffa050', '#fff4e0'), shift: 0.12 },
+      finish: { speckle: 0.5, grain: 0.14, bloom: 0.25 },
+    },
+  },
+  {
+    id: 'amber-smoke', // a few thick, blurred threads like smoke, vignette
+    name: 'Amber Smoke',
+    look: {
+      source: { type: 'threads', thrCount: 3, thrSpread: 0.6, thrConverge: 0.75, thrWeight: 12, thrGlow: 1, thrDepth: 1, thrBreak: 0, warp: 2.6, rotation: 60, blur: 0.4, seed: 19 },
+      color: { stops: P('#0e121b', '#1a2030', '#4a4440', '#d8a060', '#fff0d0') },
+      finish: { exposure: 0.25, bloom: 0.6, vignette: 0.55, grain: 0.05 },
+    },
+  },
+  {
+    id: 'night-survey', // rippled radial gradient read as contour lines: a summit on the right third
+    name: 'Night Survey',
+    look: {
+      source: { type: 'none', gradShape: 'radial', gradX: 0.35, gradY: 0.2, gradLength: 2.2, gradRipple: 1.6, gradRippleSize: 1.4 },
+      color: { stops: P('#000000', '#ffffff'), spread: 1 },
+      screen: { type: 'contour', lineCount: 16, lineWidth: 1.3, indexEvery: 5, glow: 0.15, background: 0, colorMode: 'mono', ink: '#e8e8e8', paper: '#000000' },
+      finish: { grid: true, gridSize: 4, gridOpacity: 0.2, gridDots: 0.5, grain: 0 },
+    },
+  },
+  {
+    id: 'pearl-marble', // marbled silk with iridescence + relief
+    name: 'Pearl Marble',
+    look: {
+      source: { scale: 4, warp: 2, ridge: 0.9, detail: 3, rotation: 35, seed: 42 },
+      color: { stops: P('#0a0c14', '#3a4054', '#b9c0d0', '#e8ebf2'), spread: 1.3 },
+      surface: { iridescence: 0.7, film: 0.12, relief: 0.4, gloss: 0.5, glossSize: 0.6 },
+      finish: { grain: 0.03 },
+    },
+  },
+  {
+    id: 'blue-mercury', // chrome silk with an off-center vignette
+    name: 'Blue Mercury',
+    look: {
+      source: { scale: 3.6, warp: 1.6, ridge: 0.2, detail: 2, rotation: 25, seed: 61 },
+      color: { stops: P('#02040e', '#0a1a40', '#2a4a90', '#8aa4e0') },
+      surface: { chrome: 1, liquid: 0.4, gloss: 0.7, glossSize: 0.4 },
+      light: { elevation: 45 },
+      finish: { vignette: 0.45, vignetteX: 0.3, vignetteY: 0.1, grain: 0.03 },
+    },
+  },
+  {
+    id: 'azure-spray', // silhouette wave of ink, speckle
+    name: 'Azure Spray',
+    look: {
+      source: { scale: 2.2, warp: 1.6, detail: 2, rotation: -15, seed: 9, form: 'wave', formSize: 0.5, formWave: 1.3, formSoft: 0.45, formDepth: 0, formAngle: -15, formBg: '#f4f4f2' },
+      color: { stops: P('#f4f4f2', '#9bb0e6', '#3a64d0', '#1f4fc4', '#0d36a8') },
+      finish: { speckle: 0.7, grainSize: 1.6, grain: 0.1 },
+    },
+  },
+  {
+    id: 'violet-aurora', // rippled gradient seen through wide reeded streaks
+    name: 'Violet Aurora',
+    look: {
+      source: { type: 'none', bgAngle: 90, gradRipple: 2, gradRippleSize: 1.6 },
+      color: { stops: [{ pos: 0, color: '#b9c8ff' }, { pos: 0.3, color: '#7a6cff' }, { pos: 0.5, color: '#3a1fb0' }, { pos: 0.64, color: '#000000' }, { pos: 1, color: '#000000' }], spread: 1 },
+      glass: { type: 'reeded', count: 7, strength: 0.5, streak: 0.7, shadow: 0.2, highlight: 0, reflect: 0.05, jitter: 0.5 },
+      finish: { bloom: 0.3, grain: 0.05 },
+    },
+  },
+  {
+    id: 'thermal-bloom', // rippled radial heat-map gradient, speckle
+    name: 'Thermal Bloom',
+    look: {
+      source: { type: 'none', gradShape: 'radial', gradX: 0.38, gradY: -0.25, gradLength: 1.3, gradRipple: 1.6, gradRippleSize: 1.6 },
+      color: { stops: P('#000000', '#3a0010', '#ff2a00', '#ffb000', '#3dff8a', '#00c8ff', '#1a3aff', '#0a1450', '#040820'), spread: 1 },
+      finish: { speckle: 0.35, grain: 0.12 },
+    },
+  },
+  {
+    id: 'molten-glow', // soft silhouette flame rounded with depth
+    name: 'Molten Glow',
+    look: {
+      source: { scale: 4, warp: 0.8, detail: 1, blur: 0.3, seed: 27, form: 'ribbon', formSize: 0.38, formWave: 1.2, formSoft: 0.5, formDepth: 0.85, formAngle: 20, formBg: '#000000' },
+      color: { stops: P('#000000', '#1a0400', '#7a2000', '#d84a08', '#ff8a2a', '#ffc078', '#ffe8c8'), spread: 0.8, shift: 0.1 },
+      finish: { speckle: 0.3, grain: 0.12, bloom: 0.4 },
+    },
+  },
+  {
+    id: 'dusk-horizon', // rippled linear gradient with a glowing rim
+    name: 'Dusk Horizon',
+    look: {
+      source: { type: 'none', bgAngle: 90, gradRipple: 1.2, gradRippleSize: 2.5, seed: 52 },
+      color: { stops: [{ pos: 0, color: '#0e1c24' }, { pos: 0.38, color: '#1a3240' }, { pos: 0.44, color: '#2a5070' }, { pos: 0.455, color: '#ff6a2a' }, { pos: 0.462, color: '#ffd2a0' }, { pos: 0.47, color: '#5aa0ff' }, { pos: 0.5, color: '#0a1430' }, { pos: 0.6, color: '#000000' }, { pos: 1, color: '#000000' }], spread: 1 },
+      finish: { bloom: 0.5, speckle: 0.25 },
+    },
+  },
+  {
+    id: 'coral-arcs', // radial gradient from beyond the corner, grainy arcs
+    name: 'Coral Arcs',
+    look: {
+      source: { type: 'none', gradShape: 'radial', gradX: -1.1, gradY: 1.1, gradLength: 2 },
+      color: { stops: [{ pos: 0, color: '#ffb35a' }, { pos: 0.1, color: '#ff6a1a' }, { pos: 0.22, color: '#160a06' }, { pos: 0.4, color: '#0e2a2a' }, { pos: 0.52, color: '#d2441a' }, { pos: 0.6, color: '#ff8a3a' }, { pos: 0.68, color: '#c2401c' }, { pos: 0.8, color: '#0e2426' }, { pos: 1, color: '#081416' }], spread: 1 },
+      finish: { speckle: 0.5, grain: 0.15 },
+    },
+  },
+  {
+    id: 'tangerine-groove', // rippled stripes: repeat + posterize
+    name: 'Tangerine Groove',
+    look: {
+      source: { type: 'none', bgAngle: 35, gradLength: 2.4, gradRipple: 1.4, gradRippleSize: 0.5 },
+      color: { stops: P('#f6e3c0', '#f3b24a', '#e3741f', '#a8401a', '#5e2410'), spread: 1, repeat: 12, mirror: false, posterize: 5 },
+      finish: { grain: 0.04 },
+    },
+  },
+  {
+    id: 'zebra-swirl', // rippled stripes in two flat tones
+    name: 'Zebra Swirl',
+    look: {
+      source: { type: 'none', bgAngle: 20, gradLength: 3, gradRipple: 2, gradRippleSize: 1.2 },
+      color: { stops: P('#0a0a0a', '#f4f1ea'), spread: 1, repeat: 26, mirror: false, posterize: 2 },
+      finish: { grain: 0.03 },
+    },
+  },
+  {
+    id: 'sky-sunburst', // conic gradient with swaying rays
+    name: 'Sky Sunburst',
+    look: {
+      source: { type: 'none', gradShape: 'conic', gradY: -0.3, gradRipple: 0.7 },
+      color: { stops: P('#f6efdc', '#8fd0f0', '#2a8fd6'), spread: 1, repeat: 40, posterize: 3 },
+      finish: { grain: 0.04 },
+    },
+  },
+  {
+    id: 'saffron-river', // soft rippled stripes on cream
+    name: 'Saffron River',
+    look: {
+      source: { type: 'none', bgAngle: 15, gradLength: 0.65, gradRipple: 2, gradRippleSize: 2.4 },
+      color: { stops: P('#f4ece0', '#f4ece0', '#f0a040', '#d0501e', '#f2e6d4', '#3a6464', '#8aa0a0', '#e88a30', '#f4ece0', '#f4ece0'), spread: 1, mirror: false },
+      finish: { grain: 0.06 },
     },
   },
 ];
