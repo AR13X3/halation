@@ -1,7 +1,7 @@
 {
   "name": "halation",
   "version": "1.2.0",
-  "description": "Fluid gradient backgrounds behind textured glass — a free, open-source background generator.",
+  "description": "Design animated gradient backgrounds in your browser: textured glass, liquid surfaces and seamless video loops. Free and open source.",
   "private": true,
   "type": "module",
   "scripts": {

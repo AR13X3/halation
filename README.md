@@ -7,7 +7,7 @@
 
 <h1 align="center">Halation</h1>
 
-<p align="center"><b>Fluid gradients behind textured glass — a free, open-source background generator for designers.</b></p>
+<p align="center"><b>Design animated gradient backgrounds in your browser: textured glass, liquid surfaces and seamless video loops. Free and open source.</b></p>
 
 <p align="center">
   <a href="https://ar13x3.github.io/halation/"><b>Open the app</b></a> ·
