@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 AR13X3 — Halation (https://github.com/AR13X3/halation)
-// Builds the right-hand control panel from the schema, with a search box that
-// filters it.
+// Builds the inspector from the schema: a search box, one tab per section and
+// the active section's controls. While searching, every section with a match
+// is listed instead.
 
 import { PARAMS, SECTIONS, PARAM_MAP, DOC_SIZES, objectValue } from '../schema.js';
 import { gradientCss, PALETTES } from '../palette.js';
@@ -9,46 +10,72 @@ import { createControl, h, labelText, gradientGrid } from './controls.js';
 import { gradientEditor } from './gradient.js';
 import { ICONS } from './icons.js';
 
-// Sections start collapsed except these; the user's own choices are remembered.
-const OPEN_BY_DEFAULT = new Set(['doc', 'color']);
-const FOLDS_KEY = 'halation.sections';
-
-function loadFolds() {
-  try { return JSON.parse(localStorage.getItem(FOLDS_KEY) || '{}'); } catch { return {}; }
-}
+const TAB_KEY = 'halation.tab';
+const DEFAULT_TAB = 'source';
+const TAB_ICONS = {
+  doc: 'canvas', source: 'silk', objects: 'glassObject', color: null, surface: 'sphere', glass: 'reeded',
+  light: 'sun', screen: 'halftone', finish: 'dither', anim: 'motion', export: 'download',
+};
 
 export function buildPanel(root, store, actions) {
   const syncers = [];
-  const folds = loadFolds();
-  const sections = []; // { sec, el }
+  const sections = []; // { sec, el, tab }
   const groups = [];   // subheads: { sec, name, el }
   const items = [];    // rows the search can find: { sec, el, p?, core(), context }
-  const search = searchBox({ onChange: () => { filter(); root.scrollTop = 0; }, onEnter: focusFirstResult });
-  root.append(search.el);
+  let wasSearching = false;
+  const search = searchBox({ onChange: () => { filter(); scroll.scrollTop = 0; }, onEnter: focusFirstResult });
+  const done = h('button', { class: 'btn panel-done', onclick: () => actions.closeEditor?.() }, 'Done');
+  const tabs = h('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Sections' });
+  const scroll = h('div', { class: 'panel-scroll clip' });
+  root.append(h('div', { class: 'panel-top' }, search.el, done), tabs, scroll);
+
+  let current = null;
+  function setTab(id, { focus = false } = {}) {
+    if (!SECTIONS.some((x) => x.id === id)) id = DEFAULT_TAB;
+    if (search.active()) search.clear();
+    current = id;
+    for (const s of sections) {
+      const on = s.sec.id === id;
+      s.el.classList.toggle('current', on);
+      s.tab.classList.toggle('active', on);
+      s.tab.setAttribute('aria-selected', String(on));
+      s.tab.tabIndex = on ? 0 : -1;
+      if (on && focus) s.tab.focus();
+    }
+    scroll.scrollTop = 0;
+    try { localStorage.setItem(TAB_KEY, id); } catch {}
+  }
+  tabs.addEventListener('keydown', (e) => {
+    const k = { ArrowLeft: -1, ArrowRight: 1, Home: -Infinity, End: Infinity }[e.key];
+    if (k === undefined) return;
+    e.preventDefault();
+    const i = SECTIONS.findIndex((x) => x.id === current);
+    const n = Math.max(0, Math.min(SECTIONS.length - 1, Number.isFinite(k) ? i + k : k < 0 ? 0 : SECTIONS.length - 1));
+    setTab(SECTIONS[n].id, { focus: true });
+  });
 
   for (const sec of SECTIONS) {
     const body = h('div', { class: 'section-body' });
     const headBtns = h('div', { class: 'section-btns' });
     if (sec.randomizable !== false) {
       headBtns.append(
-        h('button', { class: 'icon-btn sm', title: `Randomize ${sec.title.toLowerCase()}`, html: ICONS.dice, onclick: (e) => { e.stopPropagation(); actions.randomizeSection(sec.id); } }),
-        h('button', { class: 'icon-btn sm', title: `Reset ${sec.title.toLowerCase()}`, html: ICONS.reset, onclick: (e) => { e.stopPropagation(); actions.resetSection(sec.id); } }),
+        h('button', { class: 'icon-btn sm', title: `Randomize ${sec.title.toLowerCase()}`, 'aria-label': `Randomize ${sec.title.toLowerCase()}`, html: ICONS.dice, onclick: () => actions.randomizeSection(sec.id) }),
+        h('button', { class: 'icon-btn sm', title: `Reset ${sec.title.toLowerCase()}`, 'aria-label': `Reset ${sec.title.toLowerCase()}`, html: ICONS.reset, onclick: () => actions.resetSection(sec.id) }),
       );
     }
-    const head = h('div', { class: 'section-head', role: 'button', tabindex: 0 },
-      h('span', { class: 'section-caret', html: ICONS.chevron }),
-      h('span', { class: 'section-title' }, sec.title),
+    const head = h('div', { class: 'section-head' },
+      h('h2', { class: 'section-title', id: `sec-${sec.id}` }, sec.title),
       h('span', { class: 'section-badge' }),
       headBtns);
-    const section = h('section', { class: 'section', 'data-id': sec.id }, head, body);
+    const section = h('section', { class: 'section', 'data-id': sec.id, role: 'tabpanel', 'aria-labelledby': `sec-${sec.id}` }, head, body);
     const badge = head.querySelector('.section-badge');
-    section.classList.toggle('collapsed', folds[sec.id] ?? !OPEN_BY_DEFAULT.has(sec.id));
-    head.addEventListener('click', () => {
-      if (search.active()) return; // every section with results stays open while searching
-      folds[sec.id] = section.classList.toggle('collapsed');
-      try { localStorage.setItem(FOLDS_KEY, JSON.stringify(folds)); } catch {}
-    });
-    head.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); head.click(); } });
+    const icon = TAB_ICONS[sec.id] ? ICONS[TAB_ICONS[sec.id]] : '<span class="tab-swatch"></span>';
+    const tab = h('button', { class: 'tab', role: 'tab', 'data-id': sec.id, title: sec.title, 'aria-label': sec.title, html: icon, onclick: () => setTab(sec.id) });
+    tabs.append(tab);
+    if (sec.id === 'color') {
+      const dot = tab.querySelector('.tab-swatch');
+      syncers.push(() => { dot.style.background = gradientCss(store.state.color.stops, 135); });
+    }
 
     // Makes a row findable. Controls match on their label, key, tags and
     // options; other rows on their text plus `words`.
@@ -123,8 +150,8 @@ export function buildPanel(root, store, actions) {
       badge.textContent = t;
     });
 
-    root.append(section);
-    sections.push({ sec, el: section });
+    scroll.append(section);
+    sections.push({ sec, el: section, tab });
   }
 
   // ── search results ──
@@ -132,13 +159,19 @@ export function buildPanel(root, store, actions) {
   // while the pattern is Silk) are listed last, with the change that shows them.
   const unavailableBox = h('div', { class: 'search-unavailable', hidden: true });
   const empty = h('p', { class: 'search-empty', hidden: true });
-  root.append(unavailableBox, empty);
+  scroll.append(unavailableBox, empty);
   let unavailableSig = '';
 
   function filter() {
     const words = search.words();
     const on = words.length > 0;
     root.classList.toggle('searching', on);
+    // Leaving a search on a result keeps that result's section open.
+    if (wasSearching && !on) {
+      const sec = document.activeElement?.closest?.('#panel .section')?.dataset.id;
+      if (sec && sec !== current) setTab(sec);
+    }
+    wasSearching = on;
     const shown = [];
     const unavailable = [];
     for (const it of items) {
@@ -208,12 +241,18 @@ export function buildPanel(root, store, actions) {
     for (const s of syncers) s();
     filter();
   };
+  setTab(loadTab());
   sync();
   return {
     sync,
+    showTab: (id) => setTab(id),
     focusSearch() { search.input.focus(); search.input.select(); },
     clearSearch() { if (search.active()) search.clear(); },
   };
+}
+
+function loadTab() {
+  try { return localStorage.getItem(TAB_KEY) || DEFAULT_TAB; } catch { return DEFAULT_TAB; }
 }
 
 function searchBox({ onChange, onEnter }) {
@@ -298,7 +337,7 @@ function docSection(body, store, track) {
   const sizeCtl = createControl(PARAM_MAP['doc.size'], store);
   const w = h('input', { type: 'number', class: 'num num-wide', min: 64, max: 8192 });
   const hh = h('input', { type: 'number', class: 'num num-wide', min: 64, max: 8192 });
-  const swap = h('button', { class: 'icon-btn', title: 'Swap orientation', html: ICONS.swap });
+  const swap = h('button', { class: 'icon-btn', title: 'Swap orientation', 'aria-label': 'Swap orientation', html: ICONS.swap });
   const row = h('div', { class: 'ctl ctl-dims' },
     h('label', { class: 'ctl-label' }, 'Pixels'),
     h('div', { class: 'ctl-body dims' },

@@ -37,7 +37,7 @@ It runs entirely in your browser on the GPU. Nothing to install, no account, and
 **Use it online:** open **[ar13x3.github.io/halation](https://ar13x3.github.io/halation/)** in a current Chrome, Edge, Firefox or Safari.
 
 1. Choose an output size in **Canvas** (phone, desktop, 4K, square, print…).
-2. Click a look in the sidebar, or press **Surprise me**.
+2. Click a look in the dock, or press **Surprise me**.
 3. Adjust the flow, colors, glass and finish until it's yours.
 4. Pause on a frame you like and press **Export**, or record a seamless loop as video.
 

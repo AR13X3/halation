@@ -87,6 +87,14 @@ function rangeControl(p, store) {
   const unit = p.unit ? h('span', { class: 'unit' }, p.unit) : null;
   const body = h('div', { class: 'ctl-body' }, slider, h('div', { class: 'num-wrap' }, num, unit));
   const { el, label } = wrap(p, store, body, 'ctl-range');
+  // The label sits on the slider (the whole bar), so the bar carries its
+  // tooltip and double-clicking anywhere on it resets the value.
+  el.title = label.title;
+  el.addEventListener('dblclick', (e) => {
+    if (e.target === num) return;
+    store.set(p.key, structuredClone(p.def));
+    store.commit();
+  });
 
   slider.addEventListener('input', () => {
     store.set(p.key, snap(fromPos(slider.value / 1000)));
@@ -169,7 +177,7 @@ function numberControl(p, store) {
 
 function seedControl(p, store) {
   const num = h('input', { type: 'text', class: 'num num-wide', inputmode: 'numeric' });
-  const dice = h('button', { class: 'icon-btn', title: 'New random seed', html: ICONS.dice });
+  const dice = h('button', { class: 'icon-btn', title: 'New random seed', 'aria-label': 'New random seed', html: ICONS.dice });
   const body = h('div', { class: 'ctl-body' }, h('div', { class: 'num-wrap num-wrap-wide' }, num), dice);
   const { el, label } = wrap(p, store, body, 'ctl-seed');
   dice.addEventListener('click', () => {
@@ -212,7 +220,12 @@ function chipsControl(p, store) {
       h('span', { class: 'chip-icon', html: ICONS[o.icon] || '' }),
       h('span', { class: 'chip-label' }, o.label)),
   );
-  const el = h('div', { class: 'ctl ctl-chips' }, h('div', { class: 'chips' }, buttons));
+  // Rows of four or five, whichever splits the options more evenly.
+  const n = buttons.length;
+  const cols = n <= 5 ? n : n === 6 ? 3 : n <= 8 ? 4 : 5;
+  const grid = h('div', { class: 'chips' }, buttons);
+  grid.style.setProperty('--cols', cols);
+  const el = h('div', { class: 'ctl ctl-chips' }, grid);
   function sync() {
     if (!visible(p, store, el)) return;
     const v = store.get(p.key);

@@ -20,7 +20,7 @@ export function gradientEditor(store) {
   const swatch = h('label', { class: 'swatch' }, colorInput);
   const hex = h('input', { type: 'text', class: 'num num-wide hex', maxlength: 7, spellcheck: 'false' });
   const pos = h('input', { type: 'text', class: 'num', inputmode: 'decimal' });
-  const del = h('button', { class: 'icon-btn', title: 'Delete stop (or drag it off the bar)', html: ICONS.trash });
+  const del = h('button', { class: 'icon-btn', title: 'Delete stop (or drag it off the bar)', 'aria-label': 'Delete stop', html: ICONS.trash });
   const stopRow = h('div', { class: 'grad-stop-row' },
     swatch,
     h('div', { class: 'num-wrap num-wrap-wide' }, hex),

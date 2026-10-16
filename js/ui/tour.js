@@ -12,8 +12,8 @@ import { ICONS } from './icons.js';
 const $ = (s) => document.querySelector(s);
 const section = (id) => $(`#panel .section[data-id="${id}"]`);
 const head = (id) => section(id)?.querySelector('.section-head');
+const tab = (id) => $(`#panel .tab[data-id="${id}"]`);
 const SETTLE = 1200; // ms after the last interaction before a "Try it" step moves on
-const narrow = () => matchMedia('(max-width: 820px)').matches; // matches the stacked layout in app.css
 
 const typing = (t) => t instanceof HTMLInputElement && !['range', 'checkbox', 'color'].includes(t.type)
   || t instanceof HTMLSelectElement || t instanceof HTMLTextAreaElement;
@@ -30,7 +30,7 @@ const onEvents = (list) => (ctx, done) => {
   });
   return () => offs.forEach((off) => off());
 };
-const openSection = (id) => (ctx) => { ctx.clearSearch(); section(id)?.classList.remove('collapsed'); };
+const openSection = (id) => (ctx) => { ctx.clearSearch(); ctx.showSection(id); };
 
 const STEPS = [
   {
@@ -39,20 +39,18 @@ const STEPS = [
     next: 'Start',
   },
   {
-    // On phones the sidebar is taller than the screen: show the first two rows.
-    target: () => (narrow() ? [$('#presets .side-head'), ...[...document.querySelectorAll('#presets .preset-card')].slice(0, 6)] : $('#presets')),
-    reveal: () => $('#presets'),
-    block: 'start',
-    side: 'right',
-    prep: () => $('#presets').scrollTo({ top: 0 }),
+    target: () => [$('#presets'), $('#btn-looks')],
+    side: 'top',
+    prep: (ctx) => ctx.showDock(),
     title: 'Start from a look',
-    body: 'Each look is a complete recipe you can change. Looks you save yourself appear under My looks, further down.',
+    body: 'Each look is a complete recipe you can change. Scroll the strip for more, or open All looks to see every look at once and to keep your own under My looks.',
     try: 'Click any look to load it.',
     wait: onStore((p) => p === '*'),
   },
   {
     target: () => $('#frame'),
     side: 'right',
+    prep: (ctx) => ctx.showDock(),
     title: 'Frame it on the canvas',
     body: 'The preview has the exact proportions of your export.',
     try: 'Drag to pan and scroll to zoom. Double-click recenters.',
@@ -88,17 +86,16 @@ const STEPS = [
     wait: onStore((p) => p.startsWith('color')),
   },
   {
-    target: () => ['objects', 'surface', 'glass', 'light', 'screen', 'finish'].map(head),
-    reveal: () => section('surface'),
+    target: () => ['objects', 'surface', 'glass', 'light', 'screen', 'finish'].map(tab),
     side: 'left',
-    block: 'start',
-    prep: (ctx) => ctx.clearSearch(),
+    prep: openSection('glass'),
     title: 'Layer the effects',
-    body: 'Objects float frosted glass or solid shapes in front of the flow (drag them on the canvas), Surface adds materials such as chrome and liquid, Glass refracts everything through ribbed, tiled or frosted panes, Screen adds print and display textures, and Finish grades the result and adds grain, speckle and a vignette you can aim at your focal point. Hover a section title for its dice (randomize) and reset buttons.',
+    body: 'Objects float frosted glass or solid shapes in front of the flow (drag them on the canvas), Surface adds materials such as chrome and liquid, Glass refracts everything through ribbed, tiled or frosted panes, Screen adds print and display textures, and Finish grades the result and adds grain, speckle and a vignette you can aim at your focal point. Each has a tab here, with dice (randomize) and reset buttons next to its title.',
   },
   {
     target: () => $('#panel .panel-search'),
     side: 'left',
+    prep: (ctx) => ctx.showSection(),
     title: 'Find any setting',
     body: 'Search by name or by effect: “blur” finds Soften and Frost. Press / to jump here from anywhere.',
     try: 'Type a word, such as “blur”.',
@@ -108,6 +105,7 @@ const STEPS = [
   {
     target: () => $('#transport'),
     side: 'top',
+    prep: (ctx) => ctx.showDock(),
     title: 'Play, pause and loop',
     body: 'Pause when the motion looks right: a paused preview sharpens to full quality in a moment. With the loop on, the animation repeats seamlessly, ready for video.',
     try: 'Press Space or the play button.',
@@ -131,14 +129,14 @@ const STEPS = [
     title: 'You’re ready',
     body: (guideUrl) => {
       const link = h('a', { href: guideUrl, target: '_blank', rel: 'noopener' }, 'user guide');
-      return ['Save looks you like under My looks, press ? for keyboard shortcuts, and see the ', link, ' for every setting in depth. You can replay this tour from Tutorial at any time.'];
+      return ['Save looks you like under My looks, press ? for keyboard shortcuts, and see the ', link, ' for every setting in depth. You can replay this tour from the Help menu at any time.'];
     },
     next: 'Finish',
   },
 ];
 
-export function createTour({ store, showUI, clearSearch, guideUrl }) {
-  const ctx = { store, clearSearch };
+export function createTour({ store, showUI, clearSearch, showSection, showDock, guideUrl }) {
+  const ctx = { store, clearSearch, showSection, showDock };
   let ui = null;
   let index = -1;
   let stopWait = null;
@@ -196,7 +194,7 @@ export function createTour({ store, showUI, clearSearch, guideUrl }) {
     ui = null;
     index = -1;
     if (lastFocus?.isConnected) lastFocus.focus({ preventScroll: true });
-    if (!finished) toast('Tutorial ended. Replay it any time from Tutorial in the top bar.');
+    if (!finished) toast('Tutorial ended. Replay it any time from the Help menu.');
   }
 
   function onKey(e) {
@@ -227,9 +225,8 @@ export function createTour({ store, showUI, clearSearch, guideUrl }) {
     ui.quit.hidden = n === STEPS.length - 1;
     ui.next.textContent = step.next || 'Next';
 
-    // Section heads are sticky, which scrolling can't aim at reliably, so steps
-    // that target them name a plain element to scroll into view instead.
-    // The spotlight animates the move, so the scroll itself is instant.
+    // Steps can name a plain element to scroll into view instead of their
+    // target. The spotlight animates the move, so the scroll itself is instant.
     (step.reveal?.() || targets(step)[0])?.scrollIntoView({ block: step.block || 'nearest', inline: 'nearest' });
     if (step.wait) stopWait = step.wait(ctx, () => tried(n));
     place();
@@ -257,7 +254,7 @@ export function createTour({ store, showUI, clearSearch, guideUrl }) {
     return [step.target?.()].flat().filter((el) => el && el.getClientRects().length);
   }
 
-  // Union of the targets, clipped to their scrolling sidebar and the viewport.
+  // Union of the targets, clipped to their scrolling panel and the viewport.
   function targetRect(els) {
     let r = null;
     for (const el of els) {
@@ -268,7 +265,7 @@ export function createTour({ store, showUI, clearSearch, guideUrl }) {
     }
     if (!r) return null;
     const clips = [{ left: 0, top: 0, right: document.documentElement.clientWidth, bottom: innerHeight }];
-    const side = els[0].closest('.side');
+    const side = els[0].closest('.clip');
     if (side) clips.push(side.getBoundingClientRect());
     for (const c of clips) {
       r = { left: Math.max(r.left, c.left), top: Math.max(r.top, c.top), right: Math.min(r.right, c.right), bottom: Math.min(r.bottom, c.bottom) };

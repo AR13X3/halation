@@ -75,4 +75,12 @@ export const ICONS = {
   keyboard: svg('<rect x="2" y="5" width="16" height="10" rx="2"/><path d="M5 8h1M8 8h1M11 8h1M14 8h1M6 12h8"/>'),
   compass: svg('<circle cx="10" cy="10" r="7.5"/><path d="M13 7l-1.8 4.2L7 13l1.8-4.2z"/>'),
   check: svg('<path d="M4.5 10.5l3.5 3.5 7.5-8"/>'),
+  grid: svg('<rect x="3" y="3" width="5.5" height="5.5" rx="1.2"/><rect x="11.5" y="3" width="5.5" height="5.5" rx="1.2"/><rect x="3" y="11.5" width="5.5" height="5.5" rx="1.2"/><rect x="11.5" y="11.5" width="5.5" height="5.5" rx="1.2"/>'),
+  help: svg('<circle cx="10" cy="10" r="7.2"/><path d="M8 8.1a2.1 2.1 0 1 1 2.9 1.9c-.6.3-.9.7-.9 1.3v.4"/><circle cx="10" cy="13.9" r=".55" fill="currentColor" stroke="none"/>'),
+  sliders: svg('<path d="M3.5 6h6M13.5 6h3M3.5 14h3M10.5 14h6"/><circle cx="11.5" cy="6" r="2"/><circle cx="8.5" cy="14" r="2"/>'),
+  book: svg('<path d="M10 5.5C8.5 4.3 6.3 3.8 3.5 4v11.5c2.8-.2 5 .3 6.5 1.5 1.5-1.2 3.7-1.7 6.5-1.5V4c-2.8-.2-5 .3-6.5 1.5zM10 5.5V17"/>'),
+  // sections
+  canvas: svg('<rect x="5" y="2.5" width="10" height="15" rx="1.8"/>'),
+  sun: svg('<circle cx="10" cy="10" r="3.4"/><path d="M10 2.5v1.8M10 15.7v1.8M2.5 10h1.8M15.7 10h1.8M4.7 4.7l1.3 1.3M14 14l1.3 1.3M4.7 15.3L6 14M14 6l1.3-1.3"/>'),
+  motion: svg('<path d="M2.5 7h6M4.5 10.5h5M2.5 14h6"/><circle cx="13.5" cy="10.5" r="3.8"/>'),
 };

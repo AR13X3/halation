@@ -45,7 +45,7 @@ js/presets.js        built-in looks
 js/randomize.js      "Surprise me"
 js/export.js         PNG (8/16-bit) encoder, ZIP writer, download helpers
 js/store.js          state, undo/redo, share-link encoding
-js/ui/               panel, controls, gradient editor, looks sidebar, icons
+js/ui/               controls panel, controls, gradient editor, looks dock and browser, tour, icons
 tools/serve.mjs      development server
 docs/GUIDE.md        user guide
 ```

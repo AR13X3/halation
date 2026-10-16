@@ -27,6 +27,12 @@ const app = $('#app');
 const canvas = $('#canvas');
 const stage = $('#stage');
 const frameEl = $('#frame');
+const dockEl = $('#dock');
+const panelEl = $('#panel');
+// Phones and portrait tablets: the dock spans the bottom and settings open as
+// a sheet (app.css has the same query).
+const PHONE_QUERY = '(max-width: 720px), (max-width: 900px) and (orientation: portrait)';
+const phoneQuery = matchMedia(PHONE_QUERY);
 
 function hideBoot() {
   const boot = $("#boot");
@@ -73,6 +79,7 @@ const store = new Store();
 const previewSet = new TargetSet(ctx);
 const thumbSet = new TargetSet(ctx);
 let lookName = PRESETS[0].name;
+let edited = false; // changed since the look was loaded
 let dirty = true;
 let busy = false;
 let rec = null;
@@ -122,6 +129,7 @@ async function restore() {
       Object.assign(store.state.export, sess.export || {});
       store.applyLook(sess.look);
       lookName = sess.name || 'Untitled';
+      edited = !!sess.edited;
       return;
     }
   } catch {}
@@ -139,7 +147,7 @@ function saveSession() {
   saveTimer = setTimeout(() => {
     try {
       localStorage.setItem('halation.session', JSON.stringify({
-        look: store.look(), doc: store.state.doc, export: store.state.export, name: lookName,
+        look: store.look(), doc: store.state.doc, export: store.state.export, name: lookName, edited,
       }));
     } catch {}
   }, 400);
@@ -147,23 +155,36 @@ function saveSession() {
 
 // ── layout ──────────────────────────────────────────────────────────────────
 function docAspect() { return store.state.doc.width / store.state.doc.height; }
-const view = { cssH: 1 };
+const view = { cssH: 1, frame: { x: 0, y: 0, w: 1, h: 1 }, W: 1, H: 1 };
+
+// The room the frame has between the floating panels (stage coordinates).
+function frameArea() {
+  const W = stage.clientWidth, H = stage.clientHeight;
+  if (app.classList.contains('ui-hidden')) return { x: 0, y: 0, w: W, h: H };
+  const phone = phoneQuery.matches;
+  const gap = phone ? 12 : 22;
+  const top = $('.bar-start').getBoundingClientRect().bottom + gap;
+  const right = phone ? W - 12 : panelEl.getBoundingClientRect().left - gap;
+  const lower = phone && app.classList.contains('editing') ? panelEl : dockEl;
+  const bottom = lower.getBoundingClientRect().top - gap;
+  const left = phone ? 12 : 28;
+  return { x: left, y: top, w: Math.max(40, right - left), h: Math.max(40, bottom - top) };
+}
 
 function layout() {
   const doc = store.state.doc;
-  const hidden = app.classList.contains('ui-hidden');
-  const r = stage.getBoundingClientRect();
-  const padX = hidden ? 0 : 36;
-  const padTop = hidden ? 0 : 26;
-  const padBottom = hidden ? 0 : 72;
-  const availW = Math.max(40, r.width - padX * 2);
-  const availH = Math.max(40, r.height - padTop - padBottom);
-  const k = Math.min(availW / doc.width, availH / doc.height);
+  const area = frameArea();
+  const k = Math.min(area.w / doc.width, area.h / doc.height);
   const cssW = Math.max(1, Math.round(doc.width * k));
   const cssH = Math.max(1, Math.round(doc.height * k));
   frameEl.style.width = cssW + 'px';
   frameEl.style.height = cssH + 'px';
-  frameEl.style.top = padTop + availH / 2 + 'px';
+  frameEl.style.left = area.x + area.w / 2 + 'px';
+  frameEl.style.top = area.y + area.h / 2 + 'px';
+  view.frame = { x: Math.round(area.x + (area.w - cssW) / 2), y: Math.round(area.y + (area.h - cssH) / 2), w: cssW, h: cssH };
+  view.W = stage.clientWidth;
+  view.H = stage.clientHeight;
+  sizeAmbient();
 
   // The canvas always has full display resolution (that's what refined stills
   // use); the moving preview renders its heavy passes at a lower internal scale.
@@ -184,6 +205,69 @@ function layout() {
   dirty = true;
 }
 new ResizeObserver(layout).observe(stage);
+
+// ── ambient light ───────────────────────────────────────────────────────────
+// A tiny, blurred copy of the canvas lights the room around the frame: the
+// whole picture stretched across the window, with the frame's own pixels at
+// its place so the glow continues from its edges. All the blurring happens at
+// this tiny size; the browser only scales the result up. Its brightness also
+// sets how dark the glass panels are, so their text stays readable.
+const ambient = $('#ambient');
+const ambientCtx = ambient.getContext('2d', { alpha: false });
+const mid = document.createElement('canvas');
+const midCtx = mid.getContext('2d', { alpha: false });
+const probe = document.createElement('canvas');
+probe.width = 6;
+probe.height = 4;
+const probeCtx = probe.getContext('2d', { willReadFrequently: true });
+let ambientAt = 0;
+let glassAt = 0;
+
+function sizeAmbient() {
+  const w = 256, h = Math.max(1, Math.round((w * view.H) / Math.max(1, view.W)));
+  if (ambient.width !== w || ambient.height !== h) { ambient.width = w; ambient.height = h; }
+}
+
+// Call right after the canvas was drawn, while its pixels are still readable.
+function paintAmbient(now, force = false) {
+  if (app.classList.contains('ui-hidden') && !force) return;
+  if (!force && now - ambientAt < (app.classList.contains('lite') ? 250 : 80)) return;
+  ambientAt = now;
+  try {
+    const k = Math.min(1, 192 / Math.max(canvas.width, canvas.height));
+    const mw = Math.max(1, Math.round(canvas.width * k)), mh = Math.max(1, Math.round(canvas.height * k));
+    if (mid.width !== mw || mid.height !== mh) { mid.width = mw; mid.height = mh; }
+    midCtx.drawImage(canvas, 0, 0, mw, mh);
+    const aw = ambient.width, ah = ambient.height;
+    // The stretched picture only sets the mood, so it is blurred to color
+    // fields first (drawn oversized so the blur doesn't darken the edges).
+    const pad = aw * 0.15;
+    ambientCtx.filter = 'blur(18px) saturate(1.25) brightness(.55)';
+    ambientCtx.drawImage(mid, -pad, -pad, aw + pad * 2, ah + pad * 2);
+    // The ambient element overhangs the stage by 8% on every side (app.css).
+    const sx = aw / (view.W * 1.16), sy = ah / (view.H * 1.16);
+    const f = view.frame;
+    ambientCtx.filter = 'blur(8px) saturate(1.25) brightness(.55)';
+    ambientCtx.drawImage(mid, (f.x + view.W * 0.08) * sx, (f.y + view.H * 0.08) * sy, f.w * sx, f.h * sy);
+    ambientCtx.filter = 'none';
+    ambient.classList.add('on');
+    if (now - glassAt > 900) { glassAt = now; adaptGlass(); }
+  } catch (err) {
+    console.warn('ambient light off', err);
+    paintAmbient = () => {};
+  }
+}
+
+function adaptGlass() {
+  probeCtx.drawImage(ambient, 0, 0, probe.width, probe.height);
+  const d = probeCtx.getImageData(0, 0, probe.width, probe.height).data;
+  let lum = 0;
+  for (let i = 0; i < d.length; i += 4) lum += 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2];
+  lum /= (d.length / 4) * 255;
+  // The room shows the light at 55% (app.css), so judge what is on screen.
+  const a = Math.min(0.72, Math.max(0.36, 0.32 + 0.62 * lum * 0.55));
+  app.style.setProperty('--glass-a', a.toFixed(3));
+}
 
 // ── render loop ─────────────────────────────────────────────────────────────
 function isFluid() { return store.state.source.type === 'fluid'; }
@@ -263,6 +347,7 @@ function tick(now) {
       if (fluidOn && simDt > 0) { fluid.step((simDt * a.speed) / 0.6, s.source); simDt = 0; }
       if (lastRender && a.playing && !rec) adaptResolution(now - lastRender, t);
       renderLive();
+      paintAmbient(now, !lastRender);
       if (!lastRender) {
         hideBoot();
         // get the object shaders ready while the user looks around
@@ -277,6 +362,7 @@ function tick(now) {
   } else if (!rec && refineK < refineFrames() && now - lastChange > 140) {
     renderRefine(refineK);
     refineK++;
+    if (refineK === refineFrames()) paintAmbient(now, true);
   }
 
   if (rec) {
@@ -306,13 +392,69 @@ setIcon('#btn-undo', 'undo').onclick = () => store.undo();
 setIcon('#btn-redo', 'redo').onclick = () => store.redo();
 setIcon('#btn-surprise', 'dice', 'Surprise me').onclick = () => surprise();
 setIcon('#btn-share', 'link', 'Share').onclick = () => share();
-setIcon('#btn-tour', 'compass', 'Tutorial').onclick = () => tour.start();
-setIcon('#btn-help', 'keyboard').onclick = () => $('#help').showModal();
 setIcon('#btn-export', 'download', 'Export').onclick = () => exportImage();
 setIcon('#btn-hide', 'eye').onclick = () => toggleUI();
+setIcon('#btn-show', 'eye').onclick = () => toggleUI();
 setIcon('#btn-loop', 'loop').onclick = () => { store.set('anim.loop', !store.state.anim.loop); store.commit(); };
-const githubBtn = setIcon('#btn-github', 'github');
-githubBtn.href = REPO_URL;
+setIcon('#btn-looks', 'grid', 'All looks');
+setIcon('#btn-edit', 'sliders', 'Edit').onclick = () => setEditing(true);
+
+// The title names the current look and opens the looks browser.
+const titleBtn = $('#btn-title');
+titleBtn.insertAdjacentHTML('beforeend', ICONS.chevron);
+function setLookName(name, isEdited = false) {
+  lookName = name;
+  edited = isEdited;
+  $('#look-name').textContent = name;
+  $('#look-edited').hidden = !edited;
+  titleBtn.setAttribute('aria-label', `${name}${edited ? ' (edited)' : ''}: browse looks`);
+  saveSession();
+}
+
+// Help menu: tutorial, shortcuts, guide and source (plus Share on phones).
+const helpBtn = setIcon('#btn-help', 'help');
+const helpMenu = $('#help-menu');
+setIcon('#btn-tour', 'compass', 'Tutorial').onclick = () => tour.start();
+setIcon('#btn-keys', 'keyboard', 'Keyboard shortcuts').onclick = () => $('#help').showModal();
+$('#btn-keys').insertAdjacentHTML('beforeend', '<kbd>?</kbd>');
+setIcon('#btn-guide', 'book', 'User guide').href = `${REPO_URL}/blob/main/docs/GUIDE.md`;
+setIcon('#btn-github', 'github', 'Source on GitHub').href = REPO_URL;
+{
+  const item = document.createElement('button');
+  item.className = 'phone-only';
+  item.setAttribute('role', 'menuitem');
+  item.innerHTML = `${ICONS.link}<span>Copy share link</span>`;
+  item.onclick = () => share();
+  helpMenu.prepend(item);
+}
+function setMenu(on) {
+  helpMenu.hidden = !on;
+  helpBtn.setAttribute('aria-expanded', String(on));
+  if (on) [...helpMenu.children].find((el) => el.offsetParent)?.focus();
+}
+helpBtn.onclick = () => setMenu(helpMenu.hidden);
+helpMenu.addEventListener('click', (e) => { if (e.target.closest('[role="menuitem"]')) setMenu(false); });
+helpMenu.addEventListener('keydown', (e) => {
+  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+  e.preventDefault();
+  const items = [...helpMenu.children].filter((el) => el.offsetParent);
+  const i = items.indexOf(document.activeElement);
+  items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus();
+});
+document.addEventListener('pointerdown', (e) => {
+  if (!helpMenu.hidden && !helpMenu.contains(e.target) && !helpBtn.contains(e.target)) setMenu(false);
+});
+
+// Phones edit in a sheet that takes the dock's place.
+function setEditing(on) {
+  if (app.classList.contains('editing') === on) return;
+  app.classList.toggle('editing', on);
+  $('#btn-edit').setAttribute('aria-expanded', String(on));
+  if (on) presetsPanel.close();
+  layout();
+}
+phoneQuery.addEventListener('change', () => layout());
+
 const playBtn = $('#btn-play');
 playBtn.onclick = () => togglePlay();
 $('#help [data-close]').innerHTML = ICONS.close;
@@ -323,12 +465,15 @@ const qualitySel = $('#quality');
 function syncPerfSelect() {
   qualitySel.querySelector('option[value="auto"]').textContent = `Auto · ${TIERS[autoTier || 'balanced'].label}`;
   qualitySel.value = perfMode;
+  // Live blur behind the panels costs GPU time, so Eco uses solid ones.
+  app.classList.toggle('lite', tier() === TIERS.eco);
 }
 qualitySel.onchange = () => {
   perfMode = qualitySel.value;
   try { localStorage.setItem('halation.perf', perfMode); } catch {}
   drs = tier().maxScale;
   frameEma = 0;
+  syncPerfSelect();
   layout();
 };
 
@@ -389,6 +534,7 @@ scrub.addEventListener('change', () => { scrubbing = false; });
 window.addEventListener('pointerup', () => { scrubbing = false; });
 
 let lastPlaying = null;
+let lastTime = '';
 function syncTransport() {
   const a = store.state.anim;
   if (lastPlaying !== a.playing) {
@@ -400,10 +546,9 @@ function syncTransport() {
   if (a.loop) {
     if (!scrubbing) scrub.value = Math.round((a.time / a.duration) * 1000);
     scrub.style.setProperty('--fill', `${(a.time / a.duration) * 100}%`);
-    timeEl.textContent = `${a.time.toFixed(1)} / ${a.duration.toFixed(0)}s`;
-  } else {
-    timeEl.textContent = `${a.time.toFixed(1)}s`;
   }
+  const t = a.loop ? `${a.time.toFixed(1)} <i>/ ${a.duration.toFixed(0)} s</i>` : `${a.time.toFixed(1)} s`;
+  if (t !== lastTime) { timeEl.innerHTML = t; lastTime = t; }
 }
 
 function togglePlay() {
@@ -414,13 +559,16 @@ function togglePlay() {
 
 function toggleUI() {
   app.classList.toggle('ui-hidden');
+  setMenu(false);
+  presetsPanel.close();
   layout();
+  if (app.classList.contains('ui-hidden')) ambient.classList.remove('on');
 }
 
 const actions = {
   randomizeSection(id) {
     randomizeSection(store.state, id);
-    afterBulkChange('Remix');
+    afterBulkChange();
   },
   resetSection(id) {
     // Reset the section's settings but keep its type and the palette.
@@ -444,9 +592,11 @@ const actions = {
     store.applyLook(look);
     store.commit();
     applyingLook = false;
-    lookName = name;
+    setLookName(name);
     if (isFluid()) fluid.reset();
   },
+  renameLook: (name) => setLookName(name),
+  closeEditor: () => setEditing(false),
   thumbnail: (look) => thumbnail(look),
   // false while a look's shaders are still compiling in the background
   thumbnailReady: (look) => !(migrateLook(look)?.objects?.count > 0) || renderer.objectsReady(),
@@ -455,9 +605,9 @@ const actions = {
 
 function afterBulkChange(name) {
   sanitize(store.state);
-  if (name) lookName = name;
   store.emit('*');
   store.commit();
+  if (name) setLookName(name);
 }
 
 // Surprise me: render a few candidates from one recipe at a tiny size and keep
@@ -497,11 +647,16 @@ function surprise() {
 }
 
 const panel = buildPanel($('#panel'), store, actions);
-const presetsPanel = buildPresetsPanel($('#presets'), store, actions);
+const presetsPanel = buildPresetsPanel({ strip: $('#presets'), sheet: $('#looks-sheet'), opener: [$('#btn-looks'), titleBtn] }, store, actions);
+$('#btn-looks').onclick = () => presetsPanel.toggle();
+titleBtn.onclick = () => presetsPanel.toggle();
+setLookName(lookName, edited);
 const tour = createTour({
   store,
   showUI: () => { if (app.classList.contains('ui-hidden')) toggleUI(); },
   clearSearch: () => panel.clearSearch(),
+  showSection: (id) => { if (phoneQuery.matches) setEditing(true); if (id) panel.showTab(id); },
+  showDock: () => { setEditing(false); presetsPanel.close(); },
   guideUrl: `${REPO_URL}/blob/main/docs/GUIDE.md`,
 });
 
@@ -524,14 +679,17 @@ store.on((path) => {
     if (d && d.w) { store.state.doc.width = d.w; store.state.doc.height = d.h; }
   }
   if (path === '*' || path.startsWith('doc')) layout();
-  if (!applyingLook && path !== 'objects.edit' && !path.startsWith('doc') && !path.startsWith('export')) presetsPanel.clearActive();
+  if (!applyingLook && path !== 'objects.edit' && !path.startsWith('doc') && !path.startsWith('export')) {
+    presetsPanel.clearActive();
+    if (!edited) setLookName(lookName, true);
+  }
   queueSync();
   saveSession();
 });
 
 // Highlight the restored preset if it matches.
 const match = PRESETS.find((p) => p.name === lookName);
-if (match) presetsPanel.setActive(match.id);
+if (match && !edited) presetsPanel.setActive(match.id);
 
 // ── canvas interaction: move objects / pan / zoom / paint ───────────────────
 // The object (1–6) under the pointer, or 0.
@@ -939,6 +1097,11 @@ window.addEventListener('keydown', (e) => {
     case 's': case 'S': exportImage(); break;
     case 'c': case 'C': copyToClipboard(); break;
     case 'r': case 'R': surprise(); break;
+    case 'l': case 'L':
+      if (app.classList.contains('ui-hidden')) toggleUI();
+      setEditing(false);
+      presetsPanel.toggle();
+      break;
     case 'h': case 'H': toggleUI(); break;
     case 'f': case 'F':
       if (document.fullscreenElement) document.exitFullscreen();
@@ -948,9 +1111,16 @@ window.addEventListener('keydown', (e) => {
     case '/':
       e.preventDefault();
       if (app.classList.contains('ui-hidden')) toggleUI();
+      if (phoneQuery.matches) setEditing(true);
       panel.focusSearch();
       break;
-    case 'Escape': if (!$('#help').open) panel.clearSearch(); break;
+    case 'Escape':
+      if ($('#help').open) break;
+      if (!helpMenu.hidden) { setMenu(false); helpBtn.focus(); }
+      else if (presetsPanel.isOpen()) presetsPanel.close();
+      else if (app.classList.contains('editing')) setEditing(false);
+      else panel.clearSearch();
+      break;
     case 'ArrowLeft':
     case 'ArrowRight': {
       e.preventDefault();

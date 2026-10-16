@@ -27,27 +27,32 @@ Everything you need to go from a blank canvas to a finished background. If you j
 
 ## The interface
 
+The artwork fills the window, lit by a soft glow of its own colors, and the controls float above it on frosted glass.
+
 | Area | What it does |
 | --- | --- |
-| **Looks** (left) | Built-in starting points, plus looks you save yourself. Click one to load it. |
 | **Canvas** (center) | Live preview at the exact proportions of your output size. Drag to pan, scroll to zoom, or drag an object to move it. |
-| **Transport bar** (bottom) | Play/pause, timeline, seamless-loop toggle, performance mode and frame-rate readout. The eye icon hides the interface. |
-| **Controls** (right) | Every setting, grouped into sections: Canvas, Flow, Objects, Color, Surface, Glass, Light, Screen, Finish, Motion, Export. Canvas and Color start open; click a section title to expand or collapse it. Hover a title for its dice (randomize this section) and reset buttons. |
-| **Top bar** | Undo/redo, **Surprise me**, **Share**, **Tutorial**, keyboard shortcuts, source code link and **Export**. |
+| **Look name** (top left) | The look you are working on, with undo and redo next to it. A dot appears once you change it; click the name to browse all looks. |
+| **Top right** | **Surprise me**, **Share**, the **Help** menu (tutorial, keyboard shortcuts, this guide and the source code) and **Export**. |
+| **Controls** (right) | Every setting, one section per tab: Canvas, Flow, Objects, Color, Surface, Glass, Light, Screen, Finish, Motion, Export. Each section has dice (randomize this section) and reset buttons next to its title. |
+| **Dock** (bottom) | Play/pause, timeline, seamless-loop toggle, performance mode and frame-rate readout, and a strip of looks to click through. **All looks** (`L`) opens every built-in look plus the ones you save under **My looks**. The eye icon hides the interface. |
 
-New to Halation? Press **Tutorial** in the top bar for a one-minute guided tour of the basics. It points out each part of the interface and lets you try things as you go; press **End tutorial** or `Esc` to leave it at any time.
+On phones and portrait tablets the dock spans the bottom of the screen, and **Edit** opens the controls as a sheet (**Done** closes it).
+
+New to Halation? Open **Help → Tutorial** for a one-minute guided tour of the basics. It points out each part of the interface and lets you try things as you go; press **End tutorial** or `Esc` to leave it at any time.
 
 A few habits that make editing fast:
 
-- **Double-click a label** to reset that control to its default.
+- **Click or drag anywhere along a slider bar** to set it; the filled part shows the value.
+- **Double-click a setting** to reset it to its default.
 - **Drag a number** left or right to scrub it (hold `Shift` for fine steps), or click it to type a value. Arrow keys nudge it.
-- Hover a label for a short explanation of what it does.
+- Hover a setting for a short explanation of what it does.
 - **Search settings** at the top of the controls (or press `/`) to find any setting by name or by what it does: "blur" finds Soften and Frost, "rainbow" finds Dispersion. Settings that the current look hides, such as Band width while the pattern is Silk, are listed below the results with the change that reveals them. Press `Esc` to clear the search.
 
 ## Your first background in five steps
 
 1. **Pick a size.** In **Canvas**, choose a preset such as *Phone — 1080 × 1920* or *Desktop 4K*, or type your own width and height.
-2. **Start from a look.** Click any look in the sidebar, or press **Surprise me** (`R`) until something catches your eye.
+2. **Start from a look.** Click any look in the dock or under **All looks**, or press **Surprise me** (`R`) until something catches your eye.
 3. **Make it yours.** Change the palette in **Color**, try a different **Glass** type, adjust **Refraction** and **Frost**. Drag the canvas to find the best composition.
 4. **Pick a moment.** Pause (`Space`) when the motion looks right, or step frame by frame with `←` `→`. A paused preview sharpens itself to full quality within a second.
 5. **Export.** Choose a scale and format in **Export** and press **Download image** (`S`).
@@ -225,19 +230,19 @@ Exports always render at full quality, independent of the performance mode. Very
 
 ## Saving and sharing looks
 
-- **My looks** (bottom of the sidebar): name and save the current look with a thumbnail. Saved looks live in your browser; use **Export** to download them as a `.json` file and **Import** to load them elsewhere.
+- **My looks** (**All looks → My looks**): name and save the current look with a thumbnail. Saved looks also appear first in the dock. Saved looks live in your browser; use **Export** to download them as a `.json` file and **Import** to load them elsewhere.
 - **Share** copies a link that recreates your exact look for anyone who opens it. Images you load yourself are not included in links.
 - Your last session is restored automatically when you come back.
 - **Undo/redo** with `Ctrl/⌘ Z` and `Ctrl/⌘ Shift Z`.
 
 ## Performance modes
 
-The selector in the transport bar trades preview smoothness for detail **while things move**:
+The selector under the timeline in the dock trades preview smoothness for detail **while things move**:
 
 | Mode | For |
 | --- | --- |
 | **Auto** | Benchmarks your GPU when the app starts and picks the right mode |
-| **Eco** | Laptops and integrated graphics: 30 fps cap, lower preview resolution |
+| **Eco** | Laptops and integrated graphics: 30 fps cap, lower preview resolution, solid instead of frosted panels |
 | **Balanced** | Most computers |
 | **Max** | Fast GPUs: full resolution at all times |
 
@@ -302,4 +307,4 @@ Whatever the mode, a still preview refines itself to full quality (the readout s
 
 **Copy doesn't work**: some browsers only allow clipboard images on secure (https) pages and after a click. Use **Download image** instead.
 
-**Something looks wrong after an update**: click any look in the sidebar to start fresh. Your saved looks are kept.
+**Something looks wrong after an update**: click any look in the dock to start fresh. Your saved looks are kept.

@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Halation — fluid backgrounds behind glass</title>
   <meta name="description" content="Free, open-source generator for fluid gradient backgrounds behind reeded glass, halftone, LED and other textures. Export high-resolution PNGs and seamless loop videos." />
-  <meta name="theme-color" content="#0b0b0d" />
+  <meta name="theme-color" content="#08080a" />
   <meta property="og:title" content="Halation" />
   <meta property="og:description" content="Fluid gradients behind textured glass. Free & open source." />
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
@@ -17,58 +17,81 @@
     <div>Preparing the GPU…</div>
   </div>
   <div id="app">
-    <header class="topbar">
-      <div class="brand">
-        <img src="assets/logo-mark-light.svg" alt="" width="20" height="24" />
-        <span class="brand-name">Halation</span>
-      </div>
-      <div class="top-group">
-        <button class="icon-btn" id="btn-undo" title="Undo (Ctrl+Z)"></button>
-        <button class="icon-btn" id="btn-redo" title="Redo (Ctrl+Shift+Z)"></button>
-      </div>
-      <div class="top-spacer"></div>
-      <div class="top-group">
-        <button class="btn ghost" id="btn-surprise" title="Randomize everything (R)"></button>
-        <button class="btn ghost" id="btn-share" title="Copy a link to this exact look"></button>
-        <button class="btn ghost" id="btn-tour" title="A quick guided tour of the basics"></button>
-        <button class="icon-btn" id="btn-help" title="Keyboard shortcuts (?)"></button>
-        <a class="icon-btn" id="btn-github" href="https://github.com/" target="_blank" rel="noopener" title="Source on GitHub"></a>
-        <button class="btn primary" id="btn-export" title="Download image (S)"></button>
-      </div>
-    </header>
-
-    <aside class="side side-left" id="presets" aria-label="Looks"></aside>
-
     <main class="stage" id="stage">
+      <canvas class="ambient" id="ambient" aria-hidden="true"></canvas>
       <div class="frame" id="frame">
         <canvas id="canvas"></canvas>
       </div>
       <div class="dropzone" id="dropzone"><div>Drop an image to use it as the flow source</div></div>
-      <div class="rec-badge" id="rec-badge" hidden><span class="dot"></span><span id="rec-text">REC</span></div>
-      <div class="transport" id="transport">
-        <button class="icon-btn" id="btn-play" title="Play / pause (Space)"></button>
-        <div class="scrub" id="scrub-wrap">
-          <input type="range" class="slider" id="scrub" min="0" max="1000" step="1" value="0" />
-        </div>
-        <span class="time" id="time">0.0s</span>
-        <button class="icon-btn" id="btn-loop" title="Seamless loop"></button>
-        <span class="divider"></span>
-        <select class="select mini" id="quality">
-          <option value="auto">Auto</option>
-          <option value="eco">Eco · low-power</option>
-          <option value="balanced">Balanced</option>
-          <option value="max">Max</option>
-        </select>
-        <span class="fps" id="fps">—</span>
-        <button class="icon-btn" id="btn-hide" title="Hide interface (H)"></button>
-      </div>
+      <div class="rec-badge glass" id="rec-badge" hidden><span class="dot"></span><span id="rec-text">REC</span></div>
     </main>
 
-    <aside class="side side-right" id="panel" aria-label="Controls"></aside>
+    <header class="bar bar-start glass" aria-label="Halation">
+      <div class="brand">
+        <img src="assets/logo-mark-light.svg" alt="" width="19" height="22" />
+        <span class="brand-name">Halation</span>
+      </div>
+      <span class="bar-sep"></span>
+      <button class="look-title" id="btn-title" title="Browse looks" aria-haspopup="dialog">
+        <span class="look-name" id="look-name"></span><span class="edited" id="look-edited" title="Edited" hidden></span>
+      </button>
+      <span class="bar-sep"></span>
+      <button class="icon-btn" id="btn-undo" title="Undo (Ctrl+Z)" aria-label="Undo"></button>
+      <button class="icon-btn" id="btn-redo" title="Redo (Ctrl+Shift+Z)" aria-label="Redo"></button>
+    </header>
+
+    <div class="bar bar-end glass">
+      <button class="btn ghost" id="btn-surprise" title="Randomize everything (R)"></button>
+      <button class="btn ghost" id="btn-share" title="Copy a link to this exact look"></button>
+      <button class="icon-btn" id="btn-help" title="Help" aria-label="Help" aria-haspopup="menu" aria-expanded="false"></button>
+      <button class="btn primary" id="btn-export" title="Download image (S)"></button>
+    </div>
+
+    <div class="menu glass" id="help-menu" role="menu" aria-label="Help" hidden>
+      <button role="menuitem" id="btn-tour" title="A quick guided tour of the basics"></button>
+      <button role="menuitem" id="btn-keys"></button>
+      <a role="menuitem" id="btn-guide" target="_blank" rel="noopener"></a>
+      <a role="menuitem" id="btn-github" target="_blank" rel="noopener"></a>
+    </div>
+
+    <aside class="inspector glass" id="panel" aria-label="Controls"></aside>
+
+    <div class="dock glass" id="dock">
+      <div class="transport" id="transport">
+        <div class="tp-row">
+          <button class="play" id="btn-play" title="Play / pause (Space)" aria-label="Play / pause"></button>
+          <span class="time" id="time">0.0s</span>
+          <button class="icon-btn sm" id="btn-loop" title="Seamless loop" aria-label="Seamless loop"></button>
+          <button class="btn edit-btn" id="btn-edit" aria-expanded="false"></button>
+        </div>
+        <div class="scrub" id="scrub-wrap">
+          <input type="range" class="scrubber" id="scrub" min="0" max="1000" step="1" value="0" aria-label="Animation time" />
+        </div>
+        <div class="tp-status">
+          <select class="mini-select" id="quality" aria-label="Preview performance">
+            <option value="auto">Auto</option>
+            <option value="eco">Eco · low-power</option>
+            <option value="balanced">Balanced</option>
+            <option value="max">Max</option>
+          </select>
+          <span class="fps" id="fps">—</span>
+        </div>
+      </div>
+      <span class="dock-sep"></span>
+      <div class="films-row">
+        <div class="films clip" id="presets" aria-label="Looks"></div>
+        <button class="all-looks" id="btn-looks" title="All looks and My looks (L)" aria-haspopup="dialog" aria-expanded="false"></button>
+        <button class="icon-btn hide-btn" id="btn-hide" title="Hide interface (H)" aria-label="Hide interface"></button>
+      </div>
+    </div>
+
+    <section class="looks-sheet glass" id="looks-sheet" role="dialog" aria-label="Looks" hidden></section>
+
+    <button class="show-ui glass" id="btn-show" title="Show interface (H)" aria-label="Show interface"></button>
   </div>
 
   <div class="busy" id="busy" hidden>
-    <div class="busy-card">
+    <div class="busy-card glass">
       <div class="spinner"></div>
       <div id="busy-text">Rendering…</div>
       <div class="progress"><div id="busy-bar"></div></div>
@@ -76,12 +99,13 @@
   </div>
 
   <dialog id="help" class="dialog">
-    <div class="dialog-head"><b>Keyboard shortcuts</b><button class="icon-btn" data-close></button></div>
+    <div class="dialog-head"><b>Keyboard shortcuts</b><button class="icon-btn" data-close aria-label="Close"></button></div>
     <dl class="keys">
       <dt><kbd>Space</kbd></dt><dd>Play / pause</dd>
       <dt><kbd>S</kbd></dt><dd>Download image</dd>
       <dt><kbd>C</kbd></dt><dd>Copy image to clipboard</dd>
       <dt><kbd>R</kbd></dt><dd>Surprise me (randomize all)</dd>
+      <dt><kbd>L</kbd></dt><dd>Browse all looks</dd>
       <dt><kbd>/</kbd></dt><dd>Search settings</dd>
       <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Step one frame (hold Shift for 1 s)</dd>
       <dt><kbd>1</kbd>–<kbd>9</kbd></dt><dd>Jump to a built-in look</dd>
@@ -90,7 +114,7 @@
       <dt><kbd>Ctrl</kbd> <kbd>Z</kbd></dt><dd>Undo (Shift for redo)</dd>
       <dt>Drag canvas</dt><dd>Pan the flow (or paint, in Fluid mode)</dd>
       <dt>Scroll canvas</dt><dd>Zoom the flow</dd>
-      <dt>Double-click label</dt><dd>Reset that control</dd>
+      <dt>Double-click a setting</dt><dd>Reset it</dd>
       <dt>Drag a number</dt><dd>Scrub its value (Shift = fine)</dd>
     </dl>
     <p class="dialog-foot">Halation 1.2.0 is free software under the <a href="https://github.com/AR13X3/halation/blob/main/LICENSE" target="_blank" rel="noopener">AGPL-3.0</a> · <a href="https://github.com/AR13X3/halation" target="_blank" rel="noopener">Source code</a> · <a href="https://github.com/AR13X3/halation/blob/main/docs/GUIDE.md" target="_blank" rel="noopener">User guide</a></p>

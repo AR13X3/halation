@@ -2,6 +2,20 @@
 
 Notable changes to Halation. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- **A new interface.** The artwork fills the window, lit by a soft glow of its own colors, and every control floats above it on frosted glass that darkens over bright artwork to stay readable.
+- **Looks** moved into a dock below the canvas, next to the timeline. **All looks** opens every built-in look and your saved **My looks** at once, and the look's name at the top left marks it once you change it (click it to browse).
+- **Settings** are organized in tabs, one section at a time, and every slider is a bar you can click or drag anywhere along. Double-click a setting to reset it.
+- A **Help** menu gathers the tutorial, keyboard shortcuts, user guide and source code.
+- On phones and portrait tablets, looks and the timeline sit in a dock at the bottom and **Edit** opens the settings as a sheet.
+
+### Added
+
+- `L` opens all looks.
+
 ## [1.2.0] - 2026-10-16
 
 ### Added
@@ -63,6 +77,7 @@ First public release.
 - Settings search (`/`), which also lists settings hidden by the current look and the change that reveals them.
 - Performance modes (Auto, Eco, Balanced, Max) with dynamic resolution.
 
+[Unreleased]: https://github.com/AR13X3/halation/compare/v1.2.0...HEAD
 [1.2.0]: https://github.com/AR13X3/halation/releases/tag/v1.2.0
 [1.1.0]: https://github.com/AR13X3/halation/releases/tag/v1.1.0
 [1.0.0]: https://github.com/AR13X3/halation/releases/tag/v1.0.0
