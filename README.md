@@ -26,11 +26,11 @@ It runs entirely in your browser on the GPU. Nothing to install, no account, and
 
 ![A selection of Halation's built-in looks](assets/banner.jpg)
 
-![The Halation interface: looks sidebar, live canvas and controls](assets/screenshots/overview.jpg)
+![The Halation interface: a live full-window canvas, a tabbed inspector for flow, glass, screen and export, and a dock of saved and built-in looks](assets/screenshots/overview.jpg)
 
-| Glass | Screen | Export |
-| --- | --- | --- |
-| ![Glass controls](assets/screenshots/glass.jpg) | ![Screen controls](assets/screenshots/screen.jpg) | ![Export controls](assets/screenshots/export.jpg) |
+| Surface | Export |
+| --- | --- |
+| ![Surface controls](assets/screenshots/surface.jpg) | ![Export controls](assets/screenshots/export.jpg) |
 
 ## Quick start
 
