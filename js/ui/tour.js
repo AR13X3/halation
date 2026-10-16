@@ -35,7 +35,7 @@ const openSection = (id) => (ctx) => { ctx.clearSearch(); section(id)?.classList
 const STEPS = [
   {
     title: 'Welcome to Halation',
-    body: 'Halation turns moving color into backgrounds: a flowing field seen through glass and screen textures, exported as images or seamless video loops. This tour covers the basics in about a minute.',
+    body: 'Halation turns color into backgrounds: a flowing field or a still gradient, seen through glass, materials and screen textures, and exported as images or seamless video loops. This tour covers the basics in about a minute.',
     next: 'Start',
   },
   {
@@ -64,7 +64,7 @@ const STEPS = [
     block: 'start',
     prep: openSection('doc'),
     title: 'Pick a size',
-    body: 'Choose a phone, desktop or print preset, or type exact pixels. Effects scale with the canvas, so larger exports are simply sharper.',
+    body: 'Choose a phone, desktop or print preset, or type exact pixels. Effects scale with the canvas, so larger exports are simply sharper. A phone and a desktop frame the same look differently, so check the composition at the size you will use.',
   },
   {
     target: () => [head('source'), section('source')?.querySelector('.ctl-chips')],
@@ -73,7 +73,7 @@ const STEPS = [
     block: 'start',
     prep: openSection('source'),
     title: 'Choose a flow',
-    body: 'The flow is the moving pattern underneath everything: silk, bands, mesh, ribbons, threads, a fluid you paint with the mouse, or your own image. None gives a still color or gradient instead.',
+    body: 'The flow is the moving pattern underneath everything: silk, bands, mesh, ribbons, threads, a fluid you paint with the mouse, or your own image. None gives a still color or gradient instead, from smooth fades to rippled retro stripes and sunbursts.',
     try: 'Pick a different pattern.',
     wait: onStore((p) => p === 'source.type'),
   },
@@ -94,7 +94,7 @@ const STEPS = [
     block: 'start',
     prep: (ctx) => ctx.clearSearch(),
     title: 'Layer the effects',
-    body: 'Objects float frosted glass or solid shapes in front of the flow (drag them on the canvas), Surface adds materials such as chrome and liquid, Glass refracts everything through ribbed, tiled or frosted panes, Screen adds print and display textures, and Finish grades the result. Hover a section title for its dice (randomize) and reset buttons.',
+    body: 'Objects float frosted glass or solid shapes in front of the flow (drag them on the canvas), Surface adds materials such as chrome and liquid, Glass refracts everything through ribbed, tiled or frosted panes, Screen adds print and display textures, and Finish grades the result and adds grain, speckle and a vignette you can aim at your focal point. Hover a section title for its dice (randomize) and reset buttons.',
   },
   {
     target: () => $('#panel .panel-search'),
