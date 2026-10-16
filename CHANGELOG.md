@@ -2,7 +2,7 @@
 
 Notable changes to Halation. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.2.0] - 2026-10-16
 
 ### Added
 
@@ -63,6 +63,6 @@ First public release.
 - Settings search (`/`), which also lists settings hidden by the current look and the change that reveals them.
 - Performance modes (Auto, Eco, Balanced, Max) with dynamic resolution.
 
-[Unreleased]: https://github.com/AR13X3/halation/compare/v1.1.0...HEAD
+[1.2.0]: https://github.com/AR13X3/halation/releases/tag/v1.2.0
 [1.1.0]: https://github.com/AR13X3/halation/releases/tag/v1.1.0
 [1.0.0]: https://github.com/AR13X3/halation/releases/tag/v1.0.0
