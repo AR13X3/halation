@@ -15,6 +15,7 @@ Notable changes to Halation. The format follows [Keep a Changelog](https://keepa
 ### Added
 
 - `L` opens all looks.
+- Anonymous usage statistics on the official site through [GoatCounter](https://www.goatcounter.com): visits, plus how often people export, pick looks, press Surprise me, share and take the tutorial. No cookies or personal data, nothing is counted with Do Not Track or Global Privacy Control, and local copies and forks send nothing. See [Privacy](docs/GUIDE.md#privacy).
 
 ## [1.2.0] - 2026-10-16
 

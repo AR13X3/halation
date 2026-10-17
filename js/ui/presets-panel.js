@@ -6,6 +6,7 @@
 import { h, toast } from './controls.js';
 import { ICONS } from './icons.js';
 import { PRESETS } from '../presets.js';
+import { track } from '../analytics.js';
 
 const KEY = 'halation.userPresets';
 
@@ -74,6 +75,8 @@ export function buildPresetsPanel({ strip, sheet, opener }, store, actions) {
   function apply(item) {
     active = item.id;
     actions.applyLook(item.look, item.name);
+    const isBuiltin = PRESETS.some((p) => p.id === item.id);
+    track(isBuiltin ? `look/${item.id}` : 'look/mine', isBuiltin ? `Look: ${item.name}` : 'Look: one of my looks');
     highlight({ reveal: true });
   }
 

@@ -8,6 +8,7 @@
 
 import { h, toast } from './controls.js';
 import { ICONS } from './icons.js';
+import { track } from '../analytics.js';
 
 const $ = (s) => document.querySelector(s);
 const section = (id) => $(`#panel .section[data-id="${id}"]`);
@@ -174,6 +175,7 @@ export function createTour({ store, showUI, clearSearch, showSection, showDock, 
   function start() {
     if (ui) { go(0, true); return; }
     lastFocus = document.activeElement;
+    track('tutorial/start', 'Tutorial started');
     showUI();
     ui = build();
     window.addEventListener('keydown', onKey, true);
@@ -184,6 +186,8 @@ export function createTour({ store, showUI, clearSearch, showSection, showDock, 
 
   function end(finished = false) {
     if (!ui) return;
+    // Where people leave the tour shows which steps need work.
+    track(finished ? 'tutorial/finish' : `tutorial/quit-${index + 1}`, finished ? 'Tutorial finished' : `Tutorial ended at step ${index + 1}`);
     leave();
     resize.disconnect();
     window.removeEventListener('keydown', onKey, true);

@@ -14,6 +14,7 @@ import { ICONS } from './ui/icons.js';
 import { toast } from './ui/controls.js';
 import { randomizeSection, surpriseCandidates, scoreImage } from './randomize.js';
 import { encodePNG, makeZip, download, copyImage, pickVideoMime, timestamp, slug } from './export.js';
+import { track } from './analytics.js';
 
 // Source repository (forks: point this at your own).
 const REPO_URL = 'https://github.com/AR13X3/halation';
@@ -116,6 +117,7 @@ async function restore() {
     try {
       store.applyLook(await decodeLook(hash[1]));
       lookName = 'Shared look';
+      track('visit/share-link', 'Opened a share link');
       return;
     } catch (e) {
       console.warn('Bad share link', e);
@@ -644,6 +646,7 @@ function surprise() {
   dirty = true;
   store.applyLook(best.look);
   afterBulkChange('Surprise');
+  track('surprise', 'Surprise me');
 }
 
 const panel = buildPanel($('#panel'), store, actions);
@@ -939,6 +942,7 @@ async function exportImage() {
     const blob = await renderImage({ scale, format: e.format, quality: e.quality, onProgress: setProgress });
     download(blob, `${slug(lookName)}-${W}x${H}-${timestamp()}.${EXT[blob.type] || 'png'}`);
     toast(`Saved ${W} × ${H} ${FORMAT_LABEL[e.format]}`);
+    track(`export/${e.format}`, `Export ${FORMAT_LABEL[e.format]}`);
   } catch (err) {
     console.error(err);
     toast(err.message, { type: 'error', duration: 6000 });
@@ -960,6 +964,7 @@ async function copyToClipboard() {
     const blob = await renderImage({ scale, format: 'png' });
     await copyImage(blob);
     toast('Copied — paste it into Figma, Photoshop, Slack…');
+    track('export/copy', 'Copy image');
   } catch (err) {
     console.error(err);
     toast(err.message || 'Could not copy the image.', { type: 'error', duration: 5000 });
@@ -996,6 +1001,7 @@ async function burst() {
     const zip = await makeZip(files);
     download(zip, `${slug(lookName)}-${W}x${H}-burst-${timestamp()}.zip`);
     toast(`Saved ${n} frames`);
+    track('export/burst', 'Export burst');
   } catch (err) {
     console.error(err);
     toast(err.message, { type: 'error', duration: 6000 });
@@ -1048,6 +1054,7 @@ function startRecording() {
     const ext = type.includes('mp4') ? 'mp4' : 'webm';
     download(blob, `${slug(lookName)}-${W}x${H}-${r.auto ? 'loop' : 'clip'}-${timestamp()}.${ext}`);
     toast(`Saved ${ext.toUpperCase()} video (${W} × ${H})`);
+    track('export/video', 'Export video');
   };
   recorder.start(500);
   $('#rec-badge').hidden = false;
@@ -1069,6 +1076,7 @@ function stopRecording() {
 
 // ── share link ──────────────────────────────────────────────────────────────
 async function share() {
+  track('share', 'Copy share link');
   const code = await encodeLook(store.look());
   const url = `${location.origin}${location.pathname}#look=${code}`;
   try {
@@ -1135,7 +1143,7 @@ window.addEventListener('keydown', (e) => {
     default:
       if (/^[1-9]$/.test(e.key)) {
         const p = PRESETS[+e.key - 1];
-        if (p) { actions.applyLook(p.look, p.name); presetsPanel.setActive(p.id); }
+        if (p) { actions.applyLook(p.look, p.name); presetsPanel.setActive(p.id); track(`look/${p.id}`, `Look: ${p.name}`); }
       }
   }
 });

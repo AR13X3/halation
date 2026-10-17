@@ -44,6 +44,7 @@ js/palette.js        OKLab gradients, palette library and generator
 js/presets.js        built-in looks
 js/randomize.js      "Surprise me"
 js/export.js         PNG (8/16-bit) encoder, ZIP writer, download helpers
+js/analytics.js      anonymous usage counts (official site only; forks: see the file)
 js/store.js          state, undo/redo, share-link encoding
 js/ui/               controls panel, controls, gradient editor, looks dock and browser, tour, icons
 tools/serve.mjs      development server

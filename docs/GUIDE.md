@@ -22,6 +22,7 @@ Everything you need to go from a blank canvas to a finished background. If you j
 16. [Recipes](#recipes)
 17. [Keyboard and mouse](#keyboard-and-mouse)
 18. [Troubleshooting](#troubleshooting)
+19. [Privacy](#privacy)
 
 ---
 
@@ -308,3 +309,16 @@ Whatever the mode, a still preview refines itself to full quality (the readout s
 **Copy doesn't work**: some browsers only allow clipboard images on secure (https) pages and after a click. Use **Download image** instead.
 
 **Something looks wrong after an update**: click any look in the dock to start fresh. Your saved looks are kept.
+
+## Privacy
+
+Everything you make stays in your browser: images, videos, saved looks and images you load are never uploaded.
+
+The official site ([ar13x3.github.io/halation](https://ar13x3.github.io/halation/)) counts visits with [GoatCounter](https://www.goatcounter.com), a privacy-friendly, open-source analytics service. It uses no cookies and stores nothing personal: a visit records the page, the referring site, your browser, screen size and country. Besides visits, it counts a few actions by name only, to show which parts of Halation get used:
+
+- exports (image format, copy, burst, video)
+- the built-in look you pick, or that it was one of your own looks
+- Surprise me, copying a share link and opening one
+- starting the tutorial, finishing it, or the step where you left it
+
+Your settings, colors and images are never included. Nothing is counted when your browser sends **Do Not Track** or **Global Privacy Control**, and copies of Halation running anywhere else (your own computer or a fork) don't count anything.

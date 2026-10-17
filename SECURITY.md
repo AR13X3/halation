@@ -25,7 +25,7 @@ You can expect an acknowledgement within a week. Once the issue is confirmed, a 
 
 ## Scope
 
-Halation is a static web app that runs entirely in the browser. It has no server, no accounts and doesn't upload anything you make. Relevant reports include:
+Halation is a static web app that runs entirely in the browser. It has no server, no accounts and doesn't upload anything you make; the official site only loads GoatCounter's script to count visits anonymously (see [Privacy](docs/GUIDE.md#privacy)). Relevant reports include:
 
 - Script injection or other unexpected behavior from a crafted **share link**, imported **looks file** (`.json`) or **image**
 - Anything that sends your data off your device
