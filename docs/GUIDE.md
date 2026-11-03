@@ -322,3 +322,5 @@ The official site ([ar13x3.github.io/halation](https://ar13x3.github.io/halation
 - starting the tutorial, finishing it, or the step where you left it
 
 Your settings, colors and images are never included. Nothing is counted when your browser sends **Do Not Track** or **Global Privacy Control**, and copies of Halation running anywhere else (your own computer or a fork) don't count anything.
+
+The Halation account on Pinterest has its own [privacy policy](https://ar13x3.github.io/halation/privacy.html).
