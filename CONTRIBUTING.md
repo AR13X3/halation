@@ -48,7 +48,9 @@ js/analytics.js      anonymous usage counts (official site only; forks: see the 
 js/store.js          state, undo/redo, share-link encoding
 js/ui/               controls panel, controls, gradient editor, looks dock and browser, tour, icons
 tools/serve.mjs      development server
+tools/render-service.mjs  HTTP service that renders images in headless Chromium
 docs/GUIDE.md        user guide
+docs/RENDER-SERVICE.md    how to run and call the render service
 ```
 
 ## Common changes

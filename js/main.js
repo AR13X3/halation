@@ -12,7 +12,7 @@ import { buildPresetsPanel } from './ui/presets-panel.js';
 import { createTour } from './ui/tour.js';
 import { ICONS } from './ui/icons.js';
 import { toast } from './ui/controls.js';
-import { randomizeSection, surpriseCandidates, scoreImage } from './randomize.js';
+import { randomizeSection, surpriseCandidates, recipeWeights, scoreImage } from './randomize.js';
 import { encodePNG, makeZip, download, copyImage, pickVideoMime, timestamp, slug } from './export.js';
 import { track } from './analytics.js';
 
@@ -620,10 +620,11 @@ function afterBulkChange(name) {
 // the one that scores best (see randomize.js).
 const surpriseSet = new TargetSet(ctx);
 let surpriseTarget = null;
-function surprise() {
+function pickSurprise({ candidates = 6, weights } = {}) {
   const doc = store.state.doc;
-  const cands = surpriseCandidates(store.state, 6);
+  const cands = surpriseCandidates(store.state, candidates, weights);
   let best = cands[0];
+  let bestScore = -Infinity;
   try {
     const H = 112, W = Math.max(24, Math.min(256, Math.round((H * doc.width) / doc.height)));
     if (!surpriseTarget || surpriseTarget.w !== W) {
@@ -631,7 +632,6 @@ function surprise() {
       surpriseTarget = createTarget(gl, W, H, RGBA8, { filter: gl.NEAREST });
     }
     const px = new Uint8Array(W * H * 4);
-    let bestScore = -Infinity;
     for (const c of cands) {
       const s = defaultState();
       for (const k of LOOK_SECTIONS) s[k] = { ...s[k], ...structuredClone(c.look[k] || {}) };
@@ -648,7 +648,11 @@ function surprise() {
     console.warn('Surprise me: could not compare candidates', err);
   }
   dirty = true;
-  store.applyLook(best.look);
+  return { ...best, score: bestScore };
+}
+
+function surprise() {
+  store.applyLook(pickSurprise().look);
   afterBulkChange('Surprise');
   track('surprise', 'Surprise me');
 }
@@ -1162,8 +1166,9 @@ layout();
 queueSync();
 raf(tick);
 
-// Handy for debugging from the console.
+// For the console and tools/render-service.mjs.
 window.halation = {
-  store, renderer, fluid, caps, renderImage,
+  store, renderer, fluid, caps, renderImage, pickSurprise, recipeWeights, encodeLook,
+  showLook: (look) => { store.applyLook(look); sanitize(store.state); },
   perf: () => ({ mode: perfMode, autoTier, tier: tier().label, drs, liveScale, refineK, refineOf: refineFrames(), fps: liveFps }),
 };

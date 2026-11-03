@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node tools/serve.mjs",
-    "dev": "node tools/serve.mjs"
+    "dev": "node tools/serve.mjs",
+    "render-service": "node tools/render-service.mjs"
   },
   "license": "AGPL-3.0-only",
   "author": "AR13X3",

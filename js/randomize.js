@@ -462,15 +462,19 @@ const RECIPES = {
 const recentRecipes = [];
 let lastPreset = null;
 
+// How often each recipe comes up by default.
+export const recipeWeights = () => Object.fromEntries(Object.entries(RECIPES).map(([k, v]) => [k, v.w]));
+
 /**
  * Candidate looks for Surprise me, all from one recipe (or variations of one
  * built-in look); a recipe stays away for the next few presses. The user's
- * motion settings are kept.
+ * motion settings are kept. `weights` overrides how often recipes come up
+ * (0 = never).
  */
-export function surpriseCandidates(state, n = 4) {
-  const table = {};
-  for (const [k, v] of Object.entries(RECIPES)) if (!recentRecipes.includes(k) || k === 'remix') table[k] = v.w;
-  const recipe = weighted(table);
+export function surpriseCandidates(state, n = 4, weights = {}) {
+  const allowed = Object.entries(RECIPES).map(([k, v]) => [k, weights[k] ?? v.w]).filter(([, w]) => w > 0);
+  const fresh = allowed.filter(([k]) => !recentRecipes.includes(k) || k === 'remix');
+  const recipe = weighted(Object.fromEntries(fresh.length ? fresh : allowed.length ? allowed : [['remix', 1]]));
   recentRecipes.push(recipe);
   if (recentRecipes.length > 5) recentRecipes.shift();
   const aspect = state.doc.width / state.doc.height;
