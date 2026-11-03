@@ -79,7 +79,9 @@ try {
 const store = new Store();
 const previewSet = new TargetSet(ctx);
 const thumbSet = new TargetSet(ctx);
-let lookName = PRESETS[0].name;
+// First visit: desktops open widescreen on a look that suits it, phones in portrait.
+const openingLook = phoneQuery.matches ? PRESETS[0] : PRESETS.find((p) => p.id === 'berry-wave');
+let lookName = openingLook.name;
 let edited = false; // changed since the look was loaded
 let dirty = true;
 let busy = false;
@@ -110,6 +112,7 @@ let lastChange = performance.now();
 
 // ── initial state: share link → last session → first preset ────────────────
 async function restore() {
+  if (!phoneQuery.matches) Object.assign(store.state.doc, { size: 'hd', width: 1920, height: 1080 });
   const hash = location.hash.match(/look=([\w-]+)/);
   if (hash) {
     // Drop the hash once loaded so later reloads restore the user's own edits.
@@ -135,7 +138,7 @@ async function restore() {
       return;
     }
   } catch {}
-  store.applyLook(PRESETS[0].look);
+  store.applyLook(openingLook.look);
 }
 await restore();
 sanitize(store.state);
@@ -394,6 +397,7 @@ setIcon('#btn-undo', 'undo').onclick = () => store.undo();
 setIcon('#btn-redo', 'redo').onclick = () => store.redo();
 setIcon('#btn-surprise', 'dice', 'Surprise me').onclick = () => surprise();
 setIcon('#btn-share', 'link', 'Share').onclick = () => share();
+setIcon('#btn-repo', 'github', 'GitHub').href = REPO_URL;
 setIcon('#btn-export', 'download', 'Export').onclick = () => exportImage();
 setIcon('#btn-hide', 'eye').onclick = () => toggleUI();
 setIcon('#btn-show', 'eye').onclick = () => toggleUI();

@@ -176,6 +176,7 @@ svg { display: block; flex: none; }
 .btn:hover { background: var(--wash-3); }
 .btn:active { transform: translateY(1px); }
 .btn.ghost { background: transparent; }
+a.btn { text-decoration: none; }
 .btn.ghost:hover { background: var(--wash-2); }
 .btn.primary { background: var(--paper); color: var(--ink); font-weight: 600; }
 .btn.primary:hover { background: #fff; }
@@ -1076,8 +1077,8 @@ kbd {
 }
 @media (max-width: 900px) {
   :root { --insp-w: 284px; }
-  #btn-surprise span, #btn-share span { display: none; }
-  #btn-surprise, #btn-share { width: 34px; padding: 0; }
+  #btn-surprise span, #btn-share span, #btn-repo span { display: none; }
+  #btn-surprise, #btn-share, #btn-repo { width: 34px; padding: 0; }
   .tp-status { display: none; }
 }
 
@@ -1091,7 +1092,7 @@ kbd {
   .look-title svg { display: none; }
   .bar-start .bar-sep { display: none; }
   .brand { padding: 0 2px 0 6px; }
-  #btn-share { display: none; }
+  #btn-share, #btn-repo { display: none; }
   .menu .phone-only { display: flex; }
 
   .dock {

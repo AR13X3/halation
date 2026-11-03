@@ -34,7 +34,7 @@ The artwork fills the window, lit by a soft glow of its own colors, and the cont
 | --- | --- |
 | **Canvas** (center) | Live preview at the exact proportions of your output size. Drag to pan, scroll to zoom, or drag an object to move it. |
 | **Look name** (top left) | The look you are working on, with undo and redo next to it. A dot appears once you change it; click the name to browse all looks. |
-| **Top right** | **Surprise me**, **Share**, the **Help** menu (tutorial, keyboard shortcuts, this guide and the source code) and **Export**. |
+| **Top right** | **Surprise me**, **Share**, a link to **GitHub**, the **Help** menu (tutorial, keyboard shortcuts, this guide and the source code) and **Export**. |
 | **Controls** (right) | Every setting, one section per tab: Canvas, Flow, Objects, Color, Surface, Glass, Light, Screen, Finish, Motion, Export. Each section has dice (randomize this section) and reset buttons next to its title. |
 | **Dock** (bottom) | Play/pause, timeline, seamless-loop toggle, performance mode and frame-rate readout, and a strip of looks to click through. **All looks** (`L`) opens every built-in look plus the ones you save under **My looks**. The eye icon hides the interface. |
 

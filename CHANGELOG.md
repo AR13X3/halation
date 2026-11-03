@@ -10,11 +10,13 @@ Notable changes to Halation. The format follows [Keep a Changelog](https://keepa
 - **Looks** moved into a dock below the canvas, next to the timeline. **All looks** opens every built-in look and your saved **My looks** at once, and the look's name at the top left marks it once you change it (click it to browse).
 - **Settings** are organized in tabs, one section at a time, and every slider is a bar you can click or drag anywhere along. Double-click a setting to reset it.
 - A **Help** menu gathers the tutorial, keyboard shortcuts, user guide and source code.
+- On a first visit, desktops open on a widescreen canvas with the Berry Wave look. Phones still open in portrait, and returning visitors keep their last session.
 - On phones and portrait tablets, looks and the timeline sit in a dock at the bottom and **Edit** opens the settings as a sheet.
 
 ### Added
 
 - `L` opens all looks.
+- A **GitHub** link in the top bar, and a preview image when the app is shared on social sites.
 - Anonymous usage statistics on the official site through [GoatCounter](https://www.goatcounter.com): visits, plus how often people export, pick looks, press Surprise me, share and take the tutorial. No cookies or personal data, nothing is counted with Do Not Track or Global Privacy Control, and local copies and forks send nothing. See [Privacy](docs/GUIDE.md#privacy).
 
 ## [1.2.0] - 2026-10-16
