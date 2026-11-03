@@ -6,6 +6,7 @@ Notable changes to Halation. The format follows [Keep a Changelog](https://keepa
 
 ### Changed
 
+- **Surprise me** covers far more ground: retro stripes and sunbursts, sprayed-paint gradients, layered paper, long-exposure trails, lines seen through glass, double panes, part-frame glass, pale airy looks and off-center spotlights. Flows and silhouettes are framed off-center more often, palettes include pastels and two-hue pairs, remixes often keep a look's light and dark structure in new colors, and a direction stays away for the next few presses.
 - **A new interface.** The artwork fills the window, lit by a soft glow of its own colors, and every control floats above it on frosted glass that darkens over bright artwork to stay readable.
 - **Looks** moved into a dock below the canvas, next to the timeline. **All looks** opens every built-in look and your saved **My looks** at once, and the look's name at the top left marks it once you change it (click it to browse).
 - **Settings** are organized in tabs, one section at a time, and every slider is a bar you can click or drag anywhere along. Double-click a setting to reset it.

@@ -53,24 +53,53 @@ function metalPalette() {
   }));
 }
 
+// Airy pastels: every stop stays light.
+function lightPalette() {
+  const H = rand(0, 360), step = rand(30, 110);
+  return [[0.62, 0.14], [0.76, 0.12], [0.88, 0.07], [0.97, 0.03]].map(([L, C], i) => ({
+    pos: +(i / 3).toFixed(3),
+    color: oklchToHex(L + rand(-0.02, 0.02), C, H + (i * step) / 3),
+  }));
+}
+
+// Two opposing hues: a dark one running into a light one.
+function duoPalette() {
+  const H = rand(0, 360), H2 = H + rand(120, 220);
+  return [[0.16, 0.06, H], [0.42, 0.16, H], [0.72, 0.13, H2], [0.95, 0.04, H2]].map(([L, C, hue], i) => ({
+    pos: +(i / 3).toFixed(3),
+    color: oklchToHex(L, C, hue),
+  }));
+}
+
+// The same light and dark structure in other colors, so a composition survives.
+function rotateHue(stops, deg) {
+  return stops.map((s) => {
+    const [L, a, b] = lab(s.color);
+    return { pos: s.pos, color: oklchToHex(L, Math.hypot(a, b), (Math.atan2(b, a) * 180) / Math.PI + deg) };
+  });
+}
+
 /**
  * A palette suited to a recipe.
  *   any    — anything with enough tonal range (usually dark → light)
  *   dark   — starts near black, for light and glow on a dark ground
  *   glow   — dark start, saturated middle, bright end (threads, ribbons)
  *   metal  — low-chroma ramps (chrome mirrors a horizon built from them)
+ *   light  — pastels with no dark end
  */
 function palette(kind = 'any') {
   for (let i = 0; i < 40; i++) {
     let stops;
-    if (kind === 'metal' && chance(0.5)) stops = metalPalette();
-    else if (chance(0.8)) stops = structuredClone(pick(POOL));
-    else stops = randomPalette({ dark: kind !== 'any' || chance(0.85), harmonious: true });
-    if (kind !== 'any' || chance(0.85)) stops = darkFirst(stops);
+    if (kind === 'light') stops = lightPalette();
+    else if (kind === 'metal' && chance(0.5)) stops = metalPalette();
+    else if (kind === 'any' && chance(0.12)) stops = duoPalette();
+    else if (chance(kind === 'any' ? 0.6 : 0.8)) stops = structuredClone(pick(POOL));
+    else stops = randomPalette({ dark: kind !== 'any' || chance(0.85), harmonious: kind !== 'any' || chance(0.6) });
+    if (kind !== 'light' && (kind !== 'any' || chance(0.85))) stops = darkFirst(stops);
     const L = stops.map((s) => lum(s.color));
     const Cs = stops.map((s) => chroma(s.color));
     const C = Math.max(...Cs);
-    if (Math.max(...L) - Math.min(...L) < 0.45) continue;           // too flat
+    if (Math.max(...L) - Math.min(...L) < (kind === 'light' ? 0.25 : 0.45)) continue; // too flat
     if (kind !== 'metal' && C < 0.06) continue;                     // gray
     if (Cs.reduce((a, b) => a + b, 0) / Cs.length > 0.17) continue; // garish
     if (kind === 'dark' && L[0] > 0.3) continue;
@@ -100,13 +129,19 @@ const INK_PAPER = [
 ];
 
 // ── building blocks ─────────────────────────────────────────────────────────
+// The same flow seen from elsewhere: turned, panned and sometimes swirled.
+const framing = () => ({ rotation: ri(-180, 180), offsetX: r(-1, 1), offsetY: r(-1, 1), twist: chance(0.25) ? r(-1.5, 1.5) : 0 });
+
 // Calm flows that sit well behind glass or a screen.
 function smoothFlow() {
   const t = weighted({ mesh: 4, silk: 2, bands: 2.5 });
-  if (t === 'mesh') return { type: 'mesh', meshCount: ri(3, 6), meshBlend: r(1, 2), meshMotion: r(0.5, 1.2), warp: r(0.4, 1.3) };
-  if (t === 'silk') return { type: 'silk', scale: r(1.4, 2.2), warp: r(0.6, 1.2), detail: 2, blur: r(0.08, 0.2) };
-  return { type: 'bands', bandCount: ri(1, 3), bandWidth: r(0.1, 0.28), bandSpacing: r(0.2, 0.45), bandAngle: ri(-60, 60), bandLength: chance(0.5) ? 3 : r(1, 2.5), warp: r(0.5, 1.4) };
+  if (t === 'mesh') return { type: 'mesh', meshCount: ri(3, 6), meshBlend: r(1, 2), meshMotion: r(0.5, 1.2), warp: r(0.4, 1.3), ...framing() };
+  if (t === 'silk') return { type: 'silk', scale: r(1.4, 2.2), warp: r(0.6, 1.2), detail: 2, blur: r(0.08, 0.2), ...framing() };
+  return { type: 'bands', bandCount: ri(1, 3), bandWidth: r(0.1, 0.28), bandSpacing: r(0.2, 0.45), bandAngle: ri(-60, 60), bandLength: chance(0.5) ? 3 : r(1, 2.5), warp: r(0.5, 1.4), offsetX: r(-0.5, 0.5), offsetY: r(-0.5, 0.5) };
 }
+
+// A spot on the rule of thirds, or the center now and then (±1 = frame edges).
+const thirds = () => pick([-0.33, -0.33, 0, 0.33, 0.33]);
 
 // Something crisp to look through glass at: solid objects over a gradient
 // (composed the way the old Shapes flow composed them).
@@ -124,8 +159,8 @@ const pane = (p) => (chance(p) ? { panel: pick(['right', 'left', 'band']), panel
 // Natural glass: refraction does the work, highlights and reflections stay low.
 const glassBase = () => ({ shadow: r(0.1, 0.35), highlight: r(0, 0.08), reflect: r(0.05, 0.18) });
 
-// A built-in look with a new seed, usually a new palette of the same kind, and
-// its numbers nudged a little: the composition stays, the result is new.
+// A built-in look with a new seed, usually new colors, and its numbers nudged a
+// little: the composition stays, the result is new.
 const REMIXABLE = PRESETS.filter((p) => !['fluid', 'image'].includes(p.look.source?.type));
 const NUDGE = ['source', 'objects', 'glass', 'screen', 'surface', 'finish'];
 function remix(preset) {
@@ -143,16 +178,116 @@ function remix(preset) {
   const kind = look.surface?.chrome ? 'metal'
     : ['threads', 'ribbons'].includes(look.source?.type) ? 'glow'
     : L.length && Math.min(...L) < 0.22 && L[0] < L[L.length - 1] ? 'dark' : 'any';
-  if (chance(0.75)) look.color = { ...look.color, stops: palette(kind) };
+  const recolor = Math.random();
+  if (recolor < 0.4 && stops.length) look.color = { ...look.color, stops: rotateHue(stops, rand(40, 320)) };
+  else if (recolor < 0.75) look.color = { ...look.color, stops: palette(kind) };
   if (look.source?.form && look.source.form !== 'none') look.source.formBg = backdrop(look.color.stops);
   return look;
 }
 
 // ── recipes ─────────────────────────────────────────────────────────────────
 // Each returns a partial look; anything it leaves out is the neutral default.
-// `dark` tells the scorer that a mostly black frame is intended.
+// `dark` tells the scorer that a mostly black frame is intended; `patterned` that
+// fine detail is the point rather than noise.
 const RECIPES = {
-  remix: { w: 4, make: ({ preset }) => remix(preset) },
+  remix: { w: 3, make: ({ preset }) => remix(preset) },
+
+  // groovy retro patterns: a still gradient repeated into stripes, rings or rays
+  retro: { w: 1.3, patterned: true, make: () => {
+    const gradShape = weighted({ linear: 1.5, radial: 1.2, conic: 1 });
+    return {
+      source: {
+        type: 'none', bgFill: 'gradient', gradShape, bgAngle: ri(-180, 180), gradX: thirds(), gradY: thirds(),
+        gradLength: r(0.7, 1.5), gradRipple: chance(0.75) ? r(0.2, 1.2) : 0, gradRippleSize: r(0.6, 1.8),
+      },
+      color: { stops: palette(), spread: 1, repeat: gradShape === 'conic' ? ri(3, 9) : r(2, 6), mirror: chance(0.6), posterize: chance(0.6) ? ri(3, 8) : 0 },
+      finish: { grain: r(0.02, 0.1), speckle: chance(0.25) ? r(0.15, 0.4) : 0 },
+    };
+  } },
+
+  // sprayed-paint gradients
+  speckled: { w: 1.2, patterned: true, make: () => {
+    const source = chance(0.35)
+      ? { type: 'none', bgFill: 'gradient', gradShape: 'radial', gradX: thirds(), gradY: thirds(), gradLength: r(0.7, 1.4) }
+      : smoothFlow();
+    return { source, color: { stops: palette(), spread: r(1.1, 1.5) }, finish: { speckle: r(0.3, 0.8), grainSize: r(1, 2.2), grain: r(0.02, 0.08) } };
+  } },
+
+  // layered paper: a flow cut into a few flat tones
+  paperCut: { w: 1.2, make: () => ({
+    source: chance(0.5)
+      ? { type: 'silk', scale: r(1.2, 2), warp: r(0.7, 1.4), detail: 2, ...framing() }
+      : { type: 'mesh', meshCount: ri(3, 6), meshBlend: r(1, 1.8), warp: r(0.6, 1.3), ...framing() },
+    color: { stops: palette(), spread: r(1, 1.4), posterize: ri(4, 8) },
+    surface: chance(0.5) ? { relief: r(0.15, 0.4) } : {},
+    light: light(),
+    finish: { grain: r(0.02, 0.08) },
+  }) },
+
+  // color pulled into long exposures
+  lightTrails: { w: 1, make: () => {
+    const streakType = weighted({ zoom: 1, spin: 1, linear: 1.2 });
+    return {
+      source: smoothFlow(),
+      color: { stops: palette(chance(0.6) ? 'dark' : 'any'), spread: r(1.2, 1.7) },
+      finish: { streak: r(0.4, 0.85), streakType, streakAngle: ri(-180, 180), streakX: thirds(), streakY: thirds(), bloom: chance(0.5) ? r(0.2, 0.5) : 0, grain: r(0.02, 0.08) },
+    };
+  } },
+
+  // glowing lines broken up by glass
+  linesThroughGlass: { w: 1, dark: true, make: () => {
+    const type = weighted({ reeded: 3, wavy: 1.5, hammered: 1, rain: 1 });
+    const source = chance(0.6)
+      ? { type: 'threads', thrCount: r(6, 16, 1), thrWeight: r(1.5, 3), thrGlow: r(0.4, 0.8), thrDepth: r(0.3, 0.8), thrBreak: r(0, 0.5), thrSpread: 3, warp: r(0.6, 2), rotation: ri(-60, 60) }
+      : { type: 'ribbons', ribLines: ri(8, 24), ribWidth: r(0.4, 0.9), ribThick: r(0.08, 0.2), ribGlow: r(0.4, 0.8), ribAmp: r(0.5, 1.5), ribFreq: r(0.5, 1.2), ribFan: r(-0.8, 0.8), ribAngle: ri(-40, 40), warp: r(0.3, 0.8) };
+    const g = { type, ...glassBase(), count: type === 'rain' ? r(7, 14, 1) : r(6, 18, 1), strength: r(0.4, 0.9) };
+    if (type === 'wavy') Object.assign(g, { wave: r(0.3, 1), waveFreq: r(0.6, 2) });
+    if (type === 'rain') Object.assign(g, { frost: r(0.3, 0.6), coverage: r(0.35, 0.65) });
+    return { source, color: { stops: palette('glow') }, glass: g, light: light(), finish: { bloom: r(0.3, 0.6), grain: r(0.02, 0.05) } };
+  } },
+
+  // two sheets of glass, the second crossing the first
+  doublePane: { w: 0.9, make: () => {
+    const backType = weighted({ reeded: 3, tiles: 1, hammered: 1, water: 1 });
+    return {
+      source: smoothFlow(),
+      color: { stops: palette(), spread: r(1.1, 1.5) },
+      glass: {
+        type: weighted({ reeded: 3, wavy: 1, rings: 0.8 }), ...glassBase(), count: r(7, 20, 1), strength: r(0.35, 0.8), profile: weighted({ round: 3, linear: 1, wave: 1 }),
+        backType, backCount: r(6, 18, 1), backAngle: pick([90, 90, ri(-60, 60)]), backStrength: r(0.3, 0.7),
+        tintAmount: chance(0.2) ? r(0.15, 0.4) : 0, tint: oklchToHex(0.8, 0.09, rand(0, 360)),
+      },
+      light: light(), finish: finish(),
+    };
+  } },
+
+  // glass over part of the frame, so sharp and refracted meet at an edge
+  partialPane: { w: 1.2, make: ({ aspect }) => {
+    const panel = aspect < 1 ? weighted({ top: 1, bottom: 1.5, window: 1, band: 1 }) : weighted({ left: 1, right: 1.5, window: 1, band: 1 });
+    const type = weighted({ reeded: 3, tiles: 0.6, hammered: 1, crystal: 0.8 });
+    const g = { type, ...glassBase(), panel, panelSize: r(0.4, 0.7), panelOffset: r(-0.2, 0.2), count: type === 'crystal' ? r(3, 8, 1) : r(7, 22, 1), strength: r(0.45, 0.9), frost: chance(0.5) ? r(0.15, 0.55) : 0 };
+    return { ...crispScene(), color: { stops: palette(), spread: r(1.1, 1.5) }, glass: g, light: light(), finish: finish() };
+  } },
+
+  // pale and airy, for the frames with no dark at all
+  airy: { w: 1.2, make: () => {
+    const glass = chance(0.45) ? { type: pick(['reeded', 'reeded', 'wavy']), ...glassBase(), shadow: r(0.05, 0.15), count: r(7, 20, 1), strength: r(0.3, 0.7), frost: chance(0.5) ? r(0.1, 0.4) : 0 } : {};
+    if (glass.type === 'wavy') Object.assign(glass, { wave: r(0.3, 1), waveFreq: r(0.6, 2) });
+    return {
+      source: chance(0.65) ? { type: 'mesh', meshCount: ri(3, 6), meshBlend: r(0.9, 1.6), warp: r(0.5, 1.2), ...framing() } : { type: 'silk', scale: r(1.4, 2.2), warp: r(0.5, 1), detail: 2, blur: r(0.1, 0.25), ...framing() },
+      color: { stops: palette('light'), spread: r(1.4, 1.9) },
+      glass, light: light(), finish: { grain: r(0.03, 0.12) },
+    };
+  } },
+
+  // creased silk lit from one side, falling away into shadow
+  spotlight: { w: 1, dark: true, make: () => ({
+    source: { type: 'silk', scale: r(1.2, 2), warp: r(0.8, 1.5), ridge: r(0.2, 0.7), detail: 2, blur: r(0, 0.08), ...framing() },
+    color: { stops: palette('dark'), spread: r(1.1, 1.5) },
+    surface: chance(0.6) ? { relief: r(0.2, 0.5), gloss: r(0.1, 0.4) } : {},
+    light: light(),
+    finish: { vignette: r(0.5, 0.85), vignetteX: thirds(), vignetteY: thirds(), grain: r(0.03, 0.1) },
+  }) },
 
   // a clean gradient wallpaper: defined color fields, a little grain
   gradient: { w: 0.9, make: () => ({
@@ -206,7 +341,7 @@ const RECIPES = {
 
   // frosted glass objects floating over a soft gradient: overlapping panes,
   // a stack of pills, or a few glass balls
-  glassObjects: { w: 1.6, make: ({ aspect }) => {
+  glassObjects: { w: 1, make: ({ aspect }) => {
     const theme = weighted({ panes: 1.2, pills: 1, spheres: 1, mixed: 0.8 });
     const w = Math.min(aspect, 1);                   // stay inside narrow canvases
     const flow = weighted({ mesh: 3, silk: 1.2, gradient: 1.5, color: 0.6 });
@@ -239,7 +374,7 @@ const RECIPES = {
     return { source, objects, color: { stops, spread: r(1, 1.4) }, light: light(), finish: { grain: r(0.02, 0.08) } };
   } },
 
-  print: { w: 1.1, make: () => {
+  print: { w: 2.4, make: () => {
     const type = weighted({ halftone: 3, moire: 2, contour: 2, dither: 1, lines: 1, led: 1, mosaic: 1, crt: 0.5 });
     const sc = { type, contrast: r(1, 1.35), background: r(0.05, 0.3) };
     const fin = { grain: r(0, 0.05) };
@@ -283,8 +418,8 @@ const RECIPES = {
     const mode = weighted({ parallel: 1, hourglass: 1, burst: 1 });
     const s = { type: 'threads', thrWeight: r(1.2, 2.2), thrGlow: r(0.4, 0.7), thrDepth: r(0.3, 0.8), thrBreak: r(0.1, 0.6) };
     if (mode === 'parallel') Object.assign(s, { thrCount: r(10, 30, 1), thrConverge: 0, thrSpread: chance(0.5) ? r(0.3, 0.8) : 3, warp: r(0.8, 2.5), rotation: ri(-30, 30) });
-    if (mode === 'hourglass') Object.assign(s, { thrCount: r(40, 80, 0), thrConverge: r(0.5, 0.75), thrSpread: r(0.3, 0.5), warp: r(0.3, 0.8), rotation: pick([0, 90, 90]) });
-    if (mode === 'burst') Object.assign(s, { thrCount: r(7, 16, 1), thrConverge: 1, thrSpread: r(0.9, 3), warp: r(1.2, 2.5), rotation: ri(-45, 45) });
+    if (mode === 'hourglass') Object.assign(s, { thrCount: r(40, 80, 0), thrConverge: r(0.5, 0.75), thrSpread: r(0.3, 0.5), warp: r(0.3, 0.8), rotation: pick([0, 90, 90]), offsetX: r(-0.35, 0.35), offsetY: r(-0.35, 0.35) });
+    if (mode === 'burst') Object.assign(s, { thrCount: r(7, 16, 1), thrConverge: 1, thrSpread: r(0.9, 3), warp: r(1.2, 2.5), rotation: ri(-45, 45), offsetX: r(-0.35, 0.35), offsetY: r(-0.35, 0.35) });
     const f = { bloom: r(0.5, 0.8), grain: r(0.02, 0.05) };
     if (chance(0.6)) Object.assign(f, { aberration: r(0.3, 0.8), aberrationMode: mode === 'parallel' ? 'lens' : 'orbit' });
     if (mode !== 'parallel' && chance(0.3)) Object.assign(f, { streak: r(0.1, 0.25), streakType: 'zoom' });
@@ -307,9 +442,10 @@ const RECIPES = {
       : { type: 'silk', scale: r(1.2, 1.8), warp: r(0.6, 1.2), detail: 2 };
     const look = {
       source: {
-        ...flow, form, formSoft: 0, formBg: backdrop(stops),
+        ...flow, form, formSoft: 0, formBg: chance(0.3) ? softBackground(stops) : backdrop(stops),
         formSize: form === 'wave' ? r(0.35, 0.55) : r(0.5, 0.72) * w,
         formWave: r(0.8, 1.6), formDepth: r(0.5, 0.85),
+        formX: r(-0.35, 0.35), formY: r(-0.25, 0.25), formAngle: ri(-35, 35),
       },
       color: { stops, spread: r(1, 1.3) },
       finish: { grain: r(0.02, 0.06) },
@@ -323,19 +459,20 @@ const RECIPES = {
   } },
 };
 
-let lastRecipe = '';
+const recentRecipes = [];
 let lastPreset = null;
 
 /**
  * Candidate looks for Surprise me, all from one recipe (or variations of one
- * built-in look); the same recipe never comes twice in a row. The user's
+ * built-in look); a recipe stays away for the next few presses. The user's
  * motion settings are kept.
  */
 export function surpriseCandidates(state, n = 4) {
   const table = {};
-  for (const [k, v] of Object.entries(RECIPES)) if (k !== lastRecipe || k === 'remix') table[k] = v.w;
+  for (const [k, v] of Object.entries(RECIPES)) if (!recentRecipes.includes(k) || k === 'remix') table[k] = v.w;
   const recipe = weighted(table);
-  lastRecipe = recipe;
+  recentRecipes.push(recipe);
+  if (recentRecipes.length > 5) recentRecipes.shift();
   const aspect = state.doc.width / state.doc.height;
   const preset = pick(REMIXABLE.filter((p) => p !== lastPreset));
   if (recipe === 'remix') lastPreset = preset;
@@ -347,7 +484,7 @@ export function surpriseCandidates(state, n = 4) {
     look.source = { seed: ri(0, 9999), ...look.source };
     look.anim = anim;
     const dark = !!RECIPES[recipe].dark || ['threads', 'ribbons'].includes(look.source.type) || (look.source.form ?? 'none') !== 'none';
-    return { recipe, dark, look };
+    return { recipe, dark, patterned: !!RECIPES[recipe].patterned, look };
   });
 }
 

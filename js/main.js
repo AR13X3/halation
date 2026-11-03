@@ -641,7 +641,7 @@ function surprise() {
       renderer.render(s, surpriseSet, { w: W, h: H, target: surpriseTarget }, { time: store.state.anim.time, fieldScale: 1, samples: 3 });
       surpriseTarget.bind();
       gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px);
-      const score = scoreImage(px, W, H, { dark: c.dark, screen: s.screen.type !== 'none' });
+      const score = scoreImage(px, W, H, { dark: c.dark, screen: c.patterned || s.screen.type !== 'none' });
       if (score > bestScore) { bestScore = score; best = c; }
     }
   } catch (err) {
