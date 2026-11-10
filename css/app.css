@@ -1077,8 +1077,8 @@ kbd {
 }
 @media (max-width: 900px) {
   :root { --insp-w: 284px; }
-  #btn-surprise span, #btn-share span, #btn-repo span { display: none; }
-  #btn-surprise, #btn-share, #btn-repo { width: 34px; padding: 0; }
+  #btn-surprise span, #btn-share span, #btn-repo span, #btn-support span { display: none; }
+  #btn-surprise, #btn-share, #btn-repo, #btn-support { width: 34px; padding: 0; }
   .tp-status { display: none; }
 }
 
@@ -1092,7 +1092,7 @@ kbd {
   .look-title svg { display: none; }
   .bar-start .bar-sep { display: none; }
   .brand { padding: 0 2px 0 6px; }
-  #btn-share, #btn-repo { display: none; }
+  #btn-share, #btn-repo, #btn-support { display: none; }
   .menu .phone-only { display: flex; }
 
   .dock {

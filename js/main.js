@@ -18,6 +18,7 @@ import { track } from './analytics.js';
 
 // Source repository (forks: point this at your own).
 const REPO_URL = 'https://github.com/AR13X3/halation';
+const COFFEE_URL = 'https://buymeacoffee.com/ar13x3';
 
 const $ = (s) => document.querySelector(s);
 // ?timer drives the loop with timers instead of rAF (headless capture / hidden tabs).
@@ -417,7 +418,7 @@ function setLookName(name, isEdited = false) {
   saveSession();
 }
 
-// Help menu: tutorial, shortcuts, guide and source (plus Share on phones).
+// Help menu: tutorial, shortcuts, guide, source and support (plus Share on phones).
 const helpBtn = setIcon('#btn-help', 'help');
 const helpMenu = $('#help-menu');
 setIcon('#btn-tour', 'compass', 'Tutorial').onclick = () => tour.start();
@@ -425,6 +426,11 @@ setIcon('#btn-keys', 'keyboard', 'Keyboard shortcuts').onclick = () => $('#help'
 $('#btn-keys').insertAdjacentHTML('beforeend', '<kbd>?</kbd>');
 setIcon('#btn-guide', 'book', 'User guide').href = `${REPO_URL}/blob/main/docs/GUIDE.md`;
 setIcon('#btn-github', 'github', 'Source on GitHub').href = REPO_URL;
+for (const [sel, label] of [['#btn-support', 'Support'], ['#btn-coffee', 'Buy me a coffee']]) {
+  const el = setIcon(sel, 'coffee', label);
+  el.href = COFFEE_URL;
+  el.addEventListener('click', () => track('support/coffee', 'Buy me a coffee'));
+}
 {
   const item = document.createElement('button');
   item.className = 'phone-only';

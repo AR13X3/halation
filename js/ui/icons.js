@@ -78,6 +78,7 @@ export const ICONS = {
   grid: svg('<rect x="3" y="3" width="5.5" height="5.5" rx="1.2"/><rect x="11.5" y="3" width="5.5" height="5.5" rx="1.2"/><rect x="3" y="11.5" width="5.5" height="5.5" rx="1.2"/><rect x="11.5" y="11.5" width="5.5" height="5.5" rx="1.2"/>'),
   help: svg('<circle cx="10" cy="10" r="7.2"/><path d="M8 8.1a2.1 2.1 0 1 1 2.9 1.9c-.6.3-.9.7-.9 1.3v.4"/><circle cx="10" cy="13.9" r=".55" fill="currentColor" stroke="none"/>'),
   sliders: svg('<path d="M3.5 6h6M13.5 6h3M3.5 14h3M10.5 14h6"/><circle cx="11.5" cy="6" r="2"/><circle cx="8.5" cy="14" r="2"/>'),
+  coffee: svg('<path d="M4 8h10v4.5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M14 9.5h1a2 2 0 0 1 0 4h-1.2"/><path d="M7.5 3.5c-.6.8.6 1.4 0 2.2M10.5 3.5c-.6.8.6 1.4 0 2.2" opacity=".6"/>'),
   book: svg('<path d="M10 5.5C8.5 4.3 6.3 3.8 3.5 4v11.5c2.8-.2 5 .3 6.5 1.5 1.5-1.2 3.7-1.7 6.5-1.5V4c-2.8-.2-5 .3-6.5 1.5zM10 5.5V17"/>'),
   // sections
   canvas: svg('<rect x="5" y="2.5" width="10" height="15" rx="1.8"/>'),

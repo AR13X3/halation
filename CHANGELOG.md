@@ -18,6 +18,7 @@ Notable changes to Halation. The format follows [Keep a Changelog](https://keepa
 
 - A [render service](docs/RENDER-SERVICE.md) that creates and renders images over HTTP, for scripts and automation tools.
 - `L` opens all looks.
+- **Support**: a Buy Me a Coffee button in the top bar and Help menu, a link in the README, and a Sponsor button on the GitHub repository, for anyone who wants to support Halation.
 - A **GitHub** link in the top bar, and a preview image when the app is shared on social sites.
 - Anonymous usage statistics on the official site through [GoatCounter](https://www.goatcounter.com): visits, plus how often people export, pick looks, press Surprise me, share and take the tutorial. No cookies or personal data, nothing is counted with Do Not Track or Global Privacy Control, and local copies and forks send nothing. See [Privacy](docs/GUIDE.md#privacy).
 

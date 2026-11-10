@@ -34,7 +34,7 @@ The artwork fills the window, lit by a soft glow of its own colors, and the cont
 | --- | --- |
 | **Canvas** (center) | Live preview at the exact proportions of your output size. Drag to pan, scroll to zoom, or drag an object to move it. |
 | **Look name** (top left) | The look you are working on, with undo and redo next to it. A dot appears once you change it; click the name to browse all looks. |
-| **Top right** | **Surprise me**, **Share**, a link to **GitHub**, the **Help** menu (tutorial, keyboard shortcuts, this guide and the source code) and **Export**. |
+| **Top right** | **Surprise me**, **Share**, a link to **GitHub**, **Support** (Buy Me a Coffee), the **Help** menu (tutorial, keyboard shortcuts, this guide, the source code and Buy me a coffee) and **Export**. |
 | **Controls** (right) | Every setting, one section per tab: Canvas, Flow, Objects, Color, Surface, Glass, Light, Screen, Finish, Motion, Export. Each section has dice (randomize this section) and reset buttons next to its title. |
 | **Dock** (bottom) | Play/pause, timeline, seamless-loop toggle, performance mode and frame-rate readout, and a strip of looks to click through. **All looks** (`L`) opens every built-in look plus the ones you save under **My looks**. The eye icon hides the interface. |
 
@@ -320,6 +320,7 @@ The official site ([ar13x3.github.io/halation](https://ar13x3.github.io/halation
 - the built-in look you pick, or that it was one of your own looks
 - Surprise me, copying a share link and opening one
 - starting the tutorial, finishing it, or the step where you left it
+- opening the Buy me a coffee link
 
 Your settings, colors and images are never included. Nothing is counted when your browser sends **Do Not Track** or **Global Privacy Control**, and copies of Halation running anywhere else (your own computer or a fork) don't count anything.
 

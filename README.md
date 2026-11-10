@@ -13,7 +13,8 @@
   <a href="https://ar13x3.github.io/halation/"><b>Open the app</b></a> ·
   <a href="docs/GUIDE.md">User guide</a> ·
   <a href="CONTRIBUTING.md">Contributing</a> ·
-  <a href="#license">License</a>
+  <a href="#license">License</a> ·
+  <a href="https://buymeacoffee.com/ar13x3">Buy me a coffee</a>
 </p>
 
 ![Halation in use: picking a look, switching the glass to Wavy, raising the wave amount and pressing Surprise me](assets/demo.webp)
@@ -107,6 +108,8 @@ Built with plain JavaScript and WebGL 2. No frameworks, no build step, no depend
 ## Contributing
 
 Bug reports, new looks, effects and documentation improvements are welcome. Please read the [contributing guide](CONTRIBUTING.md) first; it explains the development setup, guidelines and how contributions are licensed. Everyone taking part is expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+If Halation is useful to you, you can support its development by [buying me a coffee](https://buymeacoffee.com/ar13x3).
 
 To report a security issue, see the [security policy](SECURITY.md). For accessibility support and known limitations, see [ACCESSIBILITY.md](ACCESSIBILITY.md).
 
