@@ -105,6 +105,8 @@ svg { display: block; flex: none; }
 .stage.fullscreen { background: #000; }
 .stage.fullscreen::after, .stage.fullscreen .ambient { display: none; }
 .stage.idle, .stage.idle #canvas { cursor: none; }
+/* Wallpaper links show only the stage. */
+#app.wallpaper > :not(.stage), #app.wallpaper .rec-badge { display: none !important; }
 #canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
 #canvas.grabbing { cursor: grabbing; }
 #canvas.over-object { cursor: move; }
@@ -1099,8 +1101,8 @@ kbd {
 }
 @media (max-width: 900px) {
   :root { --insp-w: 284px; }
-  #btn-surprise span, #btn-share span, #btn-repo span, #btn-support span { display: none; }
-  #btn-surprise, #btn-share, #btn-repo, #btn-support { width: 34px; padding: 0; }
+  #btn-surprise span, #btn-share span, #btn-wallpaper span, #btn-repo span, #btn-support span { display: none; }
+  #btn-surprise, #btn-share, #btn-wallpaper, #btn-repo, #btn-support { width: 34px; padding: 0; }
   .tp-status { display: none; }
 }
 
@@ -1114,7 +1116,7 @@ kbd {
   .look-title svg { display: none; }
   .bar-start .bar-sep { display: none; }
   .brand { padding: 0 2px 0 6px; }
-  #btn-share, #btn-repo, #btn-support { display: none; }
+  #btn-share, #btn-wallpaper, #btn-repo, #btn-support { display: none; }
   .menu .phone-only { display: flex; }
 
   .dock {
