@@ -101,7 +101,9 @@ svg { display: block; flex: none; }
   background: #000;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, .07), 0 24px 70px -18px rgba(0, 0, 0, .75);
 }
-#app.ui-hidden .frame { border-radius: 0; box-shadow: none; }
+#app.ui-hidden .frame, .stage.covering .frame { border-radius: 0; box-shadow: none; }
+.stage.covering::after, .stage.covering .ambient { display: none; }
+.stage.idle, .stage.idle #canvas { cursor: none; }
 #canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
 #canvas.grabbing { cursor: grabbing; }
 #canvas.over-object { cursor: move; }

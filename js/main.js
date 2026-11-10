@@ -163,9 +163,13 @@ function docAspect() { return store.state.doc.width / store.state.doc.height; }
 const view = { cssH: 1, frame: { x: 0, y: 0, w: 1, h: 1 }, W: 1, H: 1 };
 
 // The room the frame has between the floating panels (stage coordinates).
+// In fullscreen the frame covers the whole screen, cropping whichever sides
+// overhang, instead of fitting inside it.
+const covering = () => document.fullscreenElement === stage;
+
 function frameArea() {
   const W = stage.clientWidth, H = stage.clientHeight;
-  if (app.classList.contains('ui-hidden')) return { x: 0, y: 0, w: W, h: H };
+  if (covering() || app.classList.contains('ui-hidden')) return { x: 0, y: 0, w: W, h: H };
   const phone = phoneQuery.matches;
   const gap = phone ? 12 : 22;
   const top = $('.bar-start').getBoundingClientRect().bottom + gap;
@@ -179,7 +183,7 @@ function frameArea() {
 function layout() {
   const doc = store.state.doc;
   const area = frameArea();
-  const k = Math.min(area.w / doc.width, area.h / doc.height);
+  const k = (covering() ? Math.max : Math.min)(area.w / doc.width, area.h / doc.height);
   const cssW = Math.max(1, Math.round(doc.width * k));
   const cssH = Math.max(1, Math.round(doc.height * k));
   frameEl.style.width = cssW + 'px';
@@ -210,6 +214,16 @@ function layout() {
   dirty = true;
 }
 new ResizeObserver(layout).observe(stage);
+// In fullscreen the cursor hides after a few still seconds.
+let idleCursor = 0;
+function wakeCursor() {
+  stage.classList.remove('idle');
+  clearTimeout(idleCursor);
+  if (covering()) idleCursor = setTimeout(() => stage.classList.add('idle'), 2500);
+}
+stage.addEventListener('pointermove', wakeCursor);
+stage.addEventListener('pointerdown', wakeCursor);
+document.addEventListener('fullscreenchange', () => { stage.classList.toggle('covering', covering()); wakeCursor(); layout(); });
 
 // ── ambient light ───────────────────────────────────────────────────────────
 // A tiny, blurred copy of the canvas lights the room around the frame: the
