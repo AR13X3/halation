@@ -458,8 +458,8 @@ function tick(now) {
 
 // ── UI wiring ───────────────────────────────────────────────────────────────
 const setIcon = (sel, icon, label) => { const el = $(sel); el.innerHTML = ICONS[icon] + (label ? `<span>${label}</span>` : ''); return el; };
-setIcon('#btn-undo', 'undo').onclick = () => store.undo();
-setIcon('#btn-redo', 'redo').onclick = () => store.redo();
+setIcon('#btn-undo', 'undo').onclick = () => undo();
+setIcon('#btn-redo', 'redo').onclick = () => redo();
 setIcon('#btn-surprise', 'dice', 'Surprise me').onclick = () => surprise();
 setIcon('#btn-similar', 'sparkle', 'Similar').onclick = () => (similarEl.hidden ? openSimilar() : closeSimilar(false));
 setIcon('#btn-share', 'link', 'Share');
@@ -779,7 +779,9 @@ const similarLocks = new Set(['color']);
 let similarBase = null;
 let similarName = '';
 let similarAuto = 0;
-let similarCount = 0;
+// While Similar is open, undo and redo step through its remixes.
+let similarHist = [];
+let similarPos = 0;
 
 for (const sec of LOCKABLE) {
   const b = document.createElement('button');
@@ -797,7 +799,9 @@ function openSimilar() {
   if (!similarEl.hidden) return;
   similarBase = store.look();
   similarName = lookName;
-  similarCount = 0;
+  similarHist = [similarBase];
+  queueSync();
+  similarPos = 0;
   similarEl.hidden = false;
   $('#similar-keep').disabled = true;
   $('#btn-similar').setAttribute('aria-expanded', 'true');
@@ -809,7 +813,9 @@ function closeSimilar(keep) {
   setSimilarAuto(false);
   similarEl.hidden = true;
   $('#btn-similar').setAttribute('aria-expanded', 'false');
-  if (keep && similarCount) { afterBulkChange('Similar look'); return; }
+  // A preset or edit made while the panel was open stays.
+  if (similarRebase()) return;
+  if (keep && similarPos) { afterBulkChange('Similar look'); return; }
   showLook(similarBase);
   setLookName(similarName, edited);
 }
@@ -823,10 +829,44 @@ function showLook(look) {
   applyingLook = false;
 }
 
+// If the look changed outside Similar (a preset, an edit), it becomes the new
+// starting point. Returns true when that happened.
+function similarRebase() {
+  if (JSON.stringify(store.look()) === JSON.stringify(similarHist[similarPos])) return false;
+  similarBase = store.look();
+  similarName = lookName;
+  similarHist = [similarBase];
+  similarPos = 0;
+  $('#similar-keep').disabled = true;
+  return true;
+}
+
 function shuffleSimilar() {
-  showLook(pickSurprise({ candidates: 4, base: similarBase, lock: [...similarLocks] }).look);
-  similarCount++;
-  $('#similar-keep').disabled = false;
+  similarRebase();
+  const look = pickSurprise({ candidates: 4, base: similarBase, lock: [...similarLocks] }).look;
+  similarHist = similarHist.slice(0, similarPos + 1);
+  similarHist.push(look);
+  similarPos = similarHist.length - 1;
+  showSimilarStep();
+}
+
+function showSimilarStep() {
+  showLook(similarHist[similarPos]);
+  // Keep the look as the canvas has it, so similarRebase can compare.
+  similarHist[similarPos] = store.look();
+  $('#similar-keep').disabled = !similarPos;
+}
+
+const similarOpen = () => !similarEl.hidden;
+const canUndo = () => (similarOpen() && !similarRebase() ? similarPos > 0 : store.canUndo());
+const canRedo = () => (similarOpen() && !similarRebase() ? similarPos < similarHist.length - 1 : store.canRedo());
+function undo() {
+  if (!similarOpen() || similarRebase()) return store.undo();
+  if (similarPos > 0) { similarPos--; showSimilarStep(); }
+}
+function redo() {
+  if (!similarOpen() || similarRebase()) return store.redo();
+  if (similarPos < similarHist.length - 1) { similarPos++; showSimilarStep(); }
 }
 
 function setSimilarAuto(on) {
@@ -902,8 +942,8 @@ function queueSync() {
   raf(() => {
     syncQueued = false;
     panel.sync();
-    $('#btn-undo').disabled = !store.canUndo();
-    $('#btn-redo').disabled = !store.canRedo();
+    $('#btn-undo').disabled = !canUndo();
+    $('#btn-redo').disabled = !canRedo();
   });
 }
 
@@ -1333,8 +1373,8 @@ window.addEventListener('keydown', (e) => {
   const t = e.target;
   const typing = t instanceof HTMLInputElement && !['range', 'checkbox', 'color'].includes(t.type) || t instanceof HTMLSelectElement || t instanceof HTMLTextAreaElement;
   const mod = e.ctrlKey || e.metaKey;
-  if (mod && e.key.toLowerCase() === 'z' && !typing) { e.preventDefault(); e.shiftKey ? store.redo() : store.undo(); return; }
-  if (mod && e.key.toLowerCase() === 'y' && !typing) { e.preventDefault(); store.redo(); return; }
+  if (mod && e.key.toLowerCase() === 'z' && !typing) { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if (mod && e.key.toLowerCase() === 'y' && !typing) { e.preventDefault(); redo(); return; }
   if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); exportImage(); return; }
   if (typing || mod || e.altKey) return;
   const a = store.state.anim;
