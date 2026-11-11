@@ -49,8 +49,7 @@
 
     <div class="bar bar-end glass">
       <button class="btn ghost" id="btn-surprise" title="Randomize everything (R)"></button>
-      <button class="btn ghost" id="btn-share" title="Copy a link to this exact look"></button>
-      <button class="btn ghost" id="btn-wallpaper" title="Copy a link that shows only this animated look, full screen (for live wallpaper apps)"></button>
+      <button class="btn ghost" id="btn-share" title="Copy a link to this exact look" aria-haspopup="dialog" aria-expanded="false" aria-controls="share-pop"></button>
       <a class="btn ghost" id="btn-repo" title="Source code on GitHub" aria-label="GitHub" target="_blank" rel="noopener"></a>
       <a class="btn ghost" id="btn-support" title="Support Halation on Buy Me a Coffee" aria-label="Buy me a coffee" target="_blank" rel="noopener"></a>
       <button class="icon-btn" id="btn-help" title="Help" aria-label="Help" aria-haspopup="menu" aria-expanded="false"></button>
@@ -64,6 +63,16 @@
       <a role="menuitem" id="btn-github" target="_blank" rel="noopener"></a>
       <a role="menuitem" id="btn-coffee" target="_blank" rel="noopener"></a>
     </div>
+
+    <section class="share-pop glass" id="share-pop" aria-label="Share" hidden>
+      <div class="share-label">Link opens</div>
+      <div class="share-seg" role="group" aria-label="Link opens">
+        <button data-open="editor" aria-pressed="true" title="Opens the editor with this exact look">In the editor</button>
+        <button data-open="full" aria-pressed="false" title="Shows only the moving look, filling the screen: for live wallpaper apps like Lively">Full screen</button>
+      </div>
+      <label class="share-check" id="share-mouse-row" hidden><input type="checkbox" id="share-mouse" /> Mouse can pan and move objects</label>
+      <button class="btn primary" id="share-copy"></button>
+    </section>
 
     <aside class="inspector glass" id="panel" aria-label="Controls"></aside>
 

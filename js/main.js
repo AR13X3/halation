@@ -28,8 +28,11 @@ const raf = new URLSearchParams(location.search).has('timer')
 const app = $('#app');
 // ?wallpaper#look=… shows only the moving look, filling the window: for live
 // wallpaper apps (Lively, Wallpaper Engine) and browser kiosks.
+// Add &interactive to let the mouse pan, zoom, paint and move objects.
 const wallpaper = new URLSearchParams(location.search).has('wallpaper');
+const interactive = new URLSearchParams(location.search).has('interactive');
 app.classList.toggle('wallpaper', wallpaper);
+app.classList.toggle('interactive', interactive);
 const canvas = $('#canvas');
 const stage = $('#stage');
 const frameEl = $('#frame');
@@ -458,8 +461,41 @@ const setIcon = (sel, icon, label) => { const el = $(sel); el.innerHTML = ICONS[
 setIcon('#btn-undo', 'undo').onclick = () => store.undo();
 setIcon('#btn-redo', 'redo').onclick = () => store.redo();
 setIcon('#btn-surprise', 'dice', 'Surprise me').onclick = () => surprise();
-setIcon('#btn-share', 'link', 'Share').onclick = () => share();
-setIcon('#btn-wallpaper', 'expand', 'Wallpaper').onclick = () => share({ wallpaper: true });
+setIcon('#btn-share', 'link', 'Share');
+// Share opens a small panel: open the link in the editor, or full screen
+// (with or without the mouse). The last choice is remembered.
+const sharePop = $('#share-pop');
+const shareBtn = $('#btn-share');
+const shareOpts = (() => {
+  try { return { full: false, mouse: false, ...JSON.parse(localStorage.getItem('halation.share') || '{}') }; } catch { return { full: false, mouse: false }; }
+})();
+function syncSharePop() {
+  for (const b of sharePop.querySelectorAll('[data-open]')) b.setAttribute('aria-pressed', String((b.dataset.open === 'full') === shareOpts.full));
+  $('#share-mouse-row').hidden = !shareOpts.full;
+  $('#share-mouse').checked = shareOpts.mouse;
+  try { localStorage.setItem('halation.share', JSON.stringify(shareOpts)); } catch {}
+}
+function setSharePop(on) {
+  sharePop.hidden = !on;
+  shareBtn.setAttribute('aria-expanded', String(on));
+  if (!on) return;
+  // Hang it under the Share button, inside the window.
+  const r = shareBtn.getBoundingClientRect();
+  sharePop.style.right = 'auto';
+  sharePop.style.left = Math.max(12, Math.min(r.left, innerWidth - sharePop.offsetWidth - 12)) + 'px';
+  syncSharePop();
+  $('#share-copy').focus();
+}
+shareBtn.onclick = () => setSharePop(sharePop.hidden);
+for (const b of sharePop.querySelectorAll('[data-open]')) b.onclick = () => { shareOpts.full = b.dataset.open === 'full'; syncSharePop(); };
+$('#share-mouse').onchange = (e) => { shareOpts.mouse = e.target.checked; syncSharePop(); };
+setIcon('#share-copy', 'link', 'Copy link').onclick = () => {
+  setSharePop(false);
+  share({ wallpaper: shareOpts.full, interactive: shareOpts.mouse });
+};
+document.addEventListener('pointerdown', (e) => {
+  if (!sharePop.hidden && !sharePop.contains(e.target) && !shareBtn.contains(e.target)) setSharePop(false);
+});
 setIcon('#btn-repo', 'github', 'GitHub').href = REPO_URL;
 setIcon('#btn-export', 'download', 'Export').onclick = () => exportImage();
 setIcon('#btn-hide', 'eye').onclick = () => toggleUI();
@@ -502,7 +538,7 @@ for (const [sel, label] of [['#btn-support', 'Support'], ['#btn-coffee', 'Buy me
   const wall = document.createElement('button');
   wall.className = 'phone-only';
   wall.setAttribute('role', 'menuitem');
-  wall.innerHTML = `${ICONS.expand}<span>Copy wallpaper link</span>`;
+  wall.innerHTML = `${ICONS.expand}<span>Copy full-screen link</span>`;
   wall.onclick = () => share({ wallpaper: true });
   helpMenu.prepend(item, wall);
 }
@@ -1156,20 +1192,21 @@ function stopRecording() {
 }
 
 // ── share link ──────────────────────────────────────────────────────────────
-// A wallpaper link opens just the moving look, filling the screen, with no editor.
-async function share({ wallpaper: wall = false } = {}) {
-  track(wall ? 'share/wallpaper' : 'share', wall ? 'Copy wallpaper link' : 'Copy share link');
+// A full-screen link opens just the moving look, filling the screen, with no
+// editor: for live wallpaper apps (Lively) and kiosks.
+async function share({ wallpaper: wall = false, interactive: mouse = false } = {}) {
+  track(wall ? 'share/wallpaper' : 'share', wall ? 'Copy full-screen link' : 'Copy share link');
   const code = await encodeLook(store.look());
-  const search = wall ? '?wallpaper' : '';
+  const search = wall ? `?wallpaper${mouse ? '&interactive' : ''}` : '';
   const url = `${location.origin}${location.pathname}${search}#look=${code}`;
   try {
     await navigator.clipboard.writeText(url);
     toast(store.state.source.type === 'image'
       ? 'Link copied — note: your image itself isn’t included in links'
-      : wall ? 'Wallpaper link copied — it shows this look full screen, without the editor'
+      : wall ? 'Link copied — it shows this look full screen, without the editor'
       : 'Link copied — it opens this exact look');
   } catch {
-    if (wall) { prompt('Copy this wallpaper link:', url); return; }
+    if (wall) { prompt('Copy this link:', url); return; }
     history.replaceState(null, '', `#look=${code}`);
     toast('Couldn’t access the clipboard — the link is in the address bar.');
   }
@@ -1211,6 +1248,7 @@ window.addEventListener('keydown', (e) => {
       break;
     case 'Escape':
       if ($('#help').open) break;
+      if (!sharePop.hidden) { setSharePop(false); shareBtn.focus(); break; }
       if (!helpMenu.hidden) { setMenu(false); helpBtn.focus(); }
       else if (presetsPanel.isOpen()) presetsPanel.close();
       else if (app.classList.contains('editing')) setEditing(false);
