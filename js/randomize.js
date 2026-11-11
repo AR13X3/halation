@@ -655,3 +655,34 @@ export function randomizeSection(state, section) {
     }
   }
 }
+
+// ── similar looks ───────────────────────────────────────────────────────────
+// Sections "Similar" can lock: a new look keeps them and remixes the rest.
+// Motion is always kept.
+export const LOCKABLE = [
+  { id: 'source', title: 'Flow' },
+  { id: 'color', title: 'Colors' },
+  { id: 'objects', title: 'Objects' },
+  { id: 'surface', title: 'Surface' },
+  { id: 'glass', title: 'Glass' },
+  { id: 'light', title: 'Light' },
+  { id: 'screen', title: 'Screen' },
+  { id: 'finish', title: 'Finish' },
+];
+
+// Runs fn with Math.random replaced by a generator seeded from a string, so the
+// same seed always builds the same look (daily wallpapers).
+export function withSeed(seed, fn) {
+  let h = 2166136261;
+  for (const c of String(seed)) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  let a = h >>> 0;
+  const random = Math.random;
+  Math.random = () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  try { return fn(); } finally { Math.random = random; }
+}

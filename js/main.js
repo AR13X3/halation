@@ -12,7 +12,7 @@ import { buildPresetsPanel } from './ui/presets-panel.js';
 import { createTour } from './ui/tour.js';
 import { ICONS } from './ui/icons.js';
 import { toast } from './ui/controls.js';
-import { randomizeSection, surpriseCandidates, recipeWeights, scoreImage } from './randomize.js';
+import { randomizeSection, surpriseCandidates, recipeWeights, scoreImage, LOCKABLE, withSeed } from './randomize.js';
 import { encodePNG, makeZip, download, copyImage, pickVideoMime, timestamp, slug } from './export.js';
 import { track } from './analytics.js';
 
@@ -461,6 +461,7 @@ const setIcon = (sel, icon, label) => { const el = $(sel); el.innerHTML = ICONS[
 setIcon('#btn-undo', 'undo').onclick = () => store.undo();
 setIcon('#btn-redo', 'redo').onclick = () => store.redo();
 setIcon('#btn-surprise', 'dice', 'Surprise me').onclick = () => surprise();
+setIcon('#btn-similar', 'sparkle', 'Similar').onclick = () => (similarEl.hidden ? openSimilar() : closeSimilar(false));
 setIcon('#btn-share', 'link', 'Share');
 // Share opens a small panel: open the link in the editor, or full screen
 // (with or without the mouse). The last choice is remembered.
@@ -729,9 +730,11 @@ function afterBulkChange(name) {
 // the one that scores best (see randomize.js).
 const surpriseSet = new TargetSet(ctx);
 let surpriseTarget = null;
-function pickSurprise({ candidates = 6, weights } = {}) {
+// With `base` and `lock`, every candidate keeps the locked sections of `base`.
+function pickSurprise({ candidates = 6, weights, base, lock = [] } = {}) {
   const doc = store.state.doc;
   const cands = surpriseCandidates(store.state, candidates, weights);
+  for (const c of cands) for (const k of lock) c.look[k] = structuredClone(base[k]);
   let best = cands[0];
   let bestScore = -Infinity;
   try {
@@ -764,6 +767,118 @@ function surprise() {
   store.applyLook(pickSurprise().look);
   afterBulkChange('Surprise');
   track('surprise', 'Surprise me');
+}
+
+// ── similar looks ───────────────────────────────────────────────────────────
+// Lock some sections of the current look, then Remix the rest. The canvas
+// shows each try; Keep commits it, closing goes back to the starting look. The
+// panel also copies wallpaper links that remix themselves every day or on
+// every visit.
+const similarEl = $('#similar');
+const similarLocks = new Set(['color']);
+let similarBase = null;
+let similarName = '';
+let similarAuto = 0;
+let similarCount = 0;
+
+for (const sec of LOCKABLE) {
+  const b = document.createElement('button');
+  b.className = 'lock-chip';
+  b.textContent = sec.title;
+  b.setAttribute('aria-pressed', similarLocks.has(sec.id));
+  b.onclick = () => {
+    similarLocks.has(sec.id) ? similarLocks.delete(sec.id) : similarLocks.add(sec.id);
+    b.setAttribute('aria-pressed', similarLocks.has(sec.id));
+  };
+  $('#similar-locks').append(b);
+}
+
+function openSimilar() {
+  if (!similarEl.hidden) return;
+  similarBase = store.look();
+  similarName = lookName;
+  similarCount = 0;
+  similarEl.hidden = false;
+  $('#similar-keep').disabled = true;
+  $('#btn-similar').setAttribute('aria-expanded', 'true');
+  track('similar', 'Open Similar');
+}
+
+function closeSimilar(keep) {
+  if (similarEl.hidden) return;
+  setSimilarAuto(false);
+  similarEl.hidden = true;
+  $('#btn-similar').setAttribute('aria-expanded', 'false');
+  if (keep && similarCount) { afterBulkChange('Similar look'); return; }
+  showLook(similarBase);
+  setLookName(similarName, edited);
+}
+
+// Shows a look without adding it to the undo history.
+function showLook(look) {
+  applyingLook = true;
+  store.applyLook(look);
+  sanitize(store.state);
+  store.emit('*');
+  applyingLook = false;
+}
+
+function shuffleSimilar() {
+  showLook(pickSurprise({ candidates: 4, base: similarBase, lock: [...similarLocks] }).look);
+  similarCount++;
+  $('#similar-keep').disabled = false;
+}
+
+function setSimilarAuto(on) {
+  clearInterval(similarAuto);
+  similarAuto = on ? setInterval(shuffleSimilar, 1600) : 0;
+  setIcon('#similar-auto', on ? 'pause' : 'play', on ? 'Stop' : 'Auto').setAttribute('aria-pressed', on);
+}
+
+async function copySimilarLink() {
+  const code = await encodeLook(similarBase);
+  const vary = $('#similar-vary').value;
+  const mouse = $('#similar-mouse').checked ? '&interactive' : '';
+  const url = `${location.origin}${location.pathname}?wallpaper${mouse}&vary=${vary}&lock=${[...similarLocks].join(',')}#look=${code}`;
+  track('share/similar', 'Copy similar wallpaper link');
+  try {
+    await navigator.clipboard.writeText(url);
+    toast(vary === 'day' ? 'Link copied — a new similar look every day' : 'Link copied — a new similar look every time it opens');
+  } catch {
+    prompt('Copy this wallpaper link:', url);
+  }
+}
+
+setIcon('#similar-shuffle', 'dice', 'Remix').onclick = () => shuffleSimilar();
+setIcon('#similar-keep', 'check', 'Keep').onclick = () => closeSimilar(true);
+setIcon('#similar-copy', 'link', 'Copy link').onclick = () => copySimilarLink();
+setSimilarAuto(false);
+$('#similar-auto').onclick = () => setSimilarAuto(!similarAuto);
+$('#similar-close').innerHTML = ICONS.close;
+$('#similar-close').onclick = () => closeSimilar(false);
+
+// Wallpaper links with ?vary remix the shared look, keeping the locked sections.
+// "day" seeds the remix with the date, so it changes at midnight and stays put
+// across reloads; "load" makes a new one on every visit.
+function varyWallpaper() {
+  const q = new URLSearchParams(location.search);
+  const vary = q.get('vary');
+  if (!wallpaper || !vary) return;
+  const valid = new Set(LOCKABLE.map((x) => x.id));
+  const lock = (q.get('lock') || '').split(',').filter((k) => valid.has(k));
+  const base = store.look();
+  const remix = (seed) => {
+    const make = () => pickSurprise({ candidates: 4, base, lock }).look;
+    showLook(seed ? withSeed(seed, make) : make());
+  };
+  if (vary === 'day') {
+    let day = new Date().toDateString();
+    remix(day);
+    setInterval(() => {
+      const now = new Date().toDateString();
+      if (now !== day) remix(day = now);
+    }, 60e3);
+  } else remix();
 }
 
 const panel = buildPanel($('#panel'), store, actions);
@@ -1248,6 +1363,7 @@ window.addEventListener('keydown', (e) => {
       break;
     case 'Escape':
       if ($('#help').open) break;
+      if (!similarEl.hidden) { closeSimilar(false); break; }
       if (!sharePop.hidden) { setSharePop(false); shareBtn.focus(); break; }
       if (!helpMenu.hidden) { setMenu(false); helpBtn.focus(); }
       else if (presetsPanel.isOpen()) presetsPanel.close();
@@ -1289,3 +1405,5 @@ window.halation = {
   showLook: (look) => { store.applyLook(look); sanitize(store.state); },
   perf: () => ({ mode: perfMode, autoTier, tier: tier().label, drs, liveScale, refineK, refineOf: refineFrames(), fps: liveFps }),
 };
+
+varyWallpaper();
