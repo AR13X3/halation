@@ -164,13 +164,24 @@ function docAspect() { return store.state.doc.width / store.state.doc.height; }
 const view = { cssH: 1, frame: { x: 0, y: 0, w: 1, h: 1 }, W: 1, H: 1 };
 
 // The room the frame has between the floating panels (stage coordinates).
-// In fullscreen the frame covers the whole screen, cropping whichever sides
-// overhang, instead of fitting inside it.
-const covering = () => document.fullscreenElement === stage;
+const fullscreen = () => document.fullscreenElement === stage;
+
+// In fullscreen the frame fills the screen, cropping the sides that overhang,
+// when that hides little of the design; otherwise it fits inside the screen
+// (a phone-shaped design on a wide monitor would lose most of its height).
+// Z switches between the two until fullscreen ends.
+const MAX_FILL_CROP = 0.25;
+let fillOverride = null;   // null = automatic, true = fill, false = fit
+function filling(area, doc) {
+  if (!fullscreen()) return false;
+  if (fillOverride !== null) return fillOverride;
+  const sx = area.w / doc.width, sy = area.h / doc.height;
+  return 1 - Math.min(sx, sy) / Math.max(sx, sy) <= MAX_FILL_CROP;
+}
 
 function frameArea() {
   const W = stage.clientWidth, H = stage.clientHeight;
-  if (covering() || app.classList.contains('ui-hidden')) return { x: 0, y: 0, w: W, h: H };
+  if (fullscreen() || app.classList.contains('ui-hidden')) return { x: 0, y: 0, w: W, h: H };
   const phone = phoneQuery.matches;
   const gap = phone ? 12 : 22;
   const top = $('.bar-start').getBoundingClientRect().bottom + gap;
@@ -184,7 +195,7 @@ function frameArea() {
 function layout() {
   const doc = store.state.doc;
   const area = frameArea();
-  const k = (covering() ? Math.max : Math.min)(area.w / doc.width, area.h / doc.height);
+  const k = (filling(area, doc) ? Math.max : Math.min)(area.w / doc.width, area.h / doc.height);
   const cssW = Math.max(1, Math.round(doc.width * k));
   const cssH = Math.max(1, Math.round(doc.height * k));
   frameEl.style.width = cssW + 'px';
@@ -220,11 +231,36 @@ let idleCursor = 0;
 function wakeCursor() {
   stage.classList.remove('idle');
   clearTimeout(idleCursor);
-  if (covering()) idleCursor = setTimeout(() => stage.classList.add('idle'), 2500);
+  if (fullscreen()) idleCursor = setTimeout(() => stage.classList.add('idle'), 2500);
 }
 stage.addEventListener('pointermove', wakeCursor);
 stage.addEventListener('pointerdown', wakeCursor);
-document.addEventListener('fullscreenchange', () => { stage.classList.toggle('covering', covering()); wakeCursor(); layout(); });
+// For the first few seconds of fullscreen a corner hint names the Z key.
+const fsHint = document.createElement('div');
+fsHint.className = 'fs-hint';
+stage.append(fsHint);
+let fsHintTimer = 0;
+function hideFsHint() { clearTimeout(fsHintTimer); fsHint.classList.remove('show'); }
+document.addEventListener('fullscreenchange', () => {
+  fillOverride = null;
+  stage.classList.toggle('fullscreen', fullscreen());
+  wakeCursor();
+  layout();
+  hideFsHint();
+  if (fullscreen()) {
+    const fill = filling(frameArea(), store.state.doc);
+    fsHint.innerHTML = `Press <kbd>Z</kbd> to ${fill ? 'fit the whole design' : 'fill the screen'}`;
+    fsHint.classList.add('show');
+    fsHintTimer = setTimeout(hideFsHint, 3000);
+  }
+});
+function toggleFill() {
+  if (!fullscreen()) return;
+  hideFsHint();
+  fillOverride = !filling(frameArea(), store.state.doc);
+  layout();
+  toast(fillOverride ? 'Fill the screen' : 'Fit the whole design');
+}
 
 // ── ambient light ───────────────────────────────────────────────────────────
 // A tiny, blurred copy of the canvas lights the room around the frame: the
@@ -1143,6 +1179,7 @@ window.addEventListener('keydown', (e) => {
       if (document.fullscreenElement) document.exitFullscreen();
       else stage.requestFullscreen?.();
       break;
+    case 'z': case 'Z': toggleFill(); break;
     case '?': $('#help').showModal(); break;
     case '/':
       e.preventDefault();

@@ -340,10 +340,11 @@ function pickerControl(p, store) {
 // ── toast ───────────────────────────────────────────────────────────────────
 let toastEl;
 export function toast(msg, { type = 'info', duration = 2600, html = false } = {}) {
-  if (!toastEl) {
-    toastEl = h('div', { class: 'toasts' });
-    document.body.append(toastEl);
-  }
+  if (!toastEl) toastEl = h('div', { class: 'toasts' });
+  // Only the fullscreen element is shown in fullscreen, so toasts live there.
+  const host = document.fullscreenElement || document.body;
+  if (toastEl.parentNode !== host) host.append(toastEl);
+  toastEl.replaceChildren();   // one toast at a time: a new one replaces the last
   const t = h('div', { class: `toast toast-${type}` });
   if (html) t.innerHTML = msg; else t.textContent = msg;
   toastEl.append(t);
