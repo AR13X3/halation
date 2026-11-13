@@ -16,6 +16,9 @@ Notable changes to Halation. The format follows [Keep a Changelog](https://keepa
 
 ### Added
 
+- **Full-screen links**: in **Share**, choose **Full screen** to copy a link that shows only the moving look, filling the screen, for live wallpaper apps such as Lively or a kiosk page. An option lets the mouse pan and move objects.
+- **Surprise me options**: the arrow next to **Surprise me** locks the parts you like, so new looks keep them (a dot on the arrow shows locks are on). **Auto** shows a new look every couple of seconds, and a full-screen link can make a new look by itself every day or every time it opens.
+- The tutorial covers Surprise me's options and sharing.
 - A [render service](docs/RENDER-SERVICE.md) that creates and renders images over HTTP, for scripts and automation tools.
 - `L` opens all looks.
 - **Support**: a Buy Me a Coffee button in the top bar and Help menu, a link in the README, and a Sponsor button on the GitHub repository, for anyone who wants to support Halation.

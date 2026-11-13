@@ -269,50 +269,70 @@ a.btn { text-decoration: none; }
 .menu > *:hover, .menu > *:focus-visible { background: var(--wash-2); color: var(--text); box-shadow: none; }
 .menu kbd { margin-left: auto; }
 
-/* Similar looks: a floating panel under the top bar; the canvas is its preview. */
-.similar {
+/* Surprise me is a split button: the main half surprises, the arrow opens its
+   options. A dot on the arrow shows that some parts are locked. */
+.split { display: inline-flex; align-items: center; }
+.split #btn-surprise { border-radius: 17px 0 0 17px; padding-right: 9px; }
+.split-more { position: relative; width: 26px; padding: 0; border-radius: 0 17px 17px 0; }
+.split-more::before { content: ''; position: absolute; left: 0; top: 9px; bottom: 9px; width: 1px; background: var(--hair); }
+.split-more svg { width: 14px; height: 14px; transition: transform .15s; }
+.split-more[aria-expanded="true"] { background: var(--wash-2); }
+.split-more[aria-expanded="true"] svg { transform: rotate(180deg); }
+.split.locked .split-more::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 0 0 2px rgba(17, 16, 21, .6);
+}
+
+/* Surprise me options: hangs under its button (placed in main.js). */
+.surprise-pop {
   position: absolute;
   top: calc(var(--m) + var(--bar-h) + 8px);
-  right: calc(var(--insp-w) + var(--m) + 12px);
   z-index: 30;
   width: min(340px, calc(100vw - 2 * var(--m)));
-  padding: 6px 14px 14px;
+  max-height: calc(100% - 2 * var(--m) - var(--bar-h) - 8px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 14px 14px;
   border-radius: 18px;
   font-size: 13px;
   animation: pop-in .14s ease;
 }
-.similar[hidden] { display: none; }
-#app.ui-hidden .similar { display: none; }
-.similar-head { display: flex; justify-content: space-between; align-items: center; }
-.similar-hint { margin: 0 0 10px; color: var(--muted); font-size: 12px; }
-.similar-locks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+.surprise-pop[hidden] { display: none; }
+#app.ui-hidden .surprise-pop { display: none; }
+.pop-head { display: flex; justify-content: space-between; align-items: center; margin-right: -6px; }
+.pop-hint { margin: 2px 0 10px; color: var(--muted); font-size: 12px; }
+.pop-hint kbd { padding: 0 5px; min-width: 0; font-size: 11px; }
+.lock-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+/* Lock chips select like the inspector's option tiles (.chip). */
 .lock-chip {
-  height: 30px;
-  border-radius: 9px;
+  height: 32px;
+  border-radius: 11px;
   background: var(--wash);
   color: var(--muted);
   font-size: 12px;
-  transition: background .12s, color .12s;
+  transition: background .12s, color .12s, box-shadow .12s;
 }
-.lock-chip:hover { background: var(--wash-2); color: var(--text-2); }
-.lock-chip[aria-pressed="true"] { background: var(--paper); color: var(--ink); font-weight: 600; }
-.similar-row { display: flex; gap: 6px; margin-top: 12px; }
-.similar-row .btn { flex: 1; justify-content: center; }
-.similar-row .btn:disabled { opacity: .4; pointer-events: none; }
-.similar-share {
+.lock-chip:hover { background: var(--wash-2); color: var(--text); }
+.lock-chip[aria-pressed="true"] { background: rgba(255, 255, 255, .2); color: var(--text); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3); }
+/* Actions match the Export tab's button row. */
+.pop-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 12px; }
+.pop-row .btn { border-radius: 11px; padding: 0 8px; }
+.pop-row .btn[aria-pressed="true"] { background: rgba(255, 255, 255, .2); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3); }
+/* Link section: label, how often it changes, mouse option, then copy. */
+.pop-section {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin-top: 12px;
-  padding-top: 12px;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
   border-top: 1px solid var(--hair);
-  color: var(--muted);
-  font-size: 12px;
-}
-.similar-share .btn { margin-left: auto; }
-@media (max-width: 720px), (max-width: 900px) and (orientation: portrait) {
-  .similar { right: var(--m); }
 }
 
 /* Share: where the link opens, then copy. */
@@ -669,6 +689,29 @@ button.un-row:hover { background: var(--wash-2); }
 .switch-input:checked + .switch-track { background: var(--paper); }
 .switch-input:checked + .switch-track::after { transform: translateX(12px); background: var(--ink); box-shadow: none; }
 .switch-input:focus-visible + .switch-track { box-shadow: var(--focus); }
+/* Glass switch: a recessed well with a clear lens that slides; on, the well
+   lights up like a selected tile and the lens turns frosted white. */
+.switch.glassy { width: 36px; height: 22px; }
+.glassy .switch-track {
+  border-radius: 11px;
+  background: var(--well);
+  box-shadow: inset 0 0 0 1px var(--hair), inset 0 1px 3px rgba(0, 0, 0, .35);
+  transition: background .18s, box-shadow .18s;
+}
+.glassy .switch-track::after {
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  background: rgba(255, 255, 255, .16);
+  -webkit-backdrop-filter: blur(6px) saturate(160%);
+  backdrop-filter: blur(6px) saturate(160%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3), 0 2px 6px rgba(0, 0, 0, .35);
+  transition: transform .18s cubic-bezier(.3, .7, .4, 1), background .18s;
+}
+.glassy .switch-input:checked + .switch-track { background: rgba(255, 255, 255, .2); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3); }
+.glassy .switch-input:checked + .switch-track::after { transform: translateX(14px); background: rgba(244, 242, 238, .92); box-shadow: 0 2px 6px rgba(0, 0, 0, .3); }
+.glassy .switch-input:focus-visible + .switch-track { box-shadow: inset 0 0 0 1px var(--hair), var(--focus); }
 
 .swatch {
   position: relative;
@@ -1174,8 +1217,9 @@ kbd {
 }
 @media (max-width: 900px) {
   :root { --insp-w: 284px; }
-  #btn-surprise span, #btn-similar span, #btn-share span, #btn-repo span, #btn-support span { display: none; }
-  #btn-surprise, #btn-similar, #btn-share, #btn-repo, #btn-support { width: 34px; padding: 0; }
+  #btn-surprise span, #btn-share span, #btn-repo span, #btn-support span { display: none; }
+  #btn-surprise, #btn-share, #btn-repo, #btn-support { width: 34px; padding: 0; }
+  .split #btn-surprise { width: 32px; padding: 0 0 0 2px; }
   .tp-status { display: none; }
 }
 
@@ -1183,7 +1227,11 @@ kbd {
    sheet over it. Keep this query in sync with PHONE_QUERY in main.js. */
 @media (max-width: 720px), (max-width: 900px) and (orientation: portrait) {
   :root { --m: 10px; --bar-h: 46px; --free-w: 100%; }
-  .bar-start { max-width: calc(100% - 2 * var(--m) - 178px); }
+  /* Room left for the top-right bar: Surprise me split (30 + 22), Help (34),
+     Export (~90), gaps and padding. Keep in sync when that bar changes. */
+  .bar-start { max-width: calc(100% - 2 * var(--m) - 196px); }
+  .split #btn-surprise { width: 30px; }
+  .split-more { width: 22px; }
   #btn-redo { display: none; }
   .look-title { max-width: none; flex: 0 1 auto; gap: 5px; padding: 0 6px 0 8px; }
   .look-title svg { display: none; }

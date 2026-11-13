@@ -32,6 +32,7 @@ const onEvents = (list) => (ctx, done) => {
   return () => offs.forEach((off) => off());
 };
 const openSection = (id) => (ctx) => { ctx.clearSearch(); ctx.showSection(id); };
+const shareShown = () => !!$('#btn-share')?.offsetParent;
 
 const STEPS = [
   {
@@ -121,10 +122,32 @@ const STEPS = [
     wait: onStore((p) => p === '*'),
   },
   {
+    target: () => [$('#surprise-split'), $('#surprise-pop')],
+    side: 'left',
+    prep: (ctx) => ctx.showSurprise(true),
+    title: 'Keep what you like',
+    body: 'The arrow next to Surprise me opens its options. Lock the parts you like, such as Colors, and Surprise me changes only the rest. A dot on the arrow shows that something is locked.',
+    try: 'Lock a part, then press Surprise me.',
+    // A manual surprise, not Auto's ticks, moves the tour on.
+    wait: onEvents([[() => $('#surprise-go'), 'click'], [() => $('#btn-surprise'), 'click'], [() => window, 'keydown', (e) => (e.key === 'r' || e.key === 'R') && !typing(e.target)]]),
+    leave: (ctx) => ctx.showSurprise(false),
+  },
+  {
     target: () => $('#btn-export'),
     side: 'bottom',
     title: 'Export',
-    body: 'Download a high-resolution PNG, JPEG or WebP. The Export section adds copy to clipboard, frame bursts and video, and Share copies a link that recreates this exact look.',
+    body: 'Download a high-resolution PNG, JPEG or WebP. The Export section adds copy to clipboard, frame bursts and video.',
+  },
+  {
+    // Phones have no Share button: their share links are in the Help menu.
+    target: () => (shareShown() ? [$('#btn-share'), $('#share-pop')] : $('#btn-help')),
+    side: 'left',
+    prep: (ctx) => ctx.showShare(true),
+    title: 'Share it',
+    body: () => (shareShown()
+      ? 'Share copies a link to this exact look. In the editor opens it ready to change. Full screen shows only the moving look, filling the screen: paste it into a live wallpaper app such as Lively, or use it as a kiosk page.'
+      : 'The Help menu copies links to this exact look. Copy share link opens it in the editor, ready to change. Copy full-screen link shows only the moving look, filling the screen: paste it into a live wallpaper app such as Lively, or use it as a kiosk page.'),
+    leave: (ctx) => ctx.showShare(false),
   },
   {
     title: 'You’re ready',
@@ -136,8 +159,8 @@ const STEPS = [
   },
 ];
 
-export function createTour({ store, showUI, clearSearch, showSection, showDock, guideUrl }) {
-  const ctx = { store, clearSearch, showSection, showDock };
+export function createTour({ store, showUI, clearSearch, showSection, showDock, showSurprise, showShare, guideUrl }) {
+  const ctx = { store, clearSearch, showSection, showDock, showSurprise, showShare };
   let ui = null;
   let index = -1;
   let stopWait = null;
@@ -202,7 +225,17 @@ export function createTour({ store, showUI, clearSearch, showSection, showDock, 
   }
 
   function onKey(e) {
-    if (e.key === 'Escape' && !typing(e.target) && !$('dialog[open]')) end();
+    // Esc closes an open panel first (the app handles that), then the tour.
+    if (e.key === 'Escape' && !typing(e.target) && !$('dialog[open]') && !$('#surprise-pop:not([hidden]), #share-pop:not([hidden])')) end();
+  }
+
+  // Watch the step's targets too, so the spotlight follows a panel that opens
+  // or closes mid-step (it goes to or from 0×0 when hidden).
+  function watch(step) {
+    resize.disconnect();
+    if (!ui) return;
+    resize.observe(ui.card);
+    for (const el of [step?.target?.()].flat()) if (el) resize.observe(el);
   }
 
   function leave() {
@@ -233,6 +266,7 @@ export function createTour({ store, showUI, clearSearch, showSection, showDock, 
     // target. The spotlight animates the move, so the scroll itself is instant.
     (step.reveal?.() || targets(step)[0])?.scrollIntoView({ block: step.block || 'nearest', inline: 'nearest' });
     if (step.wait) stopWait = step.wait(ctx, () => tried(n));
+    watch(step);
     place();
     setTimeout(place, 300); // after opened sections and thumbnails settle
     if (focus) ui.card.focus({ preventScroll: true });

@@ -656,8 +656,8 @@ export function randomizeSection(state, section) {
   }
 }
 
-// ── similar looks ───────────────────────────────────────────────────────────
-// Sections "Similar" can lock: a new look keeps them and remixes the rest.
+// ── locks ───────────────────────────────────────────────────────────────────
+// Sections Surprise me can lock: a new look keeps them and remixes the rest.
 // Motion is always kept.
 export const LOCKABLE = [
   { id: 'source', title: 'Flow' },
