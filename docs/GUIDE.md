@@ -233,6 +233,7 @@ Exports always render at full quality, independent of the performance mode. Very
 
 - **My looks** (**All looks → My looks**): name and save the current look with a thumbnail. Saved looks also appear first in the dock. Saved looks live in your browser; use **Export** to download them as a `.json` file and **Import** to load them elsewhere.
 - **Share** copies a link that recreates your exact look for anyone who opens it. Images you load yourself are not included in links.
+- In the **Share** panel, choose where the link opens: **In the editor** or **Full screen**. A full-screen link shows only the moving look, filling the screen, with no editor. Use it as a web wallpaper in apps like Lively, or as a browser kiosk page. It keeps your look exactly, but renders live on the GPU instead of playing a video. Tick **Mouse can pan and move objects** to keep the mouse working on it; otherwise it ignores the mouse.
 - Your last session is restored automatically when you come back.
 - **Undo/redo** with `Ctrl/⌘ Z` and `Ctrl/⌘ Shift Z`.
 
@@ -256,6 +257,8 @@ Whatever the mode, a still preview refines itself to full quality (the readout s
 **4K desktop wallpaper**: Canvas *Desktop 4K* → Export at 1× (or set *Desktop HD* and export at 2×).
 
 **Animated wallpaper or video background**: turn on **Seamless loop**, set **Loop length** (8–20 s works well) → **Video**. The file loops perfectly.
+
+**Live wallpaper without a video**: **Share** → **Full screen** → **Copy link**, then paste the link into a web-wallpaper app such as Lively.
 
 **Your photo behind glass**: Flow → **Image** → drop a photo on the canvas → Glass → **Reeded** or **Tiles** → raise **Frost** a little. Turn **Gradient map** off to keep the photo's colors.
 

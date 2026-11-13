@@ -26,6 +26,13 @@ const raf = new URLSearchParams(location.search).has('timer')
   ? (f) => setTimeout(() => f(performance.now()), 16)
   : (f) => requestAnimationFrame(f);
 const app = $('#app');
+// ?wallpaper#look=… shows only the moving look, filling the window: for live
+// wallpaper apps (Lively, Wallpaper Engine) and browser kiosks.
+// Add &interactive to let the mouse pan, zoom, paint and move objects.
+const wallpaper = new URLSearchParams(location.search).has('wallpaper');
+const interactive = new URLSearchParams(location.search).has('interactive');
+app.classList.toggle('wallpaper', wallpaper);
+app.classList.toggle('interactive', interactive);
 const canvas = $('#canvas');
 const stage = $('#stage');
 const frameEl = $('#frame');
@@ -117,7 +124,8 @@ async function restore() {
   const hash = location.hash.match(/look=([\w-]+)/);
   if (hash) {
     // Drop the hash once loaded so later reloads restore the user's own edits.
-    history.replaceState(null, '', location.pathname + location.search);
+    // Wallpapers keep it: they reload the same look every time.
+    if (!wallpaper) history.replaceState(null, '', location.pathname + location.search);
     try {
       store.applyLook(await decodeLook(hash[1]));
       lookName = 'Shared look';
@@ -149,6 +157,7 @@ store.commit();
 
 let saveTimer = 0;
 function saveSession() {
+  if (wallpaper) return; // never overwrite the editor's session
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     try {
@@ -165,6 +174,8 @@ const view = { cssH: 1, frame: { x: 0, y: 0, w: 1, h: 1 }, W: 1, H: 1 };
 
 // The room the frame has between the floating panels (stage coordinates).
 const fullscreen = () => document.fullscreenElement === stage;
+// Fullscreen and wallpaper links show the frame alone, with no UI around it.
+const bare = () => wallpaper || fullscreen();
 
 // In fullscreen the frame fills the screen, cropping the sides that overhang,
 // when that hides little of the design; otherwise it fits inside the screen
@@ -181,7 +192,7 @@ function filling(area, doc) {
 
 function frameArea() {
   const W = stage.clientWidth, H = stage.clientHeight;
-  if (fullscreen() || app.classList.contains('ui-hidden')) return { x: 0, y: 0, w: W, h: H };
+  if (bare() || app.classList.contains('ui-hidden')) return { x: 0, y: 0, w: W, h: H };
   const phone = phoneQuery.matches;
   const gap = phone ? 12 : 22;
   const top = $('.bar-start').getBoundingClientRect().bottom + gap;
@@ -195,9 +206,10 @@ function frameArea() {
 function layout() {
   const doc = store.state.doc;
   const area = frameArea();
+  // Wallpapers take the window's own shape, so nothing is cropped.
   const k = (filling(area, doc) ? Math.max : Math.min)(area.w / doc.width, area.h / doc.height);
-  const cssW = Math.max(1, Math.round(doc.width * k));
-  const cssH = Math.max(1, Math.round(doc.height * k));
+  const cssW = wallpaper ? area.w : Math.max(1, Math.round(doc.width * k));
+  const cssH = wallpaper ? area.h : Math.max(1, Math.round(doc.height * k));
   frameEl.style.width = cssW + 'px';
   frameEl.style.height = cssH + 'px';
   frameEl.style.left = area.x + area.w / 2 + 'px';
@@ -231,7 +243,7 @@ let idleCursor = 0;
 function wakeCursor() {
   stage.classList.remove('idle');
   clearTimeout(idleCursor);
-  if (fullscreen()) idleCursor = setTimeout(() => stage.classList.add('idle'), 2500);
+  if (bare()) idleCursor = setTimeout(() => stage.classList.add('idle'), 2500);
 }
 stage.addEventListener('pointermove', wakeCursor);
 stage.addEventListener('pointerdown', wakeCursor);
@@ -243,7 +255,7 @@ let fsHintTimer = 0;
 function hideFsHint() { clearTimeout(fsHintTimer); fsHint.classList.remove('show'); }
 document.addEventListener('fullscreenchange', () => {
   fillOverride = null;
-  stage.classList.toggle('fullscreen', fullscreen());
+  stage.classList.toggle('fullscreen', bare());
   wakeCursor();
   layout();
   hideFsHint();
@@ -261,6 +273,8 @@ function toggleFill() {
   layout();
   toast(fillOverride ? 'Fill the screen' : 'Fit the whole design');
 }
+stage.classList.toggle('fullscreen', bare());
+wakeCursor();
 
 // ── ambient light ───────────────────────────────────────────────────────────
 // A tiny, blurred copy of the canvas lights the room around the frame: the
@@ -447,7 +461,41 @@ const setIcon = (sel, icon, label) => { const el = $(sel); el.innerHTML = ICONS[
 setIcon('#btn-undo', 'undo').onclick = () => store.undo();
 setIcon('#btn-redo', 'redo').onclick = () => store.redo();
 setIcon('#btn-surprise', 'dice', 'Surprise me').onclick = () => surprise();
-setIcon('#btn-share', 'link', 'Share').onclick = () => share();
+setIcon('#btn-share', 'link', 'Share');
+// Share opens a small panel: open the link in the editor, or full screen
+// (with or without the mouse). The last choice is remembered.
+const sharePop = $('#share-pop');
+const shareBtn = $('#btn-share');
+const shareOpts = (() => {
+  try { return { full: false, mouse: false, ...JSON.parse(localStorage.getItem('halation.share') || '{}') }; } catch { return { full: false, mouse: false }; }
+})();
+function syncSharePop() {
+  for (const b of sharePop.querySelectorAll('[data-open]')) b.setAttribute('aria-pressed', String((b.dataset.open === 'full') === shareOpts.full));
+  $('#share-mouse-row').hidden = !shareOpts.full;
+  $('#share-mouse').checked = shareOpts.mouse;
+  try { localStorage.setItem('halation.share', JSON.stringify(shareOpts)); } catch {}
+}
+function setSharePop(on) {
+  sharePop.hidden = !on;
+  shareBtn.setAttribute('aria-expanded', String(on));
+  if (!on) return;
+  // Hang it under the Share button, inside the window.
+  const r = shareBtn.getBoundingClientRect();
+  sharePop.style.right = 'auto';
+  sharePop.style.left = Math.max(12, Math.min(r.left, innerWidth - sharePop.offsetWidth - 12)) + 'px';
+  syncSharePop();
+  $('#share-copy').focus();
+}
+shareBtn.onclick = () => setSharePop(sharePop.hidden);
+for (const b of sharePop.querySelectorAll('[data-open]')) b.onclick = () => { shareOpts.full = b.dataset.open === 'full'; syncSharePop(); };
+$('#share-mouse').onchange = (e) => { shareOpts.mouse = e.target.checked; syncSharePop(); };
+setIcon('#share-copy', 'link', 'Copy link').onclick = () => {
+  setSharePop(false);
+  share({ wallpaper: shareOpts.full, interactive: shareOpts.mouse });
+};
+document.addEventListener('pointerdown', (e) => {
+  if (!sharePop.hidden && !sharePop.contains(e.target) && !shareBtn.contains(e.target)) setSharePop(false);
+});
 setIcon('#btn-repo', 'github', 'GitHub').href = REPO_URL;
 setIcon('#btn-export', 'download', 'Export').onclick = () => exportImage();
 setIcon('#btn-hide', 'eye').onclick = () => toggleUI();
@@ -487,7 +535,12 @@ for (const [sel, label] of [['#btn-support', 'Support'], ['#btn-coffee', 'Buy me
   item.setAttribute('role', 'menuitem');
   item.innerHTML = `${ICONS.link}<span>Copy share link</span>`;
   item.onclick = () => share();
-  helpMenu.prepend(item);
+  const wall = document.createElement('button');
+  wall.className = 'phone-only';
+  wall.setAttribute('role', 'menuitem');
+  wall.innerHTML = `${ICONS.expand}<span>Copy full-screen link</span>`;
+  wall.onclick = () => share({ wallpaper: true });
+  helpMenu.prepend(item, wall);
 }
 function setMenu(on) {
   helpMenu.hidden = !on;
@@ -1139,16 +1192,21 @@ function stopRecording() {
 }
 
 // ── share link ──────────────────────────────────────────────────────────────
-async function share() {
-  track('share', 'Copy share link');
+// A full-screen link opens just the moving look, filling the screen, with no
+// editor: for live wallpaper apps (Lively) and kiosks.
+async function share({ wallpaper: wall = false, interactive: mouse = false } = {}) {
+  track(wall ? 'share/wallpaper' : 'share', wall ? 'Copy full-screen link' : 'Copy share link');
   const code = await encodeLook(store.look());
-  const url = `${location.origin}${location.pathname}#look=${code}`;
+  const search = wall ? `?wallpaper${mouse ? '&interactive' : ''}` : '';
+  const url = `${location.origin}${location.pathname}${search}#look=${code}`;
   try {
     await navigator.clipboard.writeText(url);
     toast(store.state.source.type === 'image'
       ? 'Link copied — note: your image itself isn’t included in links'
+      : wall ? 'Link copied — it shows this look full screen, without the editor'
       : 'Link copied — it opens this exact look');
   } catch {
+    if (wall) { prompt('Copy this link:', url); return; }
     history.replaceState(null, '', `#look=${code}`);
     toast('Couldn’t access the clipboard — the link is in the address bar.');
   }
@@ -1156,6 +1214,7 @@ async function share() {
 
 // ── keyboard ────────────────────────────────────────────────────────────────
 window.addEventListener('keydown', (e) => {
+  if (wallpaper) return;
   const t = e.target;
   const typing = t instanceof HTMLInputElement && !['range', 'checkbox', 'color'].includes(t.type) || t instanceof HTMLSelectElement || t instanceof HTMLTextAreaElement;
   const mod = e.ctrlKey || e.metaKey;
@@ -1189,6 +1248,7 @@ window.addEventListener('keydown', (e) => {
       break;
     case 'Escape':
       if ($('#help').open) break;
+      if (!sharePop.hidden) { setSharePop(false); shareBtn.focus(); break; }
       if (!helpMenu.hidden) { setMenu(false); helpBtn.focus(); }
       else if (presetsPanel.isOpen()) presetsPanel.close();
       else if (app.classList.contains('editing')) setEditing(false);
