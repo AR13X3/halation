@@ -260,6 +260,8 @@ Whatever the mode, a still preview refines itself to full quality (the readout s
 
 **Live wallpaper without a video**: **Share** → **Full screen** → **Copy link**, then paste the link into a web-wallpaper app such as Lively.
 
+**Similar looks and a wallpaper that changes every day**: press **Similar**, lock the parts to keep (for example **Colors**), then press **Remix** (or **Auto**) to try remixes of everything else on the canvas. **Keep** takes the one on screen; closing the panel goes back. **Copy link** makes a full-screen link that remixes itself every day (the same look all day) or every time it opens.
+
 **Your photo behind glass**: Flow → **Image** → drop a photo on the canvas → Glass → **Reeded** or **Tiles** → raise **Frost** a little. Turn **Gradient map** off to keep the photo's colors.
 
 **Glass panel composition**: Flow → **None** → Objects → **1**, Material **Solid**, Shape **Sphere** → Glass → **Tiles**, Profile **Glass block**, Coverage **Right side**, Frost ~0.5. Drag the sphere so it sits across the pane edge.
