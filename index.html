@@ -48,9 +48,11 @@
     </header>
 
     <div class="bar bar-end glass">
-      <button class="btn ghost" id="btn-surprise" title="Randomize everything (R)"></button>
-      <button class="btn ghost" id="btn-similar" title="New looks that keep the parts you lock" aria-expanded="false" aria-controls="similar"></button>
-      <button class="btn ghost" id="btn-share" title="Copy a link to this exact look" aria-haspopup="dialog" aria-expanded="false" aria-controls="share-pop"></button>
+      <div class="split" id="surprise-split">
+        <button class="btn ghost" id="btn-surprise" title="A new look that keeps what you lock (R)"></button>
+        <button class="btn ghost split-more" id="btn-surprise-more" title="Surprise me options: keep parts you like" aria-label="Surprise me options" aria-haspopup="dialog" aria-expanded="false" aria-controls="surprise-pop"></button>
+      </div>
+      <button class="btn ghost" id="btn-share" title="Share a link to this look, in the editor or full screen" aria-haspopup="dialog" aria-expanded="false" aria-controls="share-pop"></button>
       <a class="btn ghost" id="btn-repo" title="Source code on GitHub" aria-label="GitHub" target="_blank" rel="noopener"></a>
       <a class="btn ghost" id="btn-support" title="Support Halation on Buy Me a Coffee" aria-label="Buy me a coffee" target="_blank" rel="noopener"></a>
       <button class="icon-btn" id="btn-help" title="Help" aria-label="Help" aria-haspopup="menu" aria-expanded="false"></button>
@@ -71,27 +73,26 @@
         <button data-open="editor" aria-pressed="true" title="Opens the editor with this exact look">In the editor</button>
         <button data-open="full" aria-pressed="false" title="Shows only the moving look, filling the screen: for live wallpaper apps like Lively">Full screen</button>
       </div>
-      <label class="share-check" id="share-mouse-row" hidden><input type="checkbox" id="share-mouse" /> Mouse can pan and move objects</label>
-      <button class="btn primary" id="share-copy"></button>
+      <label class="share-check" id="share-mouse-row" hidden><span class="switch glassy"><input type="checkbox" class="switch-input" id="share-mouse" /><span class="switch-track"></span></span> Mouse can pan and move objects</label>
+      <button class="btn primary wide" id="share-copy"></button>
     </section>
 
-    <section class="similar glass" id="similar" aria-label="Similar looks" hidden>
-      <div class="similar-head"><b>Similar looks</b><button class="icon-btn" id="similar-close" aria-label="Close"></button></div>
-      <p class="similar-hint">Lock what to keep, then Remix the rest. Each remix shows on the canvas.</p>
-      <div class="similar-locks" id="similar-locks" role="group" aria-label="Locked sections"></div>
-      <div class="similar-row">
-        <button class="btn ghost" id="similar-shuffle" title="A new look that keeps what's locked"></button>
-        <button class="btn ghost" id="similar-auto" title="Show a new similar look every couple of seconds"></button>
-        <button class="btn primary" id="similar-keep" title="Keep the look on the canvas"></button>
+    <section class="surprise-pop glass" id="surprise-pop" aria-label="Surprise me options" hidden>
+      <div class="pop-head"><b>Surprise me</b><button class="icon-btn sm" id="surprise-close" aria-label="Close"></button></div>
+      <p class="pop-hint">Lock the parts you like. Surprise me and <kbd>R</kbd> change only the rest.</p>
+      <div class="lock-grid" id="surprise-locks" role="group" aria-label="Keep these parts"></div>
+      <div class="pop-row">
+        <button class="btn" id="surprise-go" title="A new look that keeps what you lock (R)"></button>
+        <button class="btn" id="surprise-auto" title="A new look every couple of seconds"></button>
       </div>
-      <div class="similar-share">
-        <span>Full-screen link that changes</span>
-        <select class="mini-select" id="similar-vary" aria-label="How often the wallpaper changes">
-          <option value="day">every day</option>
-          <option value="load">every time it opens</option>
-        </select>
-        <label class="share-check"><input type="checkbox" id="similar-mouse" /> Mouse can pan and move objects</label>
-        <button class="btn ghost" id="similar-copy" title="Copy a full-screen link that makes a new similar look by itself"></button>
+      <div class="pop-section">
+        <div class="share-label">Full-screen link with a new look</div>
+        <div class="share-seg" id="surprise-vary" role="group" aria-label="How often the wallpaper changes">
+          <button data-vary="day" aria-pressed="true" title="Same look all day, a new one at midnight">Every day</button>
+          <button data-vary="load" aria-pressed="false" title="A new look every time the link opens">Every time it opens</button>
+        </div>
+        <label class="share-check"><span class="switch glassy"><input type="checkbox" class="switch-input" id="surprise-mouse" /><span class="switch-track"></span></span> Mouse can pan and move objects</label>
+        <button class="btn wide" id="surprise-copy" title="Copy a full-screen link that makes a new look by itself, keeping what you lock"></button>
       </div>
     </section>
 
@@ -145,7 +146,7 @@
       <dt><kbd>Space</kbd></dt><dd>Play / pause</dd>
       <dt><kbd>S</kbd></dt><dd>Download image</dd>
       <dt><kbd>C</kbd></dt><dd>Copy image to clipboard</dd>
-      <dt><kbd>R</kbd></dt><dd>Surprise me (randomize all)</dd>
+      <dt><kbd>R</kbd></dt><dd>Surprise me (keeps locked parts)</dd>
       <dt><kbd>L</kbd></dt><dd>Browse all looks</dd>
       <dt><kbd>/</kbd></dt><dd>Search settings</dd>
       <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Step one frame (hold Shift for 1 s)</dd>

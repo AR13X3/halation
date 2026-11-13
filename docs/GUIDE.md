@@ -34,7 +34,7 @@ The artwork fills the window, lit by a soft glow of its own colors, and the cont
 | --- | --- |
 | **Canvas** (center) | Live preview at the exact proportions of your output size. Drag to pan, scroll to zoom, or drag an object to move it. |
 | **Look name** (top left) | The look you are working on, with undo and redo next to it. A dot appears once you change it; click the name to browse all looks. |
-| **Top right** | **Surprise me**, **Share**, a link to **GitHub**, **Support** (Buy Me a Coffee), the **Help** menu (tutorial, keyboard shortcuts, this guide, the source code and Buy me a coffee) and **Export**. |
+| **Top right** | **Surprise me** (its arrow keeps parts you like), **Share**, a link to **GitHub**, **Support** (Buy Me a Coffee), the **Help** menu (tutorial, keyboard shortcuts, this guide, the source code and Buy me a coffee) and **Export**. |
 | **Controls** (right) | Every setting, one section per tab: Canvas, Flow, Objects, Color, Surface, Glass, Light, Screen, Finish, Motion, Export. Each section has dice (randomize this section) and reset buttons next to its title. |
 | **Dock** (bottom) | Play/pause, timeline, seamless-loop toggle, performance mode and frame-rate readout, and a strip of looks to click through. **All looks** (`L`) opens every built-in look plus the ones you save under **My looks**. The eye icon hides the interface. |
 
@@ -233,7 +233,7 @@ Exports always render at full quality, independent of the performance mode. Very
 
 - **My looks** (**All looks → My looks**): name and save the current look with a thumbnail. Saved looks also appear first in the dock. Saved looks live in your browser; use **Export** to download them as a `.json` file and **Import** to load them elsewhere.
 - **Share** copies a link that recreates your exact look for anyone who opens it. Images you load yourself are not included in links.
-- In the **Share** panel, choose where the link opens: **In the editor** or **Full screen**. A full-screen link shows only the moving look, filling the screen, with no editor. Use it as a web wallpaper in apps like Lively, or as a browser kiosk page. It keeps your look exactly, but renders live on the GPU instead of playing a video. Tick **Mouse can pan and move objects** to keep the mouse working on it; otherwise it ignores the mouse.
+- In the **Share** panel, choose where the link opens: **In the editor** or **Full screen**. A full-screen link shows only the moving look, filling the screen, with no editor. Use it as a web wallpaper in apps like Lively, or as a browser kiosk page. It keeps your look exactly, but renders live on the GPU instead of playing a video. Turn on **Mouse can pan and move objects** to keep the mouse working on it; otherwise it ignores the mouse.
 - Your last session is restored automatically when you come back.
 - **Undo/redo** with `Ctrl/⌘ Z` and `Ctrl/⌘ Shift Z`.
 
@@ -260,7 +260,7 @@ Whatever the mode, a still preview refines itself to full quality (the readout s
 
 **Live wallpaper without a video**: **Share** → **Full screen** → **Copy link**, then paste the link into a web-wallpaper app such as Lively.
 
-**Similar looks and a wallpaper that changes every day**: press **Similar**, lock the parts to keep (for example **Colors**), then press **Remix** (or **Auto**) to try remixes of everything else on the canvas. **Keep** takes the one on screen; closing the panel goes back. **Copy link** makes a full-screen link that remixes itself every day (the same look all day) or every time it opens.
+**Keep what you like, change the rest**: click the arrow next to **Surprise me** and lock the parts to keep (for example **Colors**). From then on **Surprise me** and `R` change only the unlocked parts; a dot on the arrow shows that something is locked. **Auto** makes a new look every couple of seconds. **Copy link** at the bottom makes a full-screen link that makes a new look by itself every day (the same look all day) or every time it opens, keeping what you locked.
 
 **Your photo behind glass**: Flow → **Image** → drop a photo on the canvas → Glass → **Reeded** or **Tiles** → raise **Frost** a little. Turn **Gradient map** off to keep the photo's colors.
 
@@ -323,7 +323,7 @@ The official site ([ar13x3.github.io/halation](https://ar13x3.github.io/halation
 
 - exports (image format, copy, burst, video)
 - the built-in look you pick, or that it was one of your own looks
-- Surprise me, copying a share link and opening one
+- Surprise me (and opening its options or Auto), copying a share or wallpaper link and opening one
 - starting the tutorial, finishing it, or the step where you left it
 - opening the Buy me a coffee link
 

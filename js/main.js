@@ -458,10 +458,10 @@ function tick(now) {
 
 // ── UI wiring ───────────────────────────────────────────────────────────────
 const setIcon = (sel, icon, label) => { const el = $(sel); el.innerHTML = ICONS[icon] + (label ? `<span>${label}</span>` : ''); return el; };
-setIcon('#btn-undo', 'undo').onclick = () => undo();
-setIcon('#btn-redo', 'redo').onclick = () => redo();
+setIcon('#btn-undo', 'undo').onclick = () => store.undo();
+setIcon('#btn-redo', 'redo').onclick = () => store.redo();
 setIcon('#btn-surprise', 'dice', 'Surprise me').onclick = () => surprise();
-setIcon('#btn-similar', 'sparkle', 'Similar').onclick = () => (similarEl.hidden ? openSimilar() : closeSimilar(false));
+setIcon('#btn-surprise-more', 'chevron').onclick = () => setSurprisePop(surprisePop.hidden);
 setIcon('#btn-share', 'link', 'Share');
 // Share opens a small panel: open the link in the editor, or full screen
 // (with or without the mouse). The last choice is remembered.
@@ -477,13 +477,12 @@ function syncSharePop() {
   try { localStorage.setItem('halation.share', JSON.stringify(shareOpts)); } catch {}
 }
 function setSharePop(on) {
+  if (on) setSurprisePop(false);
   sharePop.hidden = !on;
   shareBtn.setAttribute('aria-expanded', String(on));
   if (!on) return;
-  // Hang it under the Share button, inside the window.
-  const r = shareBtn.getBoundingClientRect();
   sharePop.style.right = 'auto';
-  sharePop.style.left = Math.max(12, Math.min(r.left, innerWidth - sharePop.offsetWidth - 12)) + 'px';
+  placePops();
   syncSharePop();
   $('#share-copy').focus();
 }
@@ -494,8 +493,12 @@ setIcon('#share-copy', 'link', 'Copy link').onclick = () => {
   setSharePop(false);
   share({ wallpaper: shareOpts.full, interactive: shareOpts.mouse });
 };
+// Clicking elsewhere closes the Share and Surprise me panels (the tutorial
+// card doesn't count: it may be pointing at one of them).
+const outside = (e, ...els) => !els.some((el) => el.contains(e.target)) && !e.target.closest?.('.tour-card');
 document.addEventListener('pointerdown', (e) => {
-  if (!sharePop.hidden && !sharePop.contains(e.target) && !shareBtn.contains(e.target)) setSharePop(false);
+  if (!sharePop.hidden && outside(e, sharePop, shareBtn)) setSharePop(false);
+  if (!surprisePop.hidden && outside(e, surprisePop, $('#surprise-split'))) setSurprisePop(false);
 });
 setIcon('#btn-repo', 'github', 'GitHub').href = REPO_URL;
 setIcon('#btn-export', 'download', 'Export').onclick = () => exportImage();
@@ -763,62 +766,119 @@ function pickSurprise({ candidates = 6, weights, base, lock = [] } = {}) {
   return { ...best, score: bestScore };
 }
 
-function surprise() {
-  store.applyLook(pickSurprise().look);
+// Surprise me keeps the sections locked in its options panel (the arrow next
+// to it). Locks are remembered in this browser, and the arrow shows a dot while
+// any are on, so a partial surprise is never a mystery.
+const surpriseLocks = new Set((() => {
+  try {
+    const saved = JSON.parse(localStorage.getItem('halation.locks') || '[]');
+    return Array.isArray(saved) ? saved.filter((k) => LOCKABLE.some((x) => x.id === k)) : [];
+  } catch { return []; }
+})());
+
+// `preview` (Auto) shows the new look without an undo step; Auto commits the
+// look it stops on, so a long run never pushes earlier looks out of history.
+function surprise({ preview = false } = {}) {
+  const lock = [...surpriseLocks];
+  store.applyLook(pickSurprise({ base: store.look(), lock }).look);
+  if (preview) {
+    sanitize(store.state);
+    store.emit('*');
+    setLookName('Surprise');
+    return;
+  }
   afterBulkChange('Surprise');
-  track('surprise', 'Surprise me');
+  track(lock.length ? 'surprise/locked' : 'surprise', 'Surprise me');
 }
 
-// ── similar looks ───────────────────────────────────────────────────────────
-// Lock some sections of the current look, then Remix the rest. The canvas
-// shows each try; Keep commits it, closing goes back to the starting look. The
-// panel also copies wallpaper links that remix themselves every day or on
-// every visit.
-const similarEl = $('#similar');
-const similarLocks = new Set(['color']);
-let similarBase = null;
-let similarName = '';
-let similarAuto = 0;
-// While Similar is open, undo and redo step through its remixes.
-let similarHist = [];
-let similarPos = 0;
+// ── Surprise me options ─────────────────────────────────────────────────────
+// Locks, Auto (a new look every 1.6 s) and wallpaper links that make a new
+// look by themselves every day or on every visit.
+const surprisePop = $('#surprise-pop');
+const surpriseMore = $('#btn-surprise-more');
+let surpriseAuto = 0;
 
 for (const sec of LOCKABLE) {
   const b = document.createElement('button');
   b.className = 'lock-chip';
+  b.dataset.id = sec.id;
   b.textContent = sec.title;
-  b.setAttribute('aria-pressed', similarLocks.has(sec.id));
+  b.title = `Keep ${sec.title.toLowerCase()} when surprising`;
   b.onclick = () => {
-    similarLocks.has(sec.id) ? similarLocks.delete(sec.id) : similarLocks.add(sec.id);
-    b.setAttribute('aria-pressed', similarLocks.has(sec.id));
+    surpriseLocks.has(sec.id) ? surpriseLocks.delete(sec.id) : surpriseLocks.add(sec.id);
+    syncLocks();
   };
-  $('#similar-locks').append(b);
+  $('#surprise-locks').append(b);
 }
 
-function openSimilar() {
-  if (!similarEl.hidden) return;
-  similarBase = store.look();
-  similarName = lookName;
-  similarHist = [similarBase];
-  queueSync();
-  similarPos = 0;
-  similarEl.hidden = false;
-  $('#similar-keep').disabled = true;
-  $('#btn-similar').setAttribute('aria-expanded', 'true');
-  track('similar', 'Open Similar');
+function syncLocks() {
+  for (const b of $('#surprise-locks').children) b.setAttribute('aria-pressed', String(surpriseLocks.has(b.dataset.id)));
+  const n = surpriseLocks.size;
+  $('#surprise-split').classList.toggle('locked', n > 0);
+  surpriseMore.title = n ? `Surprise me options: ${n} part${n > 1 ? 's' : ''} locked` : 'Surprise me options: keep parts you like';
+  try { localStorage.setItem('halation.locks', JSON.stringify([...surpriseLocks])); } catch {}
 }
 
-function closeSimilar(keep) {
-  if (similarEl.hidden) return;
-  setSimilarAuto(false);
-  similarEl.hidden = true;
-  $('#btn-similar').setAttribute('aria-expanded', 'false');
-  // A preset or edit made while the panel was open stays.
-  if (similarRebase()) return;
-  if (keep && similarPos) { afterBulkChange('Similar look'); return; }
-  showLook(similarBase);
-  setLookName(similarName, edited);
+function setSurprisePop(on) {
+  if (on === !surprisePop.hidden) return;
+  if (on) setSharePop(false);
+  else setSurpriseAuto(false);
+  surprisePop.hidden = !on;
+  surpriseMore.setAttribute('aria-expanded', String(on));
+  if (!on) return;
+  placePops();
+  track('surprise/options', 'Open Surprise me options');
 }
+
+// Hang each open panel under its button, inside the window's side margins.
+function placePops() {
+  const m = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--m')) || 12;
+  for (const [pop, anchor] of [[sharePop, shareBtn], [surprisePop, $('#surprise-split')]]) {
+    if (pop.hidden) continue;
+    const left = anchor.getBoundingClientRect().left;
+    pop.style.left = Math.max(m, Math.min(left, innerWidth - pop.offsetWidth - m)) + 'px';
+  }
+}
+window.addEventListener('resize', placePops);
+
+let autoTicks = 0;
+function setSurpriseAuto(on) {
+  if (!on && surpriseAuto && autoTicks) { store.commit(); queueSync(); }
+  clearInterval(surpriseAuto);
+  autoTicks = 0;
+  surpriseAuto = on ? setInterval(() => { surprise({ preview: true }); autoTicks++; }, 1600) : 0;
+  if (on) track('surprise/auto', 'Surprise me Auto');
+  setIcon('#surprise-auto', on ? 'pause' : 'play', on ? 'Stop' : 'Auto').setAttribute('aria-pressed', String(on));
+}
+
+async function copyVaryLink() {
+  const code = await encodeLook(store.look());
+  const vary = $('#surprise-vary [aria-pressed="true"]').dataset.vary;
+  const mouse = $('#surprise-mouse').checked ? '&interactive' : '';
+  const lock = surpriseLocks.size ? `&lock=${[...surpriseLocks].join(',')}` : '';
+  const url = `${location.origin}${location.pathname}?wallpaper${mouse}&vary=${vary}${lock}#look=${code}`;
+  track('share/vary', 'Copy self-changing wallpaper link');
+  try {
+    await navigator.clipboard.writeText(url);
+    if (surpriseLocks.has('source') && store.state.source.type === 'image') toast('Link copied — note: your image itself isn’t included in links');
+    else toast(vary === 'day' ? 'Link copied — a new look every day' : 'Link copied — a new look every time it opens');
+  } catch {
+    prompt('Copy this wallpaper link:', url);
+  }
+}
+
+setIcon('#surprise-go', 'dice', 'Surprise me').onclick = () => surprise();
+setIcon('#surprise-copy', 'link', 'Copy link').onclick = () => copyVaryLink();
+$('#surprise-auto').onclick = () => setSurpriseAuto(!surpriseAuto);
+$('#surprise-close').innerHTML = ICONS.close;
+$('#surprise-close').onclick = () => { setSurprisePop(false); surpriseMore.focus(); };
+for (const b of surprisePop.querySelectorAll('[data-vary]')) {
+  b.onclick = () => {
+    for (const o of surprisePop.querySelectorAll('[data-vary]')) o.setAttribute('aria-pressed', String(o === b));
+  };
+}
+setSurpriseAuto(false);
+syncLocks();
 
 // Shows a look without adding it to the undo history.
 function showLook(look) {
@@ -828,74 +888,6 @@ function showLook(look) {
   store.emit('*');
   applyingLook = false;
 }
-
-// If the look changed outside Similar (a preset, an edit), it becomes the new
-// starting point. Returns true when that happened.
-function similarRebase() {
-  if (JSON.stringify(store.look()) === JSON.stringify(similarHist[similarPos])) return false;
-  similarBase = store.look();
-  similarName = lookName;
-  similarHist = [similarBase];
-  similarPos = 0;
-  $('#similar-keep').disabled = true;
-  return true;
-}
-
-function shuffleSimilar() {
-  similarRebase();
-  const look = pickSurprise({ candidates: 4, base: similarBase, lock: [...similarLocks] }).look;
-  similarHist = similarHist.slice(0, similarPos + 1);
-  similarHist.push(look);
-  similarPos = similarHist.length - 1;
-  showSimilarStep();
-}
-
-function showSimilarStep() {
-  showLook(similarHist[similarPos]);
-  // Keep the look as the canvas has it, so similarRebase can compare.
-  similarHist[similarPos] = store.look();
-  $('#similar-keep').disabled = !similarPos;
-}
-
-const similarOpen = () => !similarEl.hidden;
-const canUndo = () => (similarOpen() && !similarRebase() ? similarPos > 0 : store.canUndo());
-const canRedo = () => (similarOpen() && !similarRebase() ? similarPos < similarHist.length - 1 : store.canRedo());
-function undo() {
-  if (!similarOpen() || similarRebase()) return store.undo();
-  if (similarPos > 0) { similarPos--; showSimilarStep(); }
-}
-function redo() {
-  if (!similarOpen() || similarRebase()) return store.redo();
-  if (similarPos < similarHist.length - 1) { similarPos++; showSimilarStep(); }
-}
-
-function setSimilarAuto(on) {
-  clearInterval(similarAuto);
-  similarAuto = on ? setInterval(shuffleSimilar, 1600) : 0;
-  setIcon('#similar-auto', on ? 'pause' : 'play', on ? 'Stop' : 'Auto').setAttribute('aria-pressed', on);
-}
-
-async function copySimilarLink() {
-  const code = await encodeLook(similarBase);
-  const vary = $('#similar-vary').value;
-  const mouse = $('#similar-mouse').checked ? '&interactive' : '';
-  const url = `${location.origin}${location.pathname}?wallpaper${mouse}&vary=${vary}&lock=${[...similarLocks].join(',')}#look=${code}`;
-  track('share/similar', 'Copy similar wallpaper link');
-  try {
-    await navigator.clipboard.writeText(url);
-    toast(vary === 'day' ? 'Link copied — a new similar look every day' : 'Link copied — a new similar look every time it opens');
-  } catch {
-    prompt('Copy this wallpaper link:', url);
-  }
-}
-
-setIcon('#similar-shuffle', 'dice', 'Remix').onclick = () => shuffleSimilar();
-setIcon('#similar-keep', 'check', 'Keep').onclick = () => closeSimilar(true);
-setIcon('#similar-copy', 'link', 'Copy link').onclick = () => copySimilarLink();
-setSimilarAuto(false);
-$('#similar-auto').onclick = () => setSimilarAuto(!similarAuto);
-$('#similar-close').innerHTML = ICONS.close;
-$('#similar-close').onclick = () => closeSimilar(false);
 
 // Wallpaper links with ?vary remix the shared look, keeping the locked sections.
 // "day" seeds the remix with the date, so it changes at midnight and stays put
@@ -932,6 +924,9 @@ const tour = createTour({
   clearSearch: () => panel.clearSearch(),
   showSection: (id) => { if (phoneQuery.matches) setEditing(true); if (id) panel.showTab(id); },
   showDock: () => { setEditing(false); presetsPanel.close(); },
+  // The tutorial opens these panels only where their button is on screen.
+  showSurprise: (on) => setSurprisePop(on && !!surpriseMore.offsetParent),
+  showShare: (on) => setSharePop(on && !!shareBtn.offsetParent),
   guideUrl: `${REPO_URL}/blob/main/docs/GUIDE.md`,
 });
 
@@ -942,8 +937,8 @@ function queueSync() {
   raf(() => {
     syncQueued = false;
     panel.sync();
-    $('#btn-undo').disabled = !canUndo();
-    $('#btn-redo').disabled = !canRedo();
+    $('#btn-undo').disabled = !store.canUndo();
+    $('#btn-redo').disabled = !store.canRedo();
   });
 }
 
@@ -1373,8 +1368,8 @@ window.addEventListener('keydown', (e) => {
   const t = e.target;
   const typing = t instanceof HTMLInputElement && !['range', 'checkbox', 'color'].includes(t.type) || t instanceof HTMLSelectElement || t instanceof HTMLTextAreaElement;
   const mod = e.ctrlKey || e.metaKey;
-  if (mod && e.key.toLowerCase() === 'z' && !typing) { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
-  if (mod && e.key.toLowerCase() === 'y' && !typing) { e.preventDefault(); redo(); return; }
+  if (mod && e.key.toLowerCase() === 'z' && !typing) { e.preventDefault(); e.shiftKey ? store.redo() : store.undo(); return; }
+  if (mod && e.key.toLowerCase() === 'y' && !typing) { e.preventDefault(); store.redo(); return; }
   if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); exportImage(); return; }
   if (typing || mod || e.altKey) return;
   const a = store.state.anim;
@@ -1403,8 +1398,9 @@ window.addEventListener('keydown', (e) => {
       break;
     case 'Escape':
       if ($('#help').open) break;
-      if (!similarEl.hidden) { closeSimilar(false); break; }
-      if (!sharePop.hidden) { setSharePop(false); shareBtn.focus(); break; }
+      // Closing a panel is all Esc does (the tutorial, if open, stays).
+      if (!surprisePop.hidden) { e.stopImmediatePropagation(); setSurprisePop(false); surpriseMore.focus(); break; }
+      if (!sharePop.hidden) { e.stopImmediatePropagation(); setSharePop(false); shareBtn.focus(); break; }
       if (!helpMenu.hidden) { setMenu(false); helpBtn.focus(); }
       else if (presetsPanel.isOpen()) presetsPanel.close();
       else if (app.classList.contains('editing')) setEditing(false);
